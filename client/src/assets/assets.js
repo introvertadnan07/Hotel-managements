@@ -37,6 +37,10 @@ import listIcon from "./listIcon.svg";
 import uploadArea from "./uploadArea.svg";
 import totalBookingIcon from "./totalBookingIcon.svg";
 import totalRevenueIcon from "./totalRevenueIcon.svg";
+import adnanImage from "./adnan.jpg";
+import AnumImage from "./Anum.jpg";
+import MadeehaImage from "./Madeeha.jpg";
+import shaiobImage from "./Shaoib.jpg";
 
 
 export const assets = {
@@ -78,7 +82,9 @@ export const cities = [
     "Dubai",
     "Singapore",
     "New York",
-    "London",
+    "Cheenai",
+    "Mumbai",
+    "Kochi"
 ];
 
 // Exclusive Offers Dummy Data
@@ -86,14 +92,55 @@ export const exclusiveOffers = [
     { _id: 1, title: "Summer Escape Package", description: "Enjoy a complimentary night and daily breakfast", priceOff: 25, expiryDate: "Aug 31", image: exclusiveOfferCardImg1 },
     { _id: 2, title: "Romantic Getaway", description: "Special couples package including spa treatment", priceOff: 20, expiryDate: "Sep 20", image: exclusiveOfferCardImg2 },
     { _id: 3, title: "Luxury Retreat", description: "Book 60 days in advance and save on your stay at any of our luxury properties worldwide.", priceOff: 30, expiryDate: "Sep 25", image: exclusiveOfferCardImg3 },
+
 ]
 
 // Testimonials Dummy Data
 export const testimonials = [
-    { id: 1, name: "Emma Rodriguez", address: "Barcelona, Spain", image: "https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=200", rating: 5, review: "I've used many booking platforms before, but none compare to the personalized experience and attention to detail that QuickStay provides." },
-    { id: 2, name: "Liam Johnson", address: "New York, USA", image: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=200", rating: 4, review: "QuickStay exceeded my expectations. The booking process was seamless, and the hotels were absolutely top-notch. Highly recommended!" },
-    { id: 3, name: "Sophia Lee", address: "Seoul, South Korea", image: "https://images.unsplash.com/photo-1701615004837-40d8573b6652?q=80&w=200", rating: 5, review: "Amazing service! I always find the best luxury accommodations through QuickStay. Their recommendations never disappoint!" }
+  {
+    id: 1,
+    name: "Faizan Naseem",
+    address: "Barcelona, Spain",
+    image: "https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=200",
+    rating: 5,
+    review: "I've used many booking platforms before, but none compare to the personalized experience and attention to detail that QuickStay provides."
+  },
+  {
+    id: 2,
+    name: "Madeeha Rahi",
+    address: "New York, USA",
+    image: MadeehaImage,
+    rating: 4,
+    review: "QuickStay exceeded my expectations. The booking process was seamless, and the hotels were absolutely top-notch. Highly recommended!"
+  },
+  {
+    id: 3,
+    name: "Anum Rahi",
+    address: "Kolkata, India",
+    image: AnumImage,
+    rating: 5,
+    review: "Amazing service! I always find the best luxury accommodations through QuickStay. Their recommendations never disappoint!"
+  },
+  {
+    id: 4,
+    name: "Md Adnan Qaisar",
+    address: "Kochi, India",
+    image: adnanImage,
+    rating: 5,
+    review: "A seamless booking experience with top-tier accommodations. QuickStay delivers comfort, quality, and reliability without compromise."
+  },
+
+  {
+  id: 5,
+  name: "Md Shoaib Akhtar",
+  address: "Chennai, India",
+  image: shaiobImage,
+  rating: 3.5,
+  review:
+    "Booking through QuickStay was simple and reliable. The hotel matched exactly what was shown, and the overall experience exceeded my expectations. I’d definitely use it again.."
+}
 ];
+
 
 // Facility Icon
 export const facilityIcons = {
