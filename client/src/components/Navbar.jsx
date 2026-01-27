@@ -1,158 +1,167 @@
-import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import {
-  assets,
-  facilityIcons,
-  roomCommonData,
-  roomsDummyData,
-} from "../assets/assets";
-import StarRating from "./StarRating";
+import React from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { assets } from "../assets/assets";
+import { useClerk, useUser, UserButton } from "@clerk/clerk-react";
 
-const RoomDetails = () => {
-  const { id } = useParams();
-  const [room, setRoom] = useState(null);
-  const [mainImage, setMainImage] = useState("");
+const BookIcon = () => (
+  <svg
+    className="w-4 h-4 text-gray-700"
+    xmlns="http://www.w3.org/2000/svg"
+    fill="none"
+    viewBox="0 0 24 24"
+  >
+    <path
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M5 19V4a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v13H7a2 2 0 0 0-2 2Zm0 0a2 2 0 0 0 2 2h12M9 3v14m7 0v4"
+    />
+  </svg>
+);
 
-  useEffect(() => {
-    const foundRoom = roomsDummyData.find((r) => r._id === id);
-    if (foundRoom) {
-      setRoom(foundRoom);
-      setMainImage(foundRoom.images[0]);
-    }
-  }, [id]);
+const Navbar = () => {
+  const navLinks = [
+    { name: "Home", path: "/" },
+    { name: "Hotels", path: "/rooms" },
+    { name: "Experience", path: "/" },
+    { name: "About", path: "/" },
+  ];
 
-  if (!room) return null;
+  const [isScrolled, setIsScrolled] = React.useState(false);
+  const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+
+  const { openSignIn } = useClerk();
+  const { user } = useUser();
+  const navigate = useNavigate();
+
+  React.useEffect(() => {
+    const handleScroll = () => setIsScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   return (
-    <div className="py-28 md:py-36 px-4 md:px-16 lg:px-24 xl:px-32">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row items-start md:items-center gap-3">
-        <h1 className="text-3xl md:text-4xl font-playfair">
-          {room.hotel.name}{" "}
-          <span className="font-inter text-sm">({room.roomType})</span>
-        </h1>
-        <span className="text-xs px-3 py-1.5 bg-orange-500 text-white rounded-full">
-          20% OFF
-        </span>
-      </div>
+    <nav
+      className={`fixed top-0 left-0 w-full z-50 flex items-center justify-between px-4 md:px-16 lg:px-24 xl:px-32 transition-all duration-500
+      ${isScrolled ? "bg-white/80 shadow-md backdrop-blur-lg text-gray-700 py-3" : "py-4"}`}
+    >
+      {/* Logo */}
+      <Link to="/">
+        <img
+          src={assets.logo}
+          alt="logo"
+          className={`h-9 transition-all ${
+            isScrolled ? "invert opacity-80" : ""
+          }`}
+        />
+      </Link>
 
-      {/* Rating */}
-      <div className="flex items-center gap-1 mt-2">
-        <StarRating />
-        <p className="ml-2">200+ reviews</p>
-      </div>
-
-      {/* Address */}
-      <div className="flex items-center gap-1 text-gray-500 mt-2">
-        <img src={assets.locationIcon} alt="location" />
-        <span>{room.hotel.address}</span>
-      </div>
-
-      {/* Images */}
-      <div className="flex flex-col lg:flex-row gap-6 mt-6">
-        <div className="lg:w-1/2">
-          <img
-            src={mainImage}
-            alt="Main Room"
-            className="w-full rounded-xl shadow-lg object-cover"
-          />
-        </div>
-
-        <div className="grid grid-cols-2 gap-4 lg:w-1/2">
-          {room.images.map((img, index) => (
-            <img
-              key={index}
-              src={img}
-              alt="Room"
-              onClick={() => setMainImage(img)}
-              className={`cursor-pointer rounded-xl shadow-md object-cover ${
-                mainImage === img
-                  ? "outline outline-2 outline-orange-500"
-                  : ""
+      {/* Desktop Nav */}
+      <div className="hidden md:flex items-center gap-8">
+        {navLinks.map((link, i) => (
+          <Link
+            key={i}
+            to={link.path}
+            className={`group ${
+              isScrolled ? "text-gray-700" : "text-white"
+            }`}
+          >
+            {link.name}
+            <span
+              className={`block h-0.5 w-0 group-hover:w-full transition-all ${
+                isScrolled ? "bg-gray-700" : "bg-white"
               }`}
             />
-          ))}
-        </div>
-      </div>
-
-      {/* Highlights */}
-      <div className="flex flex-col md:flex-row md:justify-between mt-10 gap-6">
-        <h2 className="text-3xl md:text-4xl font-playfair">
-          Experience Luxury Like Never Before
-        </h2>
-
-        <div className="flex flex-wrap gap-4">
-          {room.amenities.map((item, index) => (
-            <div
-              key={index}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100"
-            >
-              <img src={facilityIcons[item]} alt={item} className="w-5 h-5" />
-              <p className="text-xs">{item}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Price */}
-      <p className="text-2xl font-medium mt-6">
-        ${room.pricePerNight} / Night
-      </p>
-
-      {/* Booking Form */}
-      <form className="flex flex-col md:flex-row items-center justify-between bg-white shadow-[0_0_20px_rgba(0,0,0,0.15)] rounded-xl mt-16 max-w-6xl mx-auto px-6 py-6 gap-6">
-        <div className="flex flex-col md:flex-row gap-6 text-gray-500 w-full">
-          <div className="flex flex-col">
-            <label className="font-medium">Check-In</label>
-            <input
-              type="date"
-              className="border rounded px-3 py-2 mt-1.5 outline-none"
-              required
-            />
-          </div>
-
-          <div className="flex flex-col">
-            <label className="font-medium">Check-Out</label>
-            <input
-              type="date"
-              className="border rounded px-3 py-2 mt-1.5 outline-none"
-              required
-            />
-          </div>
-
-          <div className="flex flex-col">
-            <label className="font-medium">Guests</label>
-            <input
-              type="number"
-              min={1}
-              className="border rounded px-3 py-2 mt-1.5 outline-none max-w-[80px]"
-              required
-            />
-          </div>
-        </div>
-
-        <button
-          type="submit"
-          className="bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg px-10 py-4 min-w-[180px] transition-all"
-        >
-          Check Availability
-        </button>
-      </form>
-
-      {/* Common Specifications */}
-      <div className="mt-16 space-y-6">
-        {roomCommonData.map((spec, index) => (
-          <div key={index} className="flex items-start gap-3">
-            <img src={spec.icon} alt={spec.title} className="w-6 h-6" />
-            <div>
-              <p className="text-base font-medium">{spec.title}</p>
-              <p className="text-gray-500">{spec.description}</p>
-            </div>
-          </div>
+          </Link>
         ))}
+
+        {/* ✅ Dashboard FIX */}
+        {user && (
+          <button
+            onClick={() => navigate("/my-bookings")}
+            className={`border px-4 py-1 rounded-full ${
+              isScrolled ? "text-black" : "text-white"
+            }`}
+          >
+            Dashboard
+          </button>
+        )}
       </div>
-    </div>
+
+      {/* Desktop Right */}
+      <div className="hidden md:flex items-center gap-4">
+        <img
+          src={assets.searchIcon}
+          alt="search"
+          className={`h-7 ${isScrolled ? "invert" : ""}`}
+        />
+
+        {user ? (
+          <UserButton>
+            <UserButton.MenuItems>
+              <UserButton.Action
+                label="My Bookings"
+                labelIcon={<BookIcon />}
+                onClick={() => navigate("/my-bookings")}
+              />
+            </UserButton.MenuItems>
+          </UserButton>
+        ) : (
+          <button
+            onClick={openSignIn}
+            className="bg-black text-white px-8 py-2.5 rounded-full"
+          >
+            Login
+          </button>
+        )}
+      </div>
+
+      {/* Mobile Menu Button */}
+      <div className="md:hidden">
+        <img
+          src={assets.menuIcon}
+          onClick={() => setIsMenuOpen(true)}
+          className={`${isScrolled ? "invert" : ""} h-4`}
+          alt="menu"
+        />
+      </div>
+
+      {/* Mobile Menu */}
+      <div
+        className={`fixed inset-0 bg-white flex flex-col items-center justify-center gap-6 transition-transform duration-500 md:hidden ${
+          isMenuOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        <img
+          src={assets.closeIcon}
+          className="h-6 cursor-pointer"
+          onClick={() => setIsMenuOpen(false)}
+          alt="close"
+        />
+
+        {navLinks.map((link, i) => (
+          <Link
+            key={i}
+            to={link.path}
+            onClick={() => setIsMenuOpen(false)}
+          >
+            {link.name}
+          </Link>
+        ))}
+
+        {/* ✅ Mobile Login FIX (no duplicate) */}
+        {!user && (
+          <button
+            onClick={openSignIn}
+            className="bg-black text-white px-8 py-2.5 rounded-full"
+          >
+            Login
+          </button>
+        )}
+      </div>
+    </nav>
   );
 };
 
-export default RoomDetails;
+export default Navbar;
