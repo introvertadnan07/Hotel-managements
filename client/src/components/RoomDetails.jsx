@@ -25,6 +25,7 @@ const RoomDetails = () => {
 
   return (
     <div className="py-28 md:py-36 px-4 md:px-16 lg:px-24 xl:px-32">
+
       {/* Header */}
       <div className="flex flex-col md:flex-row items-start md:items-center gap-3">
         <h1 className="text-3xl md:text-4xl font-playfair">
@@ -75,49 +76,41 @@ const RoomDetails = () => {
         </div>
       </div>
 
-      {/* Highlights */}
-      <div className="flex flex-col md:flex-row md:justify-between mt-10 gap-6">
+      {/* Experience + Price (MATCHES TUTORIAL) */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between mt-10 gap-6">
         <h2 className="text-3xl md:text-4xl font-playfair">
           Experience Luxury Like Never Before
         </h2>
 
-        <div className="flex flex-wrap gap-4">
-          {room.amenities.map((item, index) => (
-            <div
-              key={index}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100"
-            >
-              <img src={facilityIcons[item]} alt={item} className="w-5 h-5" />
-              <p className="text-xs">{item}</p>
-            </div>
-          ))}
-        </div>
+        <p className="text-2xl font-medium">
+          ${room.pricePerNight} / night
+        </p>
       </div>
 
-      {/* Price */}
-      <p className="text-2xl font-medium mt-6">
-        ${room.pricePerNight} / Night
-      </p>
+      {/* Amenities */}
+      <div className="flex flex-wrap gap-4 mt-6">
+        {room.amenities.map((item, index) => (
+          <div
+            key={index}
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-gray-100"
+          >
+            <img src={facilityIcons[item]} alt={item} className="w-5 h-5" />
+            <p className="text-xs">{item}</p>
+          </div>
+        ))}
+      </div>
 
       {/* Booking Form */}
       <form className="flex flex-col md:flex-row items-center justify-between bg-white shadow-[0_0_20px_rgba(0,0,0,0.15)] rounded-xl mt-16 max-w-6xl mx-auto px-6 py-6 gap-6">
         <div className="flex flex-col md:flex-row gap-6 text-gray-500 w-full">
           <div className="flex flex-col">
             <label className="font-medium">Check-In</label>
-            <input
-              type="date"
-              className="border rounded px-3 py-2 mt-1.5 outline-none"
-              required
-            />
+            <input type="date" className="border rounded px-3 py-2 mt-1.5" />
           </div>
 
           <div className="flex flex-col">
             <label className="font-medium">Check-Out</label>
-            <input
-              type="date"
-              className="border rounded px-3 py-2 mt-1.5 outline-none"
-              required
-            />
+            <input type="date" className="border rounded px-3 py-2 mt-1.5" />
           </div>
 
           <div className="flex flex-col">
@@ -125,8 +118,7 @@ const RoomDetails = () => {
             <input
               type="number"
               min="1"
-              className="border rounded px-3 py-2 mt-1.5 outline-none max-w-[80px]"
-              required
+              className="border rounded px-3 py-2 mt-1.5 max-w-[80px]"
             />
           </div>
         </div>
@@ -139,48 +131,55 @@ const RoomDetails = () => {
         </button>
       </form>
 
-      {/* ✅ Common Specifications (FIXED & WORKING) */}
-      <div className="mt-25 space-y-4">
+      {/* Common Specifications */}
+      <div className="mt-16 space-y-4">
         {roomCommonData.map((spec, index) => (
-          <div key={index} className="flex items-start gap-2">
+          <div key={index} className="flex items-start gap-3">
             <img src={spec.icon} alt={spec.title} className="w-6 h-6" />
             <div>
-              <p className="text-base">{spec.title}</p>
+              <p className="text-base font-medium">{spec.title}</p>
               <p className="text-gray-500">{spec.description}</p>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="max-wl-3xl border-y border-gray-300 my-15 py-15 text-gray-500">
-        <p>Guests are thoughtfully accommodated on the ground floor, subject to availability, ensuring ease and comfort throughout your stay. This elegant two-bedroom apartment offers a refined blend of space, style, and authentic city charm, creating a sophisticated home away from home.
-
-        Designed for discerning travelers, the apartment provides a serene and comfortable atmosphere ideal for couples, families, or small groups. The displayed rate is for two guests. For additional guests, simply update the guest selection to receive a personalized price that reflects your group size. Every detail is curated to deliver a seamless, luxurious stay with comfort at its core.</p>
-    </div>
-
-  {/* Hosted by */}
-<div className="flex items-center gap-4 mt-12">
-  <img
-    src={room?.hotel?.owner?.image}
-    alt="Host"
-    className="h-14 w-14 md:h-16 md:w-16 rounded-full object-cover"
-  />
-
-  <div>
-    <p className="text-lg md:text-xl font-medium">
-      Hosted by {room.hotel.owner.username}
-    </p>
-
-    <div className="flex items-center mt-1">
-      <StarRating />
-      <p className="ml-2 text-sm text-gray-500">200+ reviews</p>
-    </div>
-  </div>
-</div>
-
-
-    
+      {/* Description */}
+      <div className="max-w-3xl border-y border-gray-300 my-16 py-10 text-gray-500">
+        <p>
+          Guests are thoughtfully accommodated on the ground floor, subject to
+          availability, ensuring ease and comfort throughout your stay. This
+          elegant two-bedroom apartment offers a refined blend of space, style,
+          and authentic city charm.
+        </p>
       </div>
+
+      {/* Hosted by */}
+      <div className="flex items-center gap-4 mt-12">
+        <img
+          src={room?.hotel?.owner?.image}
+          alt="Host"
+          className="h-14 w-14 md:h-16 md:w-16 rounded-full object-cover"
+        />
+
+        <div>
+          <p className="text-lg md:text-xl font-medium">
+            Hosted by {room.hotel.owner.username}
+          </p>
+
+          <div className="flex items-center mt-1">
+            <StarRating />
+            <p className="ml-2 text-sm text-gray-500">200+ reviews</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Contact Button */}
+      <button className="px-6 py-2.5 mt-6 rounded text-white bg-blue-600 hover:bg-blue-700 transition-all cursor-pointer">
+        Contact Now
+      </button>
+
+    </div>
   );
 };
 
