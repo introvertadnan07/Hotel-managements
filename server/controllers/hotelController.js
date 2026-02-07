@@ -3,32 +3,18 @@ import User from "../models/User.js";
 
 export const registerHotel = async (req, res) => {
   try {
-    if (!req.user) {
-      return res.json({ success: false, message: "Unauthorized" });
-    }
-
     const { name, address, contact, city } = req.body;
     const owner = req.user._id;
 
-    // Check if hotel already registered by this owner
-    const hotel = await Hotel.findOne({ owner });
-    if (hotel) {
+    const existing = await Hotel.findOne({ owner });
+    if (existing) {
       return res.json({
         success: false,
         message: "Hotel already registered",
       });
     }
 
-    // Create hotel
-    await Hotel.create({
-      name,
-      address,
-      contact,
-      city,
-      owner,
-    });
-
-    // Update user role
+    await Hotel.create({ name, address, contact, city, owner });
     await User.findByIdAndUpdate(owner, { role: "hotelOwner" });
 
     res.json({
@@ -36,7 +22,7 @@ export const registerHotel = async (req, res) => {
       message: "Hotel registered successfully",
     });
   } catch (error) {
-    res.json({
+    res.status(500).json({
       success: false,
       message: error.message,
     });
