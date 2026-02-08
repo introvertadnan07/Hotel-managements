@@ -1,5 +1,4 @@
 import express from "express";
-import { protect } from "../middleware/authMiddleware.js";
 import {
   getUserData,
   storeRecentSearchCities,
@@ -7,7 +6,7 @@ import {
 
 const userRouter = express.Router();
 
-userRouter.get("/", protect, getUserData);
-userRouter.post("/store-recent-search", protect, storeRecentSearchCities);
+userRouter.get("/", getUserData);
+userRouter.post("/store-recent-search", storeRecentSearchCities);
 
 export default userRouter;
