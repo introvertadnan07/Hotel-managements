@@ -2,22 +2,17 @@ import mongoose from "mongoose";
 
 const hotelSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true },
-    address: { type: String, required: true },
-    contact: { type: String, required: true },
-
-    // ✅ FIX: owner must be ObjectId
+    name: String,
+    address: String,
+    city: String,
+    contact: String,
     owner: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
+      type: String, // clerk userId
       required: true,
     },
-
-    city: { type: String, required: true },
   },
   { timestamps: true }
 );
 
 const Hotel = mongoose.model("Hotel", hotelSchema);
-
 export default Hotel;

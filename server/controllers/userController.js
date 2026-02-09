@@ -1,3 +1,5 @@
+import User from "../models/User.js";
+
 export const getUserData = async (req, res) => {
   try {
     if (!req.auth?.userId) {
@@ -7,14 +9,21 @@ export const getUserData = async (req, res) => {
       });
     }
 
-    // Example role logic (customize as needed)
-    const role = "hotelOwner"; // or fetch from DB
-    const recentSearchedCities = [];
+    let user = await User.findOne({ clerkId: req.auth.userId });
+
+    // If first-time login, create user
+    if (!user) {
+      user = await User.create({
+        clerkId: req.auth.userId,
+        role: "user",
+      });
+    }
 
     res.json({
       success: true,
-      user: { role },
-      recentSearchedCities,
+      user: {
+        role: user.role,
+      },
     });
   } catch (error) {
     res.status(500).json({
@@ -25,31 +34,8 @@ export const getUserData = async (req, res) => {
 };
 
 export const storeRecentSearchCities = async (req, res) => {
-  try {
-    if (!req.auth?.userId) {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized",
-      });
-    }
-
-    const { city } = req.body;
-
-    if (!city) {
-      return res.status(400).json({
-        success: false,
-        message: "City is required",
-      });
-    }
-
-    res.json({
-      success: true,
-      message: "City stored successfully",
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: error.message,
-    });
-  }
+  res.json({
+    success: true,
+    message: "Feature coming soon",
+  });
 };
