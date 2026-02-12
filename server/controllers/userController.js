@@ -2,19 +2,20 @@ import User from "../models/User.js";
 
 export const getUserData = async (req, res) => {
   try {
-    if (!req.auth?.userId) {
+    const auth = req.auth();
+
+    if (!auth || !auth.userId) {
       return res.status(401).json({
         success: false,
         message: "Unauthorized",
       });
     }
 
-    let user = await User.findOne({ clerkId: req.auth.userId });
+    let user = await User.findOne({ clerkId: auth.userId });
 
-    // If first-time login, create user
     if (!user) {
       user = await User.create({
-        clerkId: req.auth.userId,
+        clerkId: auth.userId,
         role: "user",
       });
     }
