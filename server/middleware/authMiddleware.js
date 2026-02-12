@@ -2,16 +2,16 @@ import User from "../models/User.js";
 
 export const protect = async (req, res, next) => {
   try {
-    const userId = req.auth?.userId;
+    const auth = req.auth();
 
-    if (!userId) {
+    if (!auth || !auth.userId) {
       return res.status(401).json({
         success: false,
         message: "Not authenticated",
       });
     }
 
-    const user = await User.findById(userId);
+    const user = await User.findOne({ clerkId: auth.userId });
 
     if (!user) {
       return res.status(404).json({
