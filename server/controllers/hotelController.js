@@ -3,7 +3,9 @@ import User from "../models/User.js";
 
 export const registerHotel = async (req, res) => {
   try {
-    if (!req.auth?.userId) {
+    const auth = req.auth();
+
+    if (!auth || !auth.userId) {
       return res.status(401).json({
         success: false,
         message: "Unauthorized",
@@ -17,14 +19,13 @@ export const registerHotel = async (req, res) => {
       address,
       city,
       contact,
-      owner: req.auth.userId,
+      owner: auth.userId,
     });
 
-    // 🔥 UPDATE ROLE AFTER HOTEL REGISTER
+    // update user role
     await User.findOneAndUpdate(
-      { clerkId: req.auth.userId },
-      { role: "hotelOwner" },
-      { new: true }
+      { clerkId: auth.userId },
+      { role: "hotelOwner" }
     );
 
     res.json({
