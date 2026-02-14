@@ -3,7 +3,7 @@ import mongoose from "mongoose";
 const roomSchema = new mongoose.Schema(
   {
     hotel: {
-      type: mongoose.Schema.Types.ObjectId, // ✅ FIXED
+      type: mongoose.Schema.Types.ObjectId,
       ref: "Hotel",
       required: true,
     },
@@ -14,12 +14,12 @@ const roomSchema = new mongoose.Schema(
     },
 
     pricePerNight: {
-      type: Number, // ✅ FIXED
+      type: Number,
       required: true,
     },
 
     amenities: {
-      type: [String], // ✅ FIXED (THIS SOLVES YOUR ERROR)
+      type: [String],
       default: [],
     },
 
@@ -37,5 +37,4 @@ const roomSchema = new mongoose.Schema(
 );
 
 const Room = mongoose.model("Room", roomSchema);
-
 export default Room;
