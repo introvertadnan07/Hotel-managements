@@ -1,20 +1,18 @@
 import Room from "../models/Room.js";
 import Hotel from "../models/Hotel.js";
 
-
 // ✅ CREATE ROOM
 export const createRoom = async (req, res) => {
   try {
     const auth = req.auth();
 
-    if (!auth || !auth.userId) {
+    if (!auth?.userId) {
       return res.status(401).json({
         success: false,
         message: "Unauthorized",
       });
     }
 
-    // Find hotel owned by logged-in user
     const hotel = await Hotel.findOne({ owner: auth.userId });
 
     if (!hotel) {
@@ -33,12 +31,16 @@ export const createRoom = async (req, res) => {
       });
     }
 
+    const imagePaths = req.files?.map(
+      (file) => `/uploads/${file.filename}`
+    ) || [];
+
     const room = await Room.create({
       hotel: hotel._id,
       roomType,
       pricePerNight: Number(pricePerNight),
       amenities: amenities ? JSON.parse(amenities) : [],
-      images: req.files?.map(file => file.originalname) || [],
+      images: imagePaths,
     });
 
     res.json({
@@ -56,8 +58,7 @@ export const createRoom = async (req, res) => {
   }
 };
 
-
-// ✅ GET ALL ROOMS (PUBLIC)
+// ✅ GET ALL ROOMS
 export const getRooms = async (req, res) => {
   try {
     const rooms = await Room.find().populate("hotel");
@@ -76,13 +77,40 @@ export const getRooms = async (req, res) => {
   }
 };
 
+// ✅ GET SINGLE ROOM (🔥 YOU WERE MISSING THIS)
+export const getRoomById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const room = await Room.findById(id).populate("hotel");
+
+    if (!room) {
+      return res.status(404).json({
+        success: false,
+        message: "Room not found",
+      });
+    }
+
+    res.json({
+      success: true,
+      room,
+    });
+
+  } catch (error) {
+    console.error("Get room by ID error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
 
 // ✅ GET OWNER ROOMS
 export const getOwnerRooms = async (req, res) => {
   try {
     const auth = req.auth();
 
-    if (!auth || !auth.userId) {
+    if (!auth?.userId) {
       return res.status(401).json({
         success: false,
         message: "Unauthorized",
@@ -114,8 +142,7 @@ export const getOwnerRooms = async (req, res) => {
   }
 };
 
-
-// ✅ TOGGLE ROOM AVAILABILITY
+// ✅ TOGGLE AVAILABILITY
 export const toggleRoomAvailability = async (req, res) => {
   try {
     const { roomId } = req.body;

@@ -2,7 +2,7 @@ import Booking from "../models/Booking.js";
 import Hotel from "../models/Hotel.js";
 import Room from "../models/Room.js";
 
-// check availability
+// 🔹 Check availability helper
 const checkAvailability = async ({ checkInDate, checkOutDate, room }) => {
   const bookings = await Booking.find({
     room,
@@ -13,7 +13,7 @@ const checkAvailability = async ({ checkInDate, checkOutDate, room }) => {
   return bookings.length === 0;
 };
 
-// availability API
+// ✅ Availability API
 export const checkAvailabilityAPI = async (req, res) => {
   try {
     const { room, checkInDate, checkOutDate } = req.body;
@@ -30,11 +30,12 @@ export const checkAvailabilityAPI = async (req, res) => {
   }
 };
 
-// create booking
+// ✅ Create booking
 export const createBooking = async (req, res) => {
   try {
     const { room, checkInDate, checkOutDate, guests } = req.body;
-    const user = req.user._id;
+
+    const userId = req.user._id;
 
     const isAvailable = await checkAvailability({
       room,
@@ -43,10 +44,20 @@ export const createBooking = async (req, res) => {
     });
 
     if (!isAvailable) {
-      return res.json({ success: false, message: "Room not available" });
+      return res.json({
+        success: false,
+        message: "Room not available",
+      });
     }
 
     const roomData = await Room.findById(room).populate("hotel");
+
+    if (!roomData) {
+      return res.json({
+        success: false,
+        message: "Room not found",
+      });
+    }
 
     const nights = Math.ceil(
       (new Date(checkOutDate) - new Date(checkInDate)) /
@@ -56,7 +67,7 @@ export const createBooking = async (req, res) => {
     const totalPrice = roomData.pricePerNight * nights;
 
     await Booking.create({
-      user,
+      user: userId,
       room,
       hotel: roomData.hotel._id,
       guests,
@@ -65,13 +76,20 @@ export const createBooking = async (req, res) => {
       totalPrice,
     });
 
-    res.json({ success: true, message: "Booking created" });
+    res.json({
+      success: true,
+      message: "Booking created successfully",
+    });
   } catch (error) {
-    res.json({ success: false, message: "Booking failed" });
+    console.error("Create booking error:", error);
+    res.json({
+      success: false,
+      message: "Booking failed",
+    });
   }
 };
 
-// user bookings
+// ✅ User bookings
 export const getUserBookings = async (req, res) => {
   try {
     const bookings = await Booking.find({ user: req.user._id })
@@ -79,35 +97,54 @@ export const getUserBookings = async (req, res) => {
       .sort({ createdAt: -1 });
 
     res.json({ success: true, bookings });
-  } catch {
-    res.json({ success: false, message: "Failed to fetch bookings" });
+  } catch (error) {
+    res.json({
+      success: false,
+      message: "Failed to fetch bookings",
+    });
   }
 };
 
-// owner bookings
+// ✅ Hotel Owner Dashboard
 export const getHotelBookings = async (req, res) => {
   try {
     const hotel = await Hotel.findOne({ owner: req.user.clerkId });
 
     if (!hotel) {
-      return res.json({ success: false, message: "Hotel not found" });
+      return res.json({
+        success: true,
+        dashboardData: {
+          bookings: [],
+          totalBookings: 0,
+          totalRevenue: 0,
+        },
+      });
     }
 
     const bookings = await Booking.find({ hotel: hotel._id })
-      .populate("room user hotel")
+      .populate("room user")
       .sort({ createdAt: -1 });
 
     const totalBookings = bookings.length;
+
     const totalRevenue = bookings.reduce(
-      (sum, b) => sum + b.totalPrice,
+      (sum, booking) => sum + booking.totalPrice,
       0
     );
 
     res.json({
       success: true,
-      dashboardData: { totalBookings, totalRevenue, bookings },
+      dashboardData: {
+        bookings,
+        totalBookings,
+        totalRevenue,
+      },
     });
-  } catch {
-    res.json({ success: false, message: "Failed to fetch hotel bookings" });
+  } catch (error) {
+    console.error("Hotel bookings error:", error);
+    res.json({
+      success: false,
+      message: "Failed to fetch hotel bookings",
+    });
   }
 };
