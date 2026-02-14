@@ -1,70 +1,160 @@
-import React, { useState } from "react";
-import { roomsDummyData } from '../../assets/assets'
+import React, { useEffect, useState } from "react";
 import Title from "../../components/Title";
+import { useAppContext } from "../../context/AppContext";
+import axios from "axios";
+import toast from "react-hot-toast";
 
 const ListRoom = () => {
+  const [rooms, setRooms] = useState([]);
+  const [updatingId, setUpdatingId] = useState(null);
 
-  const [rooms, setRooms] = useState(roomsDummyData)
+  const { getToken, user, currency } = useAppContext();
+
+  // ✅ Fetch Rooms
+  const fetchRooms = async () => {
+    try {
+      const token = await getToken();
+      if (!token) return;
+
+      const { data } = await axios.get("/api/rooms/owner", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (data.success) {
+        setRooms(data.rooms);
+      } else {
+        toast.error(data.message || "Failed to load rooms");
+      }
+    } catch (error) {
+      toast.error("Failed to load rooms");
+    }
+  };
+
+  // ✅ Toggle Availability
+  const toggleAvailability = async (roomId) => {
+    try {
+      setUpdatingId(roomId);
+
+      const token = await getToken();
+      if (!token) return;
+
+      // ✅ Optimistic UI update
+      setRooms((prev) =>
+        prev.map((room) =>
+          room._id === roomId
+            ? { ...room, isAvailable: !room.isAvailable }
+            : room
+        )
+      );
+
+      const { data } = await axios.post(
+        "/api/rooms/toggle-availability",
+        { roomId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (data.success) {
+        toast.success(data.message);
+      } else {
+        toast.error(data.message);
+        fetchRooms(); // rollback if failed
+      }
+    } catch (error) {
+      toast.error("Failed to update availability");
+      fetchRooms();
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  useEffect(() => {
+    if (user) fetchRooms();
+  }, [user]);
+
   return (
-    <div className="p-6">
-      <Title align='left' font='outfit' title = 'Room Listings' subTitle='View, edit, or manage all listed rooms. Keep the information up-to-date to provide the best experience for users.'/>
-      <p className="text-gray-500 mt-8">All Rooms</p>
+    <div>
+      <Title
+        align="left"
+        font="outfit"
+        title="Room Listings"
+        subTitle="View, edit, or manage all listed rooms."
+      />
 
-      <div className="w-full max-w-3xl text-left border border-gray-300 rounded-lg max-h-80 overflow-y-scroll mt-3">
-        
-      <table className="w-full">
-         <thead className="bg-gray-50">
+      <p className="text-gray-500 mt-6 mb-2">All Rooms</p>
+
+      <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+        <table className="w-full text-sm text-left">
+          <thead className="bg-gray-50">
             <tr>
-              <th className="py-3 px-4 text-gray-800 font-medium">
-                Name
-              </th>
-              <th className="py-3 px-4 text-gray-800 font-medium">
-                 Facility
-              </th>
-              <th className="py-3 px-4 text-gray-800 font-medium">
+              <th className="px-6 py-3 text-gray-700 font-medium">Name</th>
+              <th className="px-6 py-3 text-gray-700 font-medium">Facility</th>
+              <th className="px-6 py-3 text-gray-700 font-medium">
                 Price / night
               </th>
-              <th className="py-3 px-4 text-gray-800 font-medium text-center">
-                Action
+              <th className="px-6 py-3 text-gray-700 font-medium text-center">
+                Actions
               </th>
             </tr>
           </thead>
-          <tbody className="text-sm">
-            {
-              rooms.map((item, index)=>(
-                <tr key={index}>
-                   <td className="py-3 px-4 text-gray-700 border-t border-gray-300">
-                    {item.roomType}
-                   </td>
 
-                     <td className="py-3 px-4 text-gray-700 border-t border-gray-300 max-sm:hidden">
-                    {item.amenities.join(', ')}
-                   </td>
+          <tbody>
+            {rooms.length === 0 ? (
+              <tr>
+                <td
+                  colSpan="4"
+                  className="px-6 py-8 text-center text-gray-500"
+                >
+                  No rooms added yet
+                </td>
+              </tr>
+            ) : (
+              rooms.map((room) => (
+                <tr
+                  key={room._id}
+                  className="border-t border-gray-200 hover:bg-gray-50"
+                >
+                  <td className="px-6 py-4 font-medium text-gray-800">
+                    {room.roomType}
+                  </td>
 
-                   <td className="py-3 px-4 text-gray-700 border-t border-gray-300">
-                    {item.pricePerNight}
-                   </td>  
+                  <td className="px-6 py-4 text-gray-600">
+                    {room.amenities.join(", ")}
+                  </td>
 
-                   <td className="py-3 px-4 border-t border-gray-300 max-sm:hidden text-red-500">
-                    <label htmlFor="" className="relative inline-flex items-center cursor-pointer text-gray-900 gap-3">
-                      <input type="checkbox" className="sr-only peer" checked={item.isAvailable}/>
-                      <div className="w-12 h-7 bg-slate-300 rounded-full peer peer-checked:bg-blue-600 tranition-colors durations-200">
-                      </div>
-                      <span className="dot absolute left-1 top-1 w-5 h-5 bg-white rounded-full transition-transform duration-200 ease-in-out peer-checked: translate-x-5"></span>
-                    </label>
-                   
-                   </td>  
+                  <td className="px-6 py-4 text-gray-700">
+                    {currency}{room.pricePerNight}
+                  </td>
 
+                  {/* ✅ Toggle Switch */}
+                  <td className="px-6 py-4 flex justify-center">
+                    <button
+                      onClick={() => toggleAvailability(room._id)}
+                      disabled={updatingId === room._id}
+                      className={`w-11 h-6 flex items-center rounded-full p-1 transition-all duration-300 ${
+                        room.isAvailable
+                          ? "bg-blue-600"
+                          : "bg-gray-300"
+                      } ${
+                        updatingId === room._id
+                          ? "opacity-50 cursor-not-allowed"
+                          : "cursor-pointer"
+                      }`}
+                    >
+                      <div
+                        className={`w-4 h-4 bg-white rounded-full shadow-md transform transition-all duration-300 ${
+                          room.isAvailable
+                            ? "translate-x-5"
+                            : "translate-x-0"
+                        }`}
+                      />
+                    </button>
+                  </td>
                 </tr>
               ))
-            }
-
+            )}
           </tbody>
-      </table>
-
+        </table>
       </div>
-
-     
     </div>
   );
 };
