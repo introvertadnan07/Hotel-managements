@@ -7,8 +7,8 @@ import Dashboard from "./pages/hotelOwner/Dashboard";
 import AddRoom from "./pages/hotelOwner/AddRoom";
 import ListRoom from "./pages/hotelOwner/ListRoom";
 
-import Rooms from "./pages/Rooms";
-import RoomDetails from "./components/RoomDetails"; // ✅ IMPORTANT
+import AllRooms from "./pages/AllRooms";   // ✅ USE THIS
+import RoomDetails from "./components/RoomDetails";
 
 const App = () => {
   return (
@@ -19,8 +19,8 @@ const App = () => {
         <Route path="/" element={<Home />} />
 
         {/* Rooms */}
-        <Route path="/rooms" element={<Rooms />} />
-        <Route path="/rooms/:id" element={<RoomDetails />} /> {/* ✅ FIX */}
+        <Route path="/rooms" element={<AllRooms />} />  {/* ✅ FIX */}
+        <Route path="/rooms/:id" element={<RoomDetails />} />
 
         {/* Owner */}
         <Route path="/owner" element={<OwnerLayout />}>
