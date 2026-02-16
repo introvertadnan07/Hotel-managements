@@ -10,7 +10,7 @@ const Sidebar = () => {
   ];
 
   return (
-    <div className="md:w-64 w-16 border-r h-full text-base border-gray-300 pt-4 flex flex-col transition-all duration-300">
+    <div className="md:w-64 w-16 border-r min-h-screen text-base border-gray-300 pt-6 flex flex-col transition-all duration-300 bg-white">
       {SidebarLinks.map((item, index) => (
         <NavLink
           key={index}
@@ -24,7 +24,11 @@ const Sidebar = () => {
             }`
           }
         >
-          <img src={item.icon} alt={item.name} className="min-h-6 min-w-6" />
+          <img
+            src={item.icon}
+            alt={item.name}
+            className="min-h-6 min-w-6"
+          />
           <p className="md:block hidden">{item.name}</p>
         </NavLink>
       ))}
