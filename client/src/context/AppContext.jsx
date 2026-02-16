@@ -15,15 +15,15 @@ export const AppProvider = ({ children }) => {
   const [showHotelReg, setShowHotelReg] = useState(false);
   const [rooms, setRooms] = useState([]);
 
-  // ✅ Currency (future scalable)
+  
   const currency = "$";
 
-  // ✅ Axios instance (recommended)
+  
   const api = axios.create({
     baseURL: "/",
   });
 
-  // ✅ Fetch Rooms (Public)
+  
   const fetchRooms = async () => {
     try {
       const { data } = await api.get("/api/rooms");
@@ -38,7 +38,7 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  // ✅ Fetch Logged-in User
+
   const fetchUser = async () => {
     try {
       const token = await getToken();
@@ -58,7 +58,7 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-  // ✅ Effects
+  
   useEffect(() => {
     if (user) fetchUser();
   }, [user]);
@@ -76,12 +76,12 @@ export const AppProvider = ({ children }) => {
         setIsOwner,
         showHotelReg,
         setShowHotelReg,
-        axios: api,   // ✅ expose configured axios
+        axios: api,   
         getToken,
         currency,
         rooms,
         setRooms,
-        fetchRooms,   // ✅ useful for refresh
+        fetchRooms,   
       }}
     >
       {children}
