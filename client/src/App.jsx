@@ -7,22 +7,28 @@ import Dashboard from "./pages/hotelOwner/Dashboard";
 import AddRoom from "./pages/hotelOwner/AddRoom";
 import ListRoom from "./pages/hotelOwner/ListRoom";
 
-import AllRooms from "./pages/AllRooms";   // ✅ USE THIS
+import AllRooms from "./pages/AllRooms";
 import RoomDetails from "./components/RoomDetails";
 
+import HotelReg from "./components/HotelReg";   // ✅ ADD THIS
+import { useAppContext } from "./context/AppContext"; // ✅ ADD
+
 const App = () => {
+  const { showHotelReg } = useAppContext();   // ✅ GET STATE
+
   return (
     <>
       <Navbar />
 
+      {/* ✅ HOTEL REGISTRATION MODAL */}
+      {showHotelReg && <HotelReg />}
+
       <Routes>
         <Route path="/" element={<Home />} />
 
-        {/* Rooms */}
-        <Route path="/rooms" element={<AllRooms />} />  {/* ✅ FIX */}
+        <Route path="/rooms" element={<AllRooms />} />
         <Route path="/rooms/:id" element={<RoomDetails />} />
 
-        {/* Owner */}
         <Route path="/owner" element={<OwnerLayout />}>
           <Route index element={<Dashboard />} />
           <Route path="add-room" element={<AddRoom />} />

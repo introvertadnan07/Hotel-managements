@@ -15,15 +15,12 @@ export const AppProvider = ({ children }) => {
   const [showHotelReg, setShowHotelReg] = useState(false);
   const [rooms, setRooms] = useState([]);
 
-  
   const currency = "$";
 
-  
   const api = axios.create({
     baseURL: "/",
   });
 
-  
   const fetchRooms = async () => {
     try {
       const { data } = await api.get("/api/rooms");
@@ -38,27 +35,23 @@ export const AppProvider = ({ children }) => {
     }
   };
 
-
   const fetchUser = async () => {
     try {
       const token = await getToken();
       if (!token) return;
 
       const { data } = await api.get("/api/user", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (data?.success) {
-        setIsOwner(data.user.role === "hotelOwner");
+        setIsOwner(data.user.role === "hotelOwner");  // ✅ FIX WORKS NOW
       }
     } catch (error) {
       console.error("fetchUser error:", error.message);
     }
   };
 
-  
   useEffect(() => {
     if (user) fetchUser();
   }, [user]);
@@ -76,12 +69,12 @@ export const AppProvider = ({ children }) => {
         setIsOwner,
         showHotelReg,
         setShowHotelReg,
-        axios: api,   
+        axios: api,
         getToken,
         currency,
         rooms,
         setRooms,
-        fetchRooms,   
+        fetchRooms,
       }}
     >
       {children}

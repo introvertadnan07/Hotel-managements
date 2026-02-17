@@ -42,7 +42,7 @@ const HotelCard = ({ room, index }) => {
         <div className="flex justify-between mt-4">
           <p>
             <span className="text-xl">
-              ₹{room.pricePerNight}
+              ${room.pricePerNight}
             </span>
             /night
           </p>

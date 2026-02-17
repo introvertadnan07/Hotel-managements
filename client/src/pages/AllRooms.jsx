@@ -86,7 +86,10 @@ const AllRooms = () => {
     selectedFilters.priceRange.length === 0 ||
     selectedFilters.priceRange.some((range) => {
       const [min, max] = range.split("to").map(Number);
-      return room.pricePerNight >= min && room.pricePerNight <= max;
+      return (
+        room.pricePerNight >= min &&
+        room.pricePerNight <= max
+      );
     });
 
   const sortRooms = (a, b) => {
@@ -104,7 +107,11 @@ const AllRooms = () => {
 
   const filterRooms = useMemo(() => {
     return rooms
-      .filter((room) => matchesRoomType(room) && matchesPriceRange(room))
+      ?.filter(
+        (room) =>
+          matchesRoomType(room) &&
+          matchesPriceRange(room)
+      )
       .sort(sortRooms);
   }, [rooms, selectedFilters, selectedSort]);
 
@@ -119,42 +126,69 @@ const AllRooms = () => {
 
       {/* ROOMS */}
       <div className="flex-1">
-        <h1 className="text-4xl font-playfair mb-2">Hotel Rooms</h1>
+        <h1 className="text-4xl font-playfair mb-2">
+          Hotel Rooms
+        </h1>
+
         <p className="text-gray-500 mb-8">
           Take advantage of our limited-time offers and special packages.
         </p>
 
-        {filterRooms.map((room) => (
+        {filterRooms?.length === 0 && (
+          <p className="text-gray-500">
+            No rooms found.
+          </p>
+        )}
+
+        {filterRooms?.map((room) => (
           <div
             key={room._id}
             className="flex flex-col md:flex-row gap-6 py-8 border-b"
           >
             <img
-              src={`http://localhost:5000${room.images[0]}`}
+              src={`http://localhost:5000${room.images?.[0] || "/placeholder.jpg"}`}
               alt="room"
               className="md:w-1/2 h-64 object-cover rounded-xl shadow cursor-pointer"
               onClick={() => navigate(`/rooms/${room._id}`)}
             />
 
             <div className="md:w-1/2">
-              <p className="text-gray-500">{room.hotel.city}</p>
-              <h2 className="text-3xl font-playfair">{room.hotel.name}</h2>
+              <p className="text-gray-500">
+                {room.hotel?.city || "City not available"}
+              </p>
+
+              <h2 className="text-3xl font-playfair">
+                {room.hotel?.name || "Unknown Hotel"}
+              </h2>
 
               <div className="flex items-center gap-2 mt-2">
                 <StarRating />
-                <span className="text-sm">200+ reviews</span>
+                <span className="text-sm">
+                  200+ reviews
+                </span>
               </div>
 
               <div className="flex items-center gap-2 text-gray-500 text-sm mt-2">
                 <img src={assets.locationIcon} alt="" />
-                <span>{room.hotel.address}</span>
+                <span>
+                  {room.hotel?.address || "Address not available"}
+                </span>
               </div>
 
               <div className="flex flex-wrap gap-3 mt-4">
-                {room.amenities.map((item, i) => (
-                  <div key={i} className="flex items-center gap-2 bg-gray-100 px-3 py-1 rounded">
-                    <img src={facilityIcons[item]} className="w-4 h-4" />
-                    <span className="text-xs">{item}</span>
+                {room.amenities?.map((item, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-2 bg-gray-100 px-3 py-1 rounded"
+                  >
+                    <img
+                      src={facilityIcons[item]}
+                      className="w-4 h-4"
+                      alt=""
+                    />
+                    <span className="text-xs">
+                      {item}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -171,7 +205,10 @@ const AllRooms = () => {
       <div className="w-full lg:w-80 border border-gray-300 p-5 mt-8 lg:mt-0 lg:ml-10">
         <div className="flex justify-between mb-4">
           <p className="font-medium">FILTERS</p>
-          <button onClick={clearFilters} className="text-xs">
+          <button
+            onClick={clearFilters}
+            className="text-xs"
+          >
             CLEAR
           </button>
         </div>
@@ -188,7 +225,10 @@ const AllRooms = () => {
           />
         ))}
 
-        <p className="font-medium mt-4">Price Range</p>
+        <p className="font-medium mt-4">
+          Price Range
+        </p>
+
         {priceRange.map((range) => (
           <CheckBox
             key={range}
@@ -200,7 +240,10 @@ const AllRooms = () => {
           />
         ))}
 
-        <p className="font-medium mt-4">Sort By</p>
+        <p className="font-medium mt-4">
+          Sort By
+        </p>
+
         {sortOptions.map((opt) => (
           <RadioButton
             key={opt}

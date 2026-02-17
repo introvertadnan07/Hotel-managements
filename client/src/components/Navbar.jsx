@@ -6,7 +6,7 @@ import { useAppContext } from "../context/AppContext";
 
 const BookIcon = () => (
   <svg
-    className="w-4 h-4 text-gray-700"
+    className="w-4 h-4"
     xmlns="http://www.w3.org/2000/svg"
     fill="none"
     viewBox="0 0 24 24"
@@ -38,71 +38,67 @@ const Navbar = () => {
   const { openSignIn } = useClerk();
   const { user, navigate, isOwner, setShowHotelReg } = useAppContext();
 
+  // ✅ Scroll effect
   React.useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 10);
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // ✅ Prevent body scroll when mobile menu open
   React.useEffect(() => {
     document.body.style.overflow = isMenuOpen ? "hidden" : "auto";
     return () => (document.body.style.overflow = "auto");
   }, [isMenuOpen]);
 
-  return (
-    <nav
-      className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${
-        isOwnerPage || isScrolled
-          ? "bg-white shadow-sm"
-          : "bg-transparent"
-      }`}
-    >
-      <div className="h-20 px-4 md:px-16 lg:px-24 xl:px-32 flex items-center justify-between">
+  const navStyle =
+    isOwnerPage || isScrolled
+      ? "bg-white shadow-sm text-gray-700"
+      : "bg-transparent text-white";
 
-        {/* Logo */}
+  return (
+    <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${navStyle}`}>
+      
+      <div className="h-20 px-6 md:px-16 lg:px-24 xl:px-32 flex items-center justify-between">
+        
+        {/* ✅ Logo */}
         <Link to="/">
           <img
             src={assets.logo}
             alt="logo"
-            className={`h-9 ${
-              isOwnerPage || isScrolled ? "invert opacity-80" : ""
-            }`}
+            className={`h-9 ${isOwnerPage || isScrolled ? "invert opacity-80" : ""}`}
           />
         </Link>
 
-        {/* Desktop Nav */}
+        {/* ✅ Desktop Navigation */}
         <div className="hidden md:flex items-center gap-8">
-          {navLinks.map((link, i) => (
+          {navLinks.map((link) => (
             <Link
-              key={i}
+              key={link.name}
               to={link.path}
-              className={
-                isOwnerPage || isScrolled
-                  ? "text-gray-700"
-                  : "text-white"
-              }
+              className="hover:text-black transition"
             >
               {link.name}
             </Link>
           ))}
 
+          {/* ✅ Owner Button */}
           {user && (
             <button
               onClick={() =>
                 isOwner ? navigate("/owner") : setShowHotelReg(true)
               }
-              className={`border px-4 py-1 rounded-full ${
-                isOwnerPage || isScrolled
-                  ? "text-black"
-                  : "text-white"
-              }`}
+              className="border px-4 py-1 rounded-full hover:bg-black hover:text-white transition"
             >
               {isOwner ? "Dashboard" : "List Your Hotel"}
             </button>
           )}
         </div>
 
-        {/* Right Side */}
+        {/* ✅ Right Side */}
         <div className="hidden md:flex items-center gap-4">
           {user ? (
             <UserButton>
@@ -117,27 +113,25 @@ const Navbar = () => {
           ) : (
             <button
               onClick={openSignIn}
-              className="bg-black text-white px-8 py-2.5 rounded-full"
+              className="bg-black text-white px-8 py-2.5 rounded-full hover:bg-gray-800 transition"
             >
               Login
             </button>
           )}
         </div>
 
-        {/* Mobile */}
+        {/* ✅ Mobile Menu Icon */}
         <div className="md:hidden">
           <img
             src={assets.menuIcon}
             alt="menu"
             onClick={() => setIsMenuOpen(true)}
-            className={`h-4 cursor-pointer ${
-              isOwnerPage || isScrolled ? "invert" : ""
-            }`}
+            className={`h-4 cursor-pointer ${isOwnerPage || isScrolled ? "invert" : ""}`}
           />
         </div>
       </div>
 
-      {/* Mobile Menu */}
+      {/* ✅ Mobile Menu */}
       <div
         className={`fixed inset-0 bg-white z-[999] md:hidden transform transition-transform duration-300 ${
           isMenuOpen ? "translate-x-0" : "-translate-x-full"
@@ -151,9 +145,9 @@ const Navbar = () => {
         />
 
         <div className="flex flex-col items-center gap-6 mt-24">
-          {navLinks.map((link, i) => (
+          {navLinks.map((link) => (
             <Link
-              key={i}
+              key={link.name}
               to={link.path}
               onClick={() => setIsMenuOpen(false)}
               className="text-lg"
