@@ -37,6 +37,9 @@ const AllRooms = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
+  // ✅ Read destination from URL
+  const destination = searchParams.get("destination");
+
   const [selectedFilters, setSelectedFilters] = useState({
     roomType: [],
     priceRange: [],
@@ -78,6 +81,13 @@ const AllRooms = () => {
     });
   };
 
+  // ✅ Destination filter
+  const matchesDestination = (room) =>
+    !destination ||
+    room.hotel?.city
+      ?.toLowerCase()
+      .includes(destination.toLowerCase());
+
   const matchesRoomType = (room) =>
     selectedFilters.roomType.length === 0 ||
     selectedFilters.roomType.includes(room.roomType);
@@ -109,11 +119,12 @@ const AllRooms = () => {
     return rooms
       ?.filter(
         (room) =>
+          matchesDestination(room) &&
           matchesRoomType(room) &&
           matchesPriceRange(room)
       )
       .sort(sortRooms);
-  }, [rooms, selectedFilters, selectedSort]);
+  }, [rooms, selectedFilters, selectedSort, destination]);
 
   const clearFilters = () => {
     setSelectedFilters({ roomType: [], priceRange: [] });
@@ -130,9 +141,19 @@ const AllRooms = () => {
           Hotel Rooms
         </h1>
 
-        <p className="text-gray-500 mb-8">
+        <p className="text-gray-500 mb-2">
           Take advantage of our limited-time offers and special packages.
         </p>
+
+        {/* ✅ Show active destination */}
+        {destination && (
+          <p className="text-sm text-gray-500 mb-6">
+            Showing results for{" "}
+            <span className="font-medium">
+              {destination}
+            </span>
+          </p>
+        )}
 
         {filterRooms?.length === 0 && (
           <p className="text-gray-500">
