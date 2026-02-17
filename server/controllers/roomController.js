@@ -1,19 +1,11 @@
 import Room from "../models/Room.js";
 import Hotel from "../models/Hotel.js";
 
+
 // ✅ CREATE ROOM
 export const createRoom = async (req, res) => {
   try {
-    const auth = req.auth();
-
-    if (!auth?.userId) {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized",
-      });
-    }
-
-    const hotel = await Hotel.findOne({ owner: auth.userId });
+    const hotel = await Hotel.findOne({ owner: req.user.clerkId });
 
     if (!hotel) {
       return res.status(400).json({
@@ -31,9 +23,8 @@ export const createRoom = async (req, res) => {
       });
     }
 
-    const imagePaths = req.files?.map(
-      (file) => `/uploads/${file.filename}`
-    ) || [];
+    const imagePaths =
+      req.files?.map((file) => `/uploads/${file.filename}`) || [];
 
     const room = await Room.create({
       hotel: hotel._id,
@@ -58,6 +49,7 @@ export const createRoom = async (req, res) => {
   }
 };
 
+
 // ✅ GET ALL ROOMS
 export const getRooms = async (req, res) => {
   try {
@@ -77,7 +69,8 @@ export const getRooms = async (req, res) => {
   }
 };
 
-// ✅ GET SINGLE ROOM (🔥 YOU WERE MISSING THIS)
+
+// ✅ GET SINGLE ROOM
 export const getRoomById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -105,19 +98,11 @@ export const getRoomById = async (req, res) => {
   }
 };
 
+
 // ✅ GET OWNER ROOMS
 export const getOwnerRooms = async (req, res) => {
   try {
-    const auth = req.auth();
-
-    if (!auth?.userId) {
-      return res.status(401).json({
-        success: false,
-        message: "Unauthorized",
-      });
-    }
-
-    const hotel = await Hotel.findOne({ owner: auth.userId });
+    const hotel = await Hotel.findOne({ owner: req.user.clerkId });
 
     if (!hotel) {
       return res.json({
@@ -141,6 +126,7 @@ export const getOwnerRooms = async (req, res) => {
     });
   }
 };
+
 
 // ✅ TOGGLE AVAILABILITY
 export const toggleRoomAvailability = async (req, res) => {

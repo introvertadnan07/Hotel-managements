@@ -1,30 +1,41 @@
 import Hotel from "../models/Hotel.js";
-import User from "../models/User.js";
+import User from "../models/User.js";   // ✅ IMPORTANT
 
 export const registerHotel = async (req, res) => {
   try {
-    const auth = req.auth();
+    const { name, address, city, contact } = req.body;
 
-    if (!auth || !auth.userId) {
-      return res.status(401).json({
+    if (!name || !address || !city || !contact) {
+      return res.status(400).json({
         success: false,
-        message: "Unauthorized",
+        message: "All fields are required",
       });
     }
 
-    const { name, address, city, contact } = req.body;
+    // ✅ Prevent duplicate hotel per owner
+    const existingHotel = await Hotel.findOne({
+      owner: req.user.clerkId,
+    });
 
+    if (existingHotel) {
+      return res.status(400).json({
+        success: false,
+        message: "You already registered a hotel",
+      });
+    }
+
+    // ✅ Create hotel
     const hotel = await Hotel.create({
       name,
       address,
       city,
       contact,
-      owner: auth.userId,
+      owner: req.user.clerkId,
     });
 
-    // update user role
+    // ✅ UPDATE USER ROLE
     await User.findOneAndUpdate(
-      { clerkId: auth.userId },
+      { clerkId: req.user.clerkId },
       { role: "hotelOwner" }
     );
 
@@ -33,10 +44,12 @@ export const registerHotel = async (req, res) => {
       message: "Hotel registered successfully",
       hotel,
     });
+
   } catch (error) {
+    console.error("Register hotel error:", error);
     res.status(500).json({
       success: false,
-      message: error.message,
+      message: "Server error",
     });
   }
 };

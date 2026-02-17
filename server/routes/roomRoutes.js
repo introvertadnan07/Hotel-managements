@@ -4,13 +4,14 @@ import {
   createRoom,
   getRooms,
   getOwnerRooms,
-  toggleRoomAvailability,   // 👈 ADD THIS
+  getRoomById,
+  toggleRoomAvailability,
 } from "../controllers/roomController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
 const roomRouter = express.Router();
 
-// create room (owner)
+// ✅ CREATE ROOM
 roomRouter.post(
   "/",
   protect,
@@ -18,11 +19,14 @@ roomRouter.post(
   createRoom
 );
 
-// get all rooms (public)
+// ✅ GET ALL ROOMS
 roomRouter.get("/", getRooms);
 
-// get rooms of logged-in hotel owner
+// ✅ GET OWNER ROOMS (MUST be before :id)
 roomRouter.get("/owner", protect, getOwnerRooms);
+
+// ✅ GET SINGLE ROOM
+roomRouter.get("/:id", getRoomById);
 
 // ✅ TOGGLE AVAILABILITY
 roomRouter.post(
