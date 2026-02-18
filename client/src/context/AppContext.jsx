@@ -11,9 +11,13 @@ export const AppProvider = ({ children }) => {
   const { user } = useUser();
   const { getToken } = useAuth();
 
-  const [isOwner, setIsOwner] = useState(false);
+  // ✅ null = unknown (prevents flicker)
+  const [isOwner, setIsOwner] = useState(null);
+  const [isCheckingOwner, setIsCheckingOwner] = useState(true);
+
   const [showHotelReg, setShowHotelReg] = useState(false);
   const [rooms, setRooms] = useState([]);
+  const [searchedCities, setSearchedCities] = useState([]);
 
   const currency = "$";
 
@@ -21,6 +25,7 @@ export const AppProvider = ({ children }) => {
     baseURL: "/",
   });
 
+  // ✅ Fetch rooms
   const fetchRooms = async () => {
     try {
       const { data } = await api.get("/api/rooms");
@@ -35,27 +40,47 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  // ✅ Fetch user / role
   const fetchUser = async () => {
     try {
+      setIsCheckingOwner(true);
+
       const token = await getToken();
-      if (!token) return;
+
+      if (!token) {
+        setIsOwner(false);
+        return;
+      }
 
       const { data } = await api.get("/api/user", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
       if (data?.success) {
-        setIsOwner(data.user.role === "hotelOwner");  // ✅ FIX WORKS NOW
+        setIsOwner(data.user.role === "hotelOwner");
+      } else {
+        setIsOwner(false);
       }
+
     } catch (error) {
       console.error("fetchUser error:", error.message);
+      setIsOwner(false);
+    } finally {
+      setIsCheckingOwner(false);
     }
   };
 
+  // ✅ Run when Clerk user ready
   useEffect(() => {
-    if (user) fetchUser();
+    if (user) {
+      fetchUser();
+    } else {
+      setIsOwner(false);
+      setIsCheckingOwner(false);
+    }
   }, [user]);
 
+  // ✅ Initial rooms load
   useEffect(() => {
     fetchRooms();
   }, []);
@@ -66,12 +91,19 @@ export const AppProvider = ({ children }) => {
         navigate,
         user,
         isOwner,
+        isCheckingOwner,
+
         setIsOwner,
         showHotelReg,
         setShowHotelReg,
+
+        searchedCities,
+        setSearchedCities,
+
         axios: api,
         getToken,
         currency,
+
         rooms,
         setRooms,
         fetchRooms,

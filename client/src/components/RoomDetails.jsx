@@ -1,26 +1,31 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
-import { assets, facilityIcons } from "../assets/assets";
+import { facilityIcons, roomCommonData } from "../assets/assets";
 import StarRating from "./StarRating";
+import toast from "react-hot-toast";
 
 const RoomDetails = () => {
   const { id } = useParams();
-  const { axios, currency } = useAppContext();
+  const { axios, currency, navigate, getToken } = useAppContext();
 
   const [room, setRoom] = useState(null);
-  const [mainImage, setMainImage] = useState(null);
 
+  const [checkInDate, setCheckInDate] = useState("");
+  const [checkOutDate, setCheckOutDate] = useState("");
+  const [guests, setGuests] = useState(1);
+  const [isAvailable, setIsAvailable] = useState(false);
+
+  // ✅ Fetch Room
   const fetchRoom = async () => {
     try {
       const { data } = await axios.get(`/api/rooms/${id}`);
 
       if (data.success) {
         setRoom(data.room);
-        setMainImage(data.room.images?.[0]);
       }
     } catch (error) {
-      console.error("Room fetch error:", error.message);
+      console.error(error.message);
     }
   };
 
@@ -28,80 +33,204 @@ const RoomDetails = () => {
     fetchRoom();
   }, [id]);
 
-  if (!room) {
-    return <p className="pt-32 text-center">Loading...</p>;
-  }
+  // ✅ Check Availability
+  const checkAvailability = async () => {
+    try {
+      if (!checkInDate || !checkOutDate) {
+        toast.error("Please select dates");
+        return;
+      }
+
+      if (checkInDate >= checkOutDate) {
+        toast.error("Check-In must be before Check-Out");
+        return;
+      }
+
+      const { data } = await axios.post(
+        "/api/bookings/check-availability",
+        {
+          room: id,
+          checkInDate,
+          checkOutDate,
+        }
+      );
+
+      if (data.success) {
+        if (data.isAvailable) {
+          setIsAvailable(true);
+          toast.success("Room is available");
+        } else {
+          setIsAvailable(false);
+          toast.error("Room not available");
+        }
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
+  // ✅ Book Room
+  const onSubmithandler = async (e) => {
+    e.preventDefault();
+
+    if (!isAvailable) {
+      return checkAvailability();
+    }
+
+    try {
+      const token = await getToken();
+
+      const { data } = await axios.post(
+        "/api/bookings/book",
+        {
+          room: id,
+          checkInDate,
+          checkOutDate,
+          guests,
+          paymentMethod: "Pay At Hotel",
+        },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (data.success) {
+        toast.success(data.message);
+        navigate("/my-bookings");
+        window.scrollTo(0, 0);
+      } else {
+        toast.error(data.message);
+      }
+    } catch (error) {
+      toast.error(error.message);
+    }
+  };
+
+  if (!room) return <p className="pt-32 text-center">Loading...</p>;
 
   return (
-    <div className="py-28 md:py-36 px-4 md:px-16 lg:px-24 xl:px-32">
+    <div className="pt-28 px-6 md:px-16 lg:px-24 xl:px-32">
 
-      {/* Header */}
+      {/* ✅ Title Section */}
       <h1 className="text-3xl font-playfair">
         {room.hotel?.name} ({room.roomType})
       </h1>
 
-      {/* Rating */}
       <div className="flex items-center gap-2 mt-2">
         <StarRating />
-        <span>200+ reviews</span>
+        <span className="text-sm text-gray-500">200+ reviews</span>
       </div>
 
-      {/* Address */}
-      <div className="flex items-center gap-2 text-gray-500 mt-2">
-        <img src={assets.locationIcon} alt="location" />
-        <span>{room.hotel?.address}</span>
+      <p className="text-gray-500 mt-1">{room.hotel?.address}</p>
+
+      {/* ✅ PRICE */}
+      <p className="text-2xl font-semibold mt-4">
+        {currency} {room.pricePerNight}
+        <span className="text-base text-gray-500"> /night</span>
+      </p>
+
+      {/* ✅ AMENITIES (SAFE ICON FIX) */}
+      <div className="flex flex-wrap gap-3 mt-4">
+        {room.amenities?.map((item, index) => {
+          const icon = facilityIcons[item];
+
+          return (
+            <div
+              key={index}
+              className="flex items-center gap-2 border px-3 py-1 rounded-full text-sm"
+            >
+              {icon && (
+                <img
+                  src={icon}
+                  alt={item}
+                  className="w-4 h-4"
+                />
+              )}
+              <span>{item}</span>
+            </div>
+          );
+        })}
       </div>
 
-      {/* Images Section */}
-      <div className="flex flex-col lg:flex-row gap-6 mt-8">
-
-        {/* Main Image */}
-        <div className="lg:w-1/2">
-          <img
-            src={`http://localhost:5000${mainImage}`}
-            alt="Main Room"
-            className="w-full rounded-xl shadow-lg object-cover"
+      {/* ✅ BOOKING BAR */}
+      <form
+        onSubmit={onSubmithandler}
+        className="flex flex-col md:flex-row items-center gap-4 mt-8 bg-white shadow-sm border rounded-xl p-4"
+      >
+        <div>
+          <label className="text-sm text-gray-500">Check-In</label>
+          <input
+            type="date"
+            value={checkInDate}
+            min={new Date().toISOString().split("T")[0]}
+            onChange={(e) => {
+              setCheckInDate(e.target.value);
+              setIsAvailable(false);
+            }}
+            className="border rounded-lg px-3 py-2 text-sm"
           />
         </div>
 
-        {/* Thumbnail Images */}
-        <div className="grid grid-cols-2 gap-4 lg:w-1/2">
-          {room.images?.map((img, index) => (
-            <img
-              key={index}
-              src={`http://localhost:5000${img}`}
-              alt="Room"
-              onClick={() => setMainImage(img)}
-              className={`cursor-pointer rounded-xl shadow-md object-cover ${
-                mainImage === img ? "outline outline-2 outline-blue-500" : ""
-              }`}
-            />
-          ))}
+        <div>
+          <label className="text-sm text-gray-500">Check-Out</label>
+          <input
+            type="date"
+            value={checkOutDate}
+            min={checkInDate}
+            disabled={!checkInDate}
+            onChange={(e) => {
+              setCheckOutDate(e.target.value);
+              setIsAvailable(false);
+            }}
+            className="border rounded-lg px-3 py-2 text-sm"
+          />
         </div>
-      </div>
 
-      {/* Price */}
-      <p className="text-2xl mt-8 font-medium">
-        {currency} {room.pricePerNight} / night
-      </p>
+        <div>
+          <label className="text-sm text-gray-500">Guests</label>
+          <input
+            type="number"
+            value={guests}
+            min="1"
+            onChange={(e) => setGuests(e.target.value)}
+            className="border rounded-lg px-3 py-2 text-sm w-20"
+          />
+        </div>
 
-      {/* Amenities */}
-      <div className="flex flex-wrap gap-3 mt-5">
-        {room.amenities?.map((item, index) => (
-          <div
-            key={index}
-            className="flex items-center gap-2 bg-gray-100 px-3 py-2 rounded-lg"
-          >
-            <img
-              src={facilityIcons[item]}
-              alt={item}
-              className="w-5 h-5"
-            />
-            <span className="text-xs">{item}</span>
+        <button
+          type="submit"
+          className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition"
+        >
+          {isAvailable ? "Book Now" : "Check Availability"}
+        </button>
+      </form>
+
+      {/* ✅ FEATURES */}
+      <div className="mt-10 space-y-4">
+        {roomCommonData.map((item, index) => (
+          <div key={index} className="flex items-start gap-3">
+            <img src={item.icon} alt="" className="w-5 mt-1" />
+            <div>
+              <p className="font-medium">{item.title}</p>
+              <p className="text-sm text-gray-500">
+                {item.description}
+              </p>
+            </div>
           </div>
         ))}
       </div>
 
+      {/* ✅ DESCRIPTION */}
+      <div className="mt-10 border-t pt-6">
+        <p className="text-gray-600 leading-relaxed">
+          Enjoy a comfortable stay designed around your convenience and availability.
+          Room placement is thoughtfully managed to deliver the best possible experience.
+          Rates are dynamically adjusted based on your selected guest count.
+          We recommend verifying your dates and preferences before booking.
+        </p>
+      </div>
     </div>
   );
 };

@@ -1,10 +1,21 @@
 import React, { useState } from "react";
 import Title from "../components/Title";
-import { assets, userBookingsDummyData } from "../assets/assets";
+import { assets } from "../assets/assets";
+import { useAppContext } from "../context/AppContext";
 
 const MyBookings = () => {
-  const [bookings] = useState(userBookingsDummyData);
 
+  const { axios, getToken, user } = useAppContext()
+  const [bookings, setBooking] = useState([])
+
+  const fetchUserBookings = async () => {
+    try {
+      const { data } = await axios.get('/api/bookings/user')
+    } catch(error){
+     
+    }
+  }
+}
   return (
     <div className="py-28 px-4 md:px-16 lg:px-24 xl:px-32">
       <Title
@@ -29,22 +40,22 @@ const MyBookings = () => {
             {/* Hotel Info */}
             <div className="flex gap-4">
               <img
-                src={booking.room.images[0]}
+                src={booking.room?.images?.[0]}
                 alt="hotel"
                 className="w-28 h-24 rounded-lg object-cover"
               />
 
               <div className="space-y-1">
                 <p className="font-playfair text-xl">
-                  {booking.hotel.name}{" "}
+                  {booking.hotel?.name}{" "}
                   <span className="text-sm text-gray-500">
-                    ({booking.room.roomType})
+                    ({booking.room?.roomType})
                   </span>
                 </p>
 
                 <div className="flex items-center gap-1 text-sm text-gray-500">
                   <img src={assets.locationIcon} className="h-4" />
-                  <span>{booking.hotel.address}</span>
+                  <span>{booking.hotel?.address}</span>
                 </div>
 
                 <div className="flex items-center gap-1 text-sm text-gray-500">
@@ -52,7 +63,9 @@ const MyBookings = () => {
                   <span>Guests: {booking.guests}</span>
                 </div>
 
-                <p className="font-medium">Total: ${booking.totalPrice}</p>
+                <p className="font-medium">
+                  Total: ${booking.totalPrice}
+                </p>
               </div>
             </div>
 

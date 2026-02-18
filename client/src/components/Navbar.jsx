@@ -5,12 +5,7 @@ import { useClerk, UserButton } from "@clerk/clerk-react";
 import { useAppContext } from "../context/AppContext";
 
 const BookIcon = () => (
-  <svg
-    className="w-4 h-4"
-    xmlns="http://www.w3.org/2000/svg"
-    fill="none"
-    viewBox="0 0 24 24"
-  >
+  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
     <path
       stroke="currentColor"
       strokeWidth="2"
@@ -36,19 +31,22 @@ const Navbar = () => {
   const isOwnerPage = location.pathname.startsWith("/owner");
 
   const { openSignIn } = useClerk();
-  const { user, navigate, isOwner, setShowHotelReg } = useAppContext();
+  const {
+    user,
+    navigate,
+    isOwner,
+    isCheckingOwner,
+    setShowHotelReg,
+  } = useAppContext();
 
-  // ✅ Scroll effect
+  // ✅ Scroll detection
   React.useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
-
+    const handleScroll = () => setIsScrolled(window.scrollY > 10);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // ✅ Prevent body scroll when mobile menu open
+  // ✅ Lock body scroll when mobile menu open
   React.useEffect(() => {
     document.body.style.overflow = isMenuOpen ? "hidden" : "auto";
     return () => (document.body.style.overflow = "auto");
@@ -63,24 +61,22 @@ const Navbar = () => {
     <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${navStyle}`}>
       
       <div className="h-20 px-6 md:px-16 lg:px-24 xl:px-32 flex items-center justify-between">
-        
+
         {/* ✅ Logo */}
         <Link to="/">
           <img
             src={assets.logo}
             alt="logo"
-            className={`h-9 ${isOwnerPage || isScrolled ? "invert opacity-80" : ""}`}
+            className={`h-9 ${
+              isOwnerPage || isScrolled ? "invert opacity-80" : ""
+            }`}
           />
         </Link>
 
-        {/* ✅ Desktop Navigation */}
+        {/* ✅ Desktop Nav */}
         <div className="hidden md:flex items-center gap-8">
           {navLinks.map((link) => (
-            <Link
-              key={link.name}
-              to={link.path}
-              className="hover:text-black transition"
-            >
+            <Link key={link.name} to={link.path}>
               {link.name}
             </Link>
           ))}
@@ -88,12 +84,25 @@ const Navbar = () => {
           {/* ✅ Owner Button */}
           {user && (
             <button
-              onClick={() =>
-                isOwner ? navigate("/owner") : setShowHotelReg(true)
-              }
-              className="border px-4 py-1 rounded-full hover:bg-black hover:text-white transition"
+              disabled={isCheckingOwner}
+              onClick={() => {
+                if (isOwner) {
+                  navigate("/owner");
+                } else {
+                  setShowHotelReg(true);
+                }
+              }}
+              className={`border px-4 py-1 rounded-full transition ${
+                isCheckingOwner
+                  ? "opacity-50 cursor-not-allowed"
+                  : "hover:bg-black hover:text-white"
+              }`}
             >
-              {isOwner ? "Dashboard" : "List Your Hotel"}
+              {isCheckingOwner
+                ? "Loading..."
+                : isOwner
+                ? "Dashboard"
+                : "List Your Hotel"}
             </button>
           )}
         </div>
@@ -126,7 +135,9 @@ const Navbar = () => {
             src={assets.menuIcon}
             alt="menu"
             onClick={() => setIsMenuOpen(true)}
-            className={`h-4 cursor-pointer ${isOwnerPage || isScrolled ? "invert" : ""}`}
+            className={`h-4 cursor-pointer ${
+              isOwnerPage || isScrolled ? "invert" : ""
+            }`}
           />
         </div>
       </div>
@@ -158,13 +169,27 @@ const Navbar = () => {
 
           {user && (
             <button
+              disabled={isCheckingOwner}
               onClick={() => {
                 setIsMenuOpen(false);
-                isOwner ? navigate("/owner") : setShowHotelReg(true);
+
+                if (isOwner) {
+                  navigate("/owner");
+                } else {
+                  setShowHotelReg(true);
+                }
               }}
-              className="border px-6 py-2 rounded-full"
+              className={`border px-6 py-2 rounded-full transition ${
+                isCheckingOwner
+                  ? "opacity-50 cursor-not-allowed"
+                  : "hover:bg-black hover:text-white"
+              }`}
             >
-              {isOwner ? "Dashboard" : "List Your Hotel"}
+              {isCheckingOwner
+                ? "Loading..."
+                : isOwner
+                ? "Dashboard"
+                : "List Your Hotel"}
             </button>
           )}
 

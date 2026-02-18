@@ -10,17 +10,18 @@ import ListRoom from "./pages/hotelOwner/ListRoom";
 import AllRooms from "./pages/AllRooms";
 import RoomDetails from "./components/RoomDetails";
 
-import HotelReg from "./components/HotelReg";   // ✅ ADD THIS
-import { useAppContext } from "./context/AppContext"; // ✅ ADD
+import MyBookings from "./pages/MyBookings";   // ✅ ADD THIS
+
+import HotelReg from "./components/HotelReg";
+import { useAppContext } from "./context/AppContext";
 
 const App = () => {
-  const { showHotelReg } = useAppContext();   // ✅ GET STATE
+  const { showHotelReg } = useAppContext();
 
   return (
     <>
       <Navbar />
 
-      {/* ✅ HOTEL REGISTRATION MODAL */}
       {showHotelReg && <HotelReg />}
 
       <Routes>
@@ -28,6 +29,9 @@ const App = () => {
 
         <Route path="/rooms" element={<AllRooms />} />
         <Route path="/rooms/:id" element={<RoomDetails />} />
+
+        {/* ✅ FIXED ROUTE */}
+        <Route path="/my-bookings" element={<MyBookings />} />
 
         <Route path="/owner" element={<OwnerLayout />}>
           <Route index element={<Dashboard />} />
