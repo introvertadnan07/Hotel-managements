@@ -12,27 +12,18 @@ import { protect } from "../middleware/authMiddleware.js";
 const roomRouter = express.Router();
 
 // ✅ CREATE ROOM
-roomRouter.post(
-  "/",
-  protect,
-  upload.array("images", 4),
-  createRoom
-);
+roomRouter.post("/", protect, upload.array("images", 4), createRoom);
 
 // ✅ GET ALL ROOMS
 roomRouter.get("/", getRooms);
 
-// ✅ GET OWNER ROOMS (MUST be before :id)
+// ✅ GET OWNER ROOMS
 roomRouter.get("/owner", protect, getOwnerRooms);
 
 // ✅ GET SINGLE ROOM
 roomRouter.get("/:id", getRoomById);
 
 // ✅ TOGGLE AVAILABILITY
-roomRouter.post(
-  "/toggle-availability",
-  protect,
-  toggleRoomAvailability
-);
+roomRouter.post("/toggle-availability", protect, toggleRoomAvailability);
 
 export default roomRouter;

@@ -1,5 +1,5 @@
 import Hotel from "../models/Hotel.js";
-import User from "../models/User.js";   // ✅ IMPORTANT
+import User from "../models/User.js";
 
 export const registerHotel = async (req, res) => {
   try {
@@ -33,7 +33,7 @@ export const registerHotel = async (req, res) => {
       owner: req.user.clerkId,
     });
 
-    // ✅ UPDATE USER ROLE
+    // ✅ Update user role → hotelOwner
     await User.findOneAndUpdate(
       { clerkId: req.user.clerkId },
       { role: "hotelOwner" }
@@ -47,6 +47,7 @@ export const registerHotel = async (req, res) => {
 
   } catch (error) {
     console.error("Register hotel error:", error);
+
     res.status(500).json({
       success: false,
       message: "Server error",

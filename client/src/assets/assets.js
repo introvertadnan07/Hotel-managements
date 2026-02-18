@@ -47,6 +47,9 @@ import AnumImage from "./Anum.jpg";
 import MadeehaImage from "./Madeeha.jpg";
 import shaiobImage from "./Shaoib.jpg";
 
+// ✅ Hosted Image
+import hostedDefaultImage from "./Anum.jpg";
+
 export const assets = {
   logo,
   searchIcon,
@@ -81,10 +84,12 @@ export const assets = {
   totalBookingIcon,
   totalRevenueIcon,
 
-  // ✅ FIXED: Exclusive Offer Images
   exclusiveOffer1: exclusiveOfferCardImg1,
   exclusiveOffer2: exclusiveOfferCardImg2,
   exclusiveOffer3: exclusiveOfferCardImg3,
+
+  // ✅ NEW
+  hostedDefaultImage,
 };
 
 export const cities = [
@@ -96,7 +101,6 @@ export const cities = [
   "Kochi",
 ];
 
-// ✅ Exclusive Offers Dummy Data
 export const exclusiveOffers = [
   {
     _id: 1,
@@ -125,7 +129,6 @@ export const exclusiveOffers = [
   },
 ];
 
-// ✅ Testimonials Dummy Data
 export const testimonials = [
   {
     id: 1,
@@ -153,7 +156,7 @@ export const testimonials = [
     image: AnumImage,
     rating: 5,
     review:
-      "Amazing service! I always find the best luxury accommodations through QuickStay. Their recommendations never disappoint!",
+      "Amazing service! I always find the best luxury accommodations through QuickStay.",
   },
   {
     id: 4,
@@ -162,53 +165,41 @@ export const testimonials = [
     image: adnanImage,
     rating: 5,
     review:
-      "A seamless booking experience with top-tier accommodations. QuickStay delivers comfort, quality, and reliability without compromise.",
-  },
-  {
-    id: 5,
-    name: "Md Shoaib Akhtar",
-    address: "Chennai, India",
-    image: shaiobImage,
-    rating: 3.5,
-    review:
-      "Booking through QuickStay was simple and reliable. The hotel matched exactly what was shown, and the overall experience exceeded my expectations.",
+      "A seamless booking experience with top-tier accommodations.",
   },
 ];
 
-// ✅ Facility Icons
 export const facilityIcons = {
-  "Free WiFi": assets.freeWifiIcon,
-  "Free Breakfast": assets.freeBreakfastIcon,
-  "Room Service": assets.roomServiceIcon,
-  "Mountain View": assets.mountainIcon,
-  "Pool Access": assets.poolIcon,
+  "Free WiFi": freeWifiIcon,
+  "Free Breakfast": freeBreakfastIcon,
+  "Free Service": roomServiceIcon,
+  "Mountain View": mountainIcon,
+  "Pool Access": poolIcon,
 };
 
-// ✅ Room Details Common Data
 export const roomCommonData = [
   {
-    icon: assets.homeIcon,
+    icon: homeIcon,
     title: "Clean & Safe Stay",
     description: "A well-maintained and hygienic space just for you.",
   },
   {
-    icon: assets.badgeIcon,
+    icon: badgeIcon,
     title: "Enhanced Cleaning",
     description: "This host follows strict cleaning standards.",
   },
   {
-    icon: assets.locationFilledIcon,
+    icon: locationFilledIcon,
     title: "Excellent Location",
     description: "90% of guests rated the location 5 stars.",
   },
   {
-    icon: assets.heartIcon,
+    icon: heartIcon,
     title: "Smooth Check-In",
     description: "100% of guests gave check-in a 5-star rating.",
   },
 ];
 
-// ✅ Rooms Dummy Data
 export const roomsDummyData = [
   {
     _id: "1",
@@ -217,5 +208,26 @@ export const roomsDummyData = [
     amenities: ["Room Service", "Mountain View", "Pool Access"],
     images: [roomImg1, roomImg2, roomImg3, roomImg4],
     isAvailable: true,
+  },
+];
+
+
+// ✅ ✅ ✅ FIXED: Missing Export
+export const userBookingsDummyData = [
+  {
+    _id: "b1",
+    hotel: {
+      name: "Urbanza Suites",
+      address: "Main Road 123 Street, 23 Colony",
+    },
+    room: {
+      roomType: "Double Bed",
+      images: [roomImg1],
+    },
+    checkInDate: "2026-02-20",
+    checkOutDate: "2026-02-25",
+    guests: 2,
+    totalPrice: 998,
+    isPaid: false,
   },
 ];

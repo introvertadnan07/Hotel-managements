@@ -2,20 +2,21 @@ import User from "../models/User.js";
 
 export const getUserData = async (req, res) => {
   try {
-    const auth = req.auth();
+    const { userId } = req.auth(); // ✅ Clerk auth
 
-    if (!auth || !auth.userId) {
+    if (!userId) {
       return res.status(401).json({
         success: false,
         message: "Unauthorized",
       });
     }
 
-    let user = await User.findOne({ clerkId: auth.userId });
+    let user = await User.findOne({ clerkId: userId });
 
+    // ✅ Create user if not exists
     if (!user) {
       user = await User.create({
-        clerkId: auth.userId,
+        clerkId: userId,
         role: "user",
       });
     }
@@ -26,7 +27,10 @@ export const getUserData = async (req, res) => {
         role: user.role,
       },
     });
+
   } catch (error) {
+    console.error("getUserData error:", error);
+
     res.status(500).json({
       success: false,
       message: error.message,
@@ -35,8 +39,15 @@ export const getUserData = async (req, res) => {
 };
 
 export const storeRecentSearchCities = async (req, res) => {
-  res.json({
-    success: true,
-    message: "Feature coming soon",
-  });
+  try {
+    res.json({
+      success: true,
+      message: "Feature coming soon",
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
 };

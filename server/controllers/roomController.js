@@ -1,7 +1,6 @@
 import Room from "../models/Room.js";
 import Hotel from "../models/Hotel.js";
 
-
 // ✅ CREATE ROOM
 export const createRoom = async (req, res) => {
   try {
@@ -23,15 +22,15 @@ export const createRoom = async (req, res) => {
       });
     }
 
-    const imagePaths =
-      req.files?.map((file) => `/uploads/${file.filename}`) || [];
+    // ✅ FIX: store ONLY filenames
+    const imageNames = req.files?.map((file) => file.filename) || [];
 
     const room = await Room.create({
       hotel: hotel._id,
       roomType,
       pricePerNight: Number(pricePerNight),
       amenities: amenities ? JSON.parse(amenities) : [],
-      images: imagePaths,
+      images: imageNames,
     });
 
     res.json({
@@ -48,7 +47,6 @@ export const createRoom = async (req, res) => {
     });
   }
 };
-
 
 // ✅ GET ALL ROOMS
 export const getRooms = async (req, res) => {
@@ -68,7 +66,6 @@ export const getRooms = async (req, res) => {
     });
   }
 };
-
 
 // ✅ GET SINGLE ROOM
 export const getRoomById = async (req, res) => {
@@ -98,7 +95,6 @@ export const getRoomById = async (req, res) => {
   }
 };
 
-
 // ✅ GET OWNER ROOMS
 export const getOwnerRooms = async (req, res) => {
   try {
@@ -126,7 +122,6 @@ export const getOwnerRooms = async (req, res) => {
     });
   }
 };
-
 
 // ✅ TOGGLE AVAILABILITY
 export const toggleRoomAvailability = async (req, res) => {
