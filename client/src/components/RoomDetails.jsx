@@ -10,19 +10,33 @@ const RoomDetails = () => {
   const { axios, currency, navigate, getToken } = useAppContext();
 
   const [room, setRoom] = useState(null);
+  const [mainImage, setMainImage] = useState("");
 
   const [checkInDate, setCheckInDate] = useState("");
   const [checkOutDate, setCheckOutDate] = useState("");
   const [guests, setGuests] = useState(1);
   const [isAvailable, setIsAvailable] = useState(false);
 
-  // ✅ Fetch Room
+  // ✅ Normalize image path (handles all DB formats)
+  const getImageUrl = (img) => {
+    if (!img) return "";
+
+    // If already full URL
+    if (img.startsWith("http")) return img;
+
+    // Remove leading slash if exists
+    if (img.startsWith("/")) img = img.slice(1);
+
+    return `${import.meta.env.VITE_BACKEND_URL}/${img}`;
+  };
+
   const fetchRoom = async () => {
     try {
       const { data } = await axios.get(`/api/rooms/${id}`);
 
       if (data.success) {
         setRoom(data.room);
+        setMainImage(data.room.images?.[0]);
       }
     } catch (error) {
       console.error(error.message);
@@ -33,7 +47,6 @@ const RoomDetails = () => {
     fetchRoom();
   }, [id]);
 
-  // ✅ Check Availability
   const checkAvailability = async () => {
     try {
       if (!checkInDate || !checkOutDate) {
@@ -48,21 +61,14 @@ const RoomDetails = () => {
 
       const { data } = await axios.post(
         "/api/bookings/check-availability",
-        {
-          room: id,
-          checkInDate,
-          checkOutDate,
-        }
+        { room: id, checkInDate, checkOutDate }
       );
 
       if (data.success) {
-        if (data.isAvailable) {
-          setIsAvailable(true);
-          toast.success("Room is available");
-        } else {
-          setIsAvailable(false);
-          toast.error("Room not available");
-        }
+        setIsAvailable(data.isAvailable);
+
+        if (data.isAvailable) toast.success("Room is available");
+        else toast.error("Room not available");
       } else {
         toast.error(data.message);
       }
@@ -71,7 +77,6 @@ const RoomDetails = () => {
     }
   };
 
-  // ✅ Book Room
   const onSubmithandler = async (e) => {
     e.preventDefault();
 
@@ -112,8 +117,6 @@ const RoomDetails = () => {
 
   return (
     <div className="pt-28 px-6 md:px-16 lg:px-24 xl:px-32">
-
-      {/* ✅ Title Section */}
       <h1 className="text-3xl font-playfair">
         {room.hotel?.name} ({room.roomType})
       </h1>
@@ -125,92 +128,91 @@ const RoomDetails = () => {
 
       <p className="text-gray-500 mt-1">{room.hotel?.address}</p>
 
-      {/* ✅ PRICE */}
-      <p className="text-2xl font-semibold mt-4">
-        {currency} {room.pricePerNight}
-        <span className="text-base text-gray-500"> /night</span>
-      </p>
+      {/* ✅ Images */}
+      <div className="mt-6">
+        <img
+          src={getImageUrl(mainImage)}
+          alt="room"
+          className="w-full h-[380px] object-cover rounded-xl"
+        />
 
-      {/* ✅ AMENITIES (SAFE ICON FIX) */}
-      <div className="flex flex-wrap gap-3 mt-4">
-        {room.amenities?.map((item, index) => {
-          const icon = facilityIcons[item];
-
-          return (
-            <div
-              key={index}
-              className="flex items-center gap-2 border px-3 py-1 rounded-full text-sm"
-            >
-              {icon && (
-                <img
-                  src={icon}
-                  alt={item}
-                  className="w-4 h-4"
-                />
-              )}
-              <span>{item}</span>
-            </div>
-          );
-        })}
+        <div className="flex gap-3 mt-3">
+          {room.images?.map((img) => (
+            <img
+              key={img}
+              src={getImageUrl(img)}
+              onClick={() => setMainImage(img)}
+              alt="thumb"
+              className={`w-24 h-20 object-cover rounded-lg cursor-pointer border ${
+                mainImage === img ? "border-black" : "border-gray-200"
+              }`}
+            />
+          ))}
+        </div>
       </div>
 
-      {/* ✅ BOOKING BAR */}
+      {/* ✅ Amenities */}
+      <div className="flex flex-wrap gap-3 mt-6">
+        {room.amenities?.map((item) => (
+          <div
+            key={item}
+            className="flex items-center gap-2 border px-3 py-1 rounded-full text-sm"
+          >
+            <img
+              src={facilityIcons[item]}
+              alt={item}
+              className="w-4 h-4"
+            />
+            {item}
+          </div>
+        ))}
+      </div>
+
+      {/* ✅ Booking Bar */}
       <form
         onSubmit={onSubmithandler}
         className="flex flex-col md:flex-row items-center gap-4 mt-8 bg-white shadow-sm border rounded-xl p-4"
       >
-        <div>
-          <label className="text-sm text-gray-500">Check-In</label>
-          <input
-            type="date"
-            value={checkInDate}
-            min={new Date().toISOString().split("T")[0]}
-            onChange={(e) => {
-              setCheckInDate(e.target.value);
-              setIsAvailable(false);
-            }}
-            className="border rounded-lg px-3 py-2 text-sm"
-          />
-        </div>
+        <input
+          type="date"
+          value={checkInDate}
+          min={new Date().toISOString().split("T")[0]}
+          onChange={(e) => {
+            setCheckInDate(e.target.value);
+            setIsAvailable(false);
+          }}
+          className="border rounded-lg px-3 py-2 text-sm"
+        />
 
-        <div>
-          <label className="text-sm text-gray-500">Check-Out</label>
-          <input
-            type="date"
-            value={checkOutDate}
-            min={checkInDate}
-            disabled={!checkInDate}
-            onChange={(e) => {
-              setCheckOutDate(e.target.value);
-              setIsAvailable(false);
-            }}
-            className="border rounded-lg px-3 py-2 text-sm"
-          />
-        </div>
+        <input
+          type="date"
+          value={checkOutDate}
+          min={checkInDate}
+          disabled={!checkInDate}
+          onChange={(e) => {
+            setCheckOutDate(e.target.value);
+            setIsAvailable(false);
+          }}
+          className="border rounded-lg px-3 py-2 text-sm"
+        />
 
-        <div>
-          <label className="text-sm text-gray-500">Guests</label>
-          <input
-            type="number"
-            value={guests}
-            min="1"
-            onChange={(e) => setGuests(e.target.value)}
-            className="border rounded-lg px-3 py-2 text-sm w-20"
-          />
-        </div>
+        <input
+          type="number"
+          value={guests}
+          min="1"
+          onChange={(e) => setGuests(e.target.value)}
+          className="border rounded-lg px-3 py-2 text-sm w-20"
+        />
 
-        <button
-          type="submit"
-          className="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition"
-        >
+        <button className="bg-blue-600 text-white px-8 py-3 rounded-lg">
           {isAvailable ? "Book Now" : "Check Availability"}
         </button>
       </form>
 
-      {/* ✅ FEATURES */}
+      {/* ✅ Features */}
       <div className="mt-10 space-y-4">
-        {roomCommonData.map((item, index) => (
-          <div key={index} className="flex items-start gap-3">
+        {roomCommonData.map((item) => (
+          <div key={item.title} className="flex items-start gap-3">
             <img src={item.icon} alt="" className="w-5 mt-1" />
             <div>
               <p className="font-medium">{item.title}</p>
@@ -220,16 +222,6 @@ const RoomDetails = () => {
             </div>
           </div>
         ))}
-      </div>
-
-      {/* ✅ DESCRIPTION */}
-      <div className="mt-10 border-t pt-6">
-        <p className="text-gray-600 leading-relaxed">
-          Enjoy a comfortable stay designed around your convenience and availability.
-          Room placement is thoughtfully managed to deliver the best possible experience.
-          Rates are dynamically adjusted based on your selected guest count.
-          We recommend verifying your dates and preferences before booking.
-        </p>
       </div>
     </div>
   );
