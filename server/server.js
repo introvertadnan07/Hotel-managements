@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import "dotenv/config";
 import { clerkMiddleware } from "@clerk/express";
+import path from "path";
 
 import connectDB from "./configs/db.js";
 
@@ -20,8 +21,9 @@ app.use(express.urlencoded({ extended: true }));
 
 app.use(clerkMiddleware());
 
-// ✅ Serve uploaded images
-app.use("/uploads", express.static("uploads"));
+/* ✅ FIX: Absolute path for uploads folder */
+const __dirname = path.resolve();
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.get("/", (req, res) => {
   res.send("API running...");

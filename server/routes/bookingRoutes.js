@@ -12,9 +12,9 @@ const bookingRouter = express.Router();
 bookingRouter.post("/check-availability", checkAvailabilityAPI);
 bookingRouter.post("/book", protect, createBooking);
 
-// ✅ FIX HERE
-bookingRouter.get("/user", protect, getUserBookings);
+// ✅ FIXED → POST instead of GET
+bookingRouter.post("/user", protect, getUserBookings);
 
-bookingRouter.get("/hotel", protect, getHotelBookings);
+bookingRouter.post("/hotel", protect, getHotelBookings);
 
 export default bookingRouter;
