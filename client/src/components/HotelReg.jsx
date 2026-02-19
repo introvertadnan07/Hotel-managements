@@ -15,7 +15,7 @@ const HotelReg = () => {
   const [city, setCity] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ✅ Close on ESC key
+  // ✅ Close modal on ESC
   useEffect(() => {
     const handler = (e) => {
       if (e.key === "Escape") {
@@ -27,6 +27,7 @@ const HotelReg = () => {
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
+  // ✅ Submit Handler (FIXED REDIRECT LOGIC)
   const onSubmitHandler = async (e) => {
     e.preventDefault();
 
@@ -56,20 +57,31 @@ const HotelReg = () => {
         setIsOwner(true);
         setShowHotelReg(false);
         navigate("/owner");
+
       } else {
         toast.error(data.message);
+
+        // ✅ FIX → Redirect if already registered
+        if (data.message?.toLowerCase().includes("already")) {
+          setIsOwner(true);
+          setShowHotelReg(false);
+          navigate("/owner");
+        }
       }
+
     } catch (error) {
       const message =
         error.response?.data?.message || "Registration failed";
 
       toast.error(message);
 
+      // ✅ ALSO redirect if backend throws "already"
       if (message.toLowerCase().includes("already")) {
         setIsOwner(true);
         setShowHotelReg(false);
         navigate("/owner");
       }
+
     } finally {
       setLoading(false);
     }

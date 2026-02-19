@@ -11,7 +11,6 @@ export const AppProvider = ({ children }) => {
   const { user } = useUser();
   const { getToken } = useAuth();
 
-  // ✅ null = unknown (prevents flicker)
   const [isOwner, setIsOwner] = useState(null);
   const [isCheckingOwner, setIsCheckingOwner] = useState(true);
 
@@ -25,22 +24,18 @@ export const AppProvider = ({ children }) => {
     baseURL: "/",
   });
 
-  // ✅ Fetch rooms
   const fetchRooms = async () => {
     try {
       const { data } = await api.get("/api/rooms");
 
       if (data?.success) {
         setRooms(data.rooms || []);
-      } else {
-        toast.error(data?.message || "Failed to load rooms");
       }
     } catch (error) {
-      toast.error(error.message || "Rooms fetch failed");
+      console.log("ROOM FETCH ERROR:", error.response?.status);
     }
   };
 
-  // ✅ Fetch user / role
   const fetchUser = async () => {
     try {
       setIsCheckingOwner(true);
@@ -61,26 +56,22 @@ export const AppProvider = ({ children }) => {
       } else {
         setIsOwner(false);
       }
-
     } catch (error) {
-      console.error("fetchUser error:", error.message);
+      console.log("USER FETCH ERROR:", error.response?.status);
       setIsOwner(false);
     } finally {
       setIsCheckingOwner(false);
     }
   };
 
-  // ✅ Run when Clerk user ready
   useEffect(() => {
-    if (user) {
-      fetchUser();
-    } else {
+    if (user) fetchUser();
+    else {
       setIsOwner(false);
       setIsCheckingOwner(false);
     }
   }, [user]);
 
-  // ✅ Initial rooms load
   useEffect(() => {
     fetchRooms();
   }, []);
