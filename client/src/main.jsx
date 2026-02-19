@@ -14,11 +14,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(
   <ClerkProvider publishableKey={PUBLISHABLE_KEY} afterSignOutUrl="/">
     <BrowserRouter>
       <AppProvider>
-
         <ScrollToTop />
-
         <Toaster position="top-center" />
-
         <App />
       </AppProvider>
     </BrowserRouter>
