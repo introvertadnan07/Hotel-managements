@@ -4,12 +4,15 @@ import {
   storeRecentSearchCities,
 } from "../controllers/userController.js";
 
-import { requireAuth } from "@clerk/express"; // ✅ IMPORTANT
+import { requireAuth } from "@clerk/express";
 
 const userRouter = express.Router();
 
-// ✅ Protect routes with Clerk auth
 userRouter.get("/", requireAuth(), getUserData);
-userRouter.post("/store-recent-search", requireAuth(), storeRecentSearchCities);
+userRouter.post(
+  "/store-recent-search",
+  requireAuth(),
+  storeRecentSearchCities
+);
 
 export default userRouter;

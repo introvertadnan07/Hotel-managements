@@ -7,6 +7,20 @@ const userSchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
+
+    email: {
+      type: String,
+      required: true,
+    },
+
+    username: {
+      type: String,
+    },
+
+    image: {
+      type: String,
+    },
+
     role: {
       type: String,
       enum: ["user", "hotelOwner"],
@@ -18,3 +32,4 @@ const userSchema = new mongoose.Schema(
 
 const User = mongoose.model("User", userSchema);
 export default User;
+s

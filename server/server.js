@@ -30,7 +30,7 @@ app.get("/", (req, res) => {
   res.send("API running...");
 });
 
-// ✅ Clerk Webhook
+// ✅ Clerk Webhook Route
 app.post("/api/webhooks/clerk", clerkWebhooks);
 
 app.use("/api/user", userRouter);
@@ -38,7 +38,7 @@ app.use("/api/hotels", hotelRouter);
 app.use("/api/rooms", roomRouter);
 app.use("/api/bookings", bookingRouter);
 
-// ✅ JSON fallback (prevents HTML errors)
+// ✅ JSON fallback
 app.use((req, res) => {
   res.status(404).json({
     success: false,

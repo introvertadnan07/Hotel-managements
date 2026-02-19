@@ -4,7 +4,7 @@ export const protect = async (req, res, next) => {
   try {
     const auth = req.auth();
 
-    if (!auth || !auth.userId) {
+    if (!auth?.userId) {
       return res.status(401).json({
         success: false,
         message: "Not authenticated",
@@ -14,9 +14,11 @@ export const protect = async (req, res, next) => {
     const user = await User.findOne({ clerkId: auth.userId });
 
     if (!user) {
+      console.log("❌ User not found in DB for clerkId:", auth.userId);
+
       return res.status(404).json({
         success: false,
-        message: "User not found",
+        message: "User not found. Please login again.",
       });
     }
 
@@ -24,7 +26,8 @@ export const protect = async (req, res, next) => {
     next();
 
   } catch (error) {
-    console.error("Auth error:", error);
+    console.error("Auth error:", error.message);
+
     res.status(500).json({
       success: false,
       message: "Server error",
