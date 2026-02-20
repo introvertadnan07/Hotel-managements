@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
-import { facilityIcons, roomCommonData } from "../assets/assets";
+import { facilityIcons, roomCommonData, assets } from "../assets/assets";
 import StarRating from "./StarRating";
 import toast from "react-hot-toast";
 
@@ -17,14 +17,12 @@ const RoomDetails = () => {
   const [guests, setGuests] = useState(1);
   const [isAvailable, setIsAvailable] = useState(false);
 
-  // ✅ Normalize image path (handles all DB formats)
+  // ✅ Normalize image path (handles DB filenames / URLs / slashes)
   const getImageUrl = (img) => {
-    if (!img) return "";
+    if (!img) return assets.hostedDefaultImage;
 
-    // If already full URL
     if (img.startsWith("http")) return img;
 
-    // Remove leading slash if exists
     if (img.startsWith("/")) img = img.slice(1);
 
     return `${import.meta.env.VITE_BACKEND_URL}/${img}`;
@@ -36,7 +34,9 @@ const RoomDetails = () => {
 
       if (data.success) {
         setRoom(data.room);
-        setMainImage(data.room.images?.[0]);
+
+        const firstImage = data.room.images?.[0];
+        setMainImage(firstImage || "");
       }
     } catch (error) {
       console.error(error.message);
@@ -93,7 +93,7 @@ const RoomDetails = () => {
           room: id,
           checkInDate,
           checkOutDate,
-          guests,
+          guests: Number(guests), // ✅ FIXED
           paymentMethod: "Pay At Hotel",
         },
         {

@@ -8,6 +8,17 @@ const MyBookings = () => {
   const { axios, getToken, user } = useAppContext();
   const [bookings, setBooking] = useState([]);
 
+  // ✅ Normalize image path
+  const getImageUrl = (img) => {
+    if (!img) return assets.hostedDefaultImage;
+
+    if (img.startsWith("http")) return img;
+
+    if (img.startsWith("/")) img = img.slice(1);
+
+    return `${import.meta.env.VITE_BACKEND_URL}/${img}`;
+  };
+
   const fetchUserBookings = async () => {
     try {
       const token = await getToken();
@@ -34,16 +45,14 @@ const MyBookings = () => {
   };
 
   useEffect(() => {
-    if (user) {
-      fetchUserBookings();
-    }
+    if (user) fetchUserBookings();
   }, [user]);
 
   return (
     <div className="py-28 px-4 md:px-16 lg:px-24 xl:px-32">
       <Title
         title="My Bookings"
-        subTitle="Easily manage your past, current, and upcoming hotel reservations in one place. Plan your trips seamlessly with just a few clicks."
+        subTitle="Manage your hotel reservations easily."
         align="left"
       />
 
@@ -62,21 +71,17 @@ const MyBookings = () => {
               key={booking._id}
               className="grid grid-cols-1 md:grid-cols-[3fr_2fr_1fr] gap-6 border-b py-6"
             >
-              {/* HOTEL INFO */}
+              {/* ✅ Hotel Info */}
               <div className="flex gap-4">
                 <img
-                  src={
-                    booking.room?.images?.length > 0
-                      ? booking.room.images[0]   
-                      : assets.hostedDefaultImage
-                  }
+                  src={getImageUrl(booking.room?.images?.[0])}
                   alt="hotel"
                   className="w-28 h-24 rounded-lg object-cover"
                 />
 
                 <div className="space-y-1">
                   <p className="font-playfair text-xl">
-                    {booking.room?.hotel?.name}
+                    {booking.hotel?.name}
                     <span className="text-sm text-gray-500">
                       {" "}({booking.room?.roomType})
                     </span>
@@ -84,7 +89,7 @@ const MyBookings = () => {
 
                   <div className="flex items-center gap-1 text-sm text-gray-500">
                     <img src={assets.locationIcon} className="h-4" />
-                    <span>{booking.room?.hotel?.address}</span>
+                    <span>{booking.hotel?.address}</span>
                   </div>
 
                   <div className="flex items-center gap-1 text-sm text-gray-500">
@@ -93,12 +98,12 @@ const MyBookings = () => {
                   </div>
 
                   <p className="font-medium">
-                    Total: ₹{booking.totalPrice}
+                    Total: {booking.totalPrice}
                   </p>
                 </div>
               </div>
 
-              {/* DATES */}
+              {/* ✅ Dates */}
               <div className="text-sm space-y-1">
                 <p>
                   <span className="font-medium">Check-In:</span>{" "}
@@ -110,7 +115,7 @@ const MyBookings = () => {
                 </p>
               </div>
 
-              {/* PAYMENT */}
+              {/* ✅ Payment */}
               <div className="flex flex-col gap-3">
                 <div className="flex items-center gap-2">
                   <span
@@ -128,7 +133,7 @@ const MyBookings = () => {
                 </div>
 
                 {!booking.isPaid && (
-                  <button className="w-fit px-4 py-1.5 text-sm border rounded-full hover:bg-gray-100 transition">
+                  <button className="w-fit px-4 py-1.5 text-sm border rounded-full hover:bg-gray-100">
                     Pay Now
                   </button>
                 )}

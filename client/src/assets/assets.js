@@ -42,7 +42,7 @@ import uploadArea from "./uploadArea.svg";
 import totalBookingIcon from "./totalBookingIcon.svg";
 import totalRevenueIcon from "./totalRevenueIcon.svg";
 
-// ✅ Local images (match filenames EXACTLY)
+// ✅ Local images (must match filenames EXACTLY)
 import adnanImage from "./adnan.jpg";
 import anumImage from "./anum.jpg";
 
@@ -169,7 +169,7 @@ export const facilityIcons = {
   "Pool Access": poolIcon,
 };
 
-// ✅ REQUIRED (your RoomDetails.jsx uses this)
+// ✅ REQUIRED (used in RoomDetails.jsx)
 export const roomCommonData = [
   {
     icon: homeIcon,
