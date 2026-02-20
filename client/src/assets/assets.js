@@ -42,11 +42,9 @@ import uploadArea from "./uploadArea.svg";
 import totalBookingIcon from "./totalBookingIcon.svg";
 import totalRevenueIcon from "./totalRevenueIcon.svg";
 
-// ✅ Existing images only
 import adnanImage from "./adnan.jpg";
 import anumImage from "./anum.jpg";
 
-// Hosted fallback
 import hostedDefaultImage from "./anum.jpg";
 
 export const assets = {
@@ -166,6 +164,31 @@ export const facilityIcons = {
   "Mountain View": mountainIcon,
   "Pool Access": poolIcon,
 };
+
+
+// ✅ ✅ ✅ THIS WAS MISSING → ADD BACK
+export const roomCommonData = [
+  {
+    icon: homeIcon,
+    title: "Clean & Safe Stay",
+    description: "A well-maintained and hygienic space just for you.",
+  },
+  {
+    icon: badgeIcon,
+    title: "Enhanced Cleaning",
+    description: "This host follows strict cleaning standards.",
+  },
+  {
+    icon: locationFilledIcon,
+    title: "Excellent Location",
+    description: "Guests love the convenience of this location.",
+  },
+  {
+    icon: heartIcon,
+    title: "Smooth Check-In",
+    description: "Easy and hassle-free check-in experience.",
+  },
+];
 
 export const roomsDummyData = [
   {
