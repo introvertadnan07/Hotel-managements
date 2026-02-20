@@ -2,7 +2,6 @@ import express from "express";
 import cors from "cors";
 import "dotenv/config";
 import { clerkMiddleware } from "@clerk/express";
-import path from "path";
 
 import connectDB from "./configs/db.js";
 
@@ -19,32 +18,42 @@ const app = express();
 
 app.use(cors());
 
-// ✅ Webhook route FIRST + raw body
+// ✅ Clerk webhook (RAW body FIRST)
 app.post(
   "/api/webhooks/clerk",
   express.raw({ type: "application/json" }),
   clerkWebhooks
 );
 
-// ✅ Normal parsing AFTER webhook
+// ✅ Normal body parsing AFTER webhook
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// ✅ Clerk middleware
 app.use(clerkMiddleware());
 
-const __dirname = path.resolve();
-app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
+
+
+// ✅ Root route (health check for browser)
 app.get("/", (req, res) => {
-  res.send("Anumifly code work (Api working)...");
+  res.send("Anumifly code work (API working)...");
 });
 
+// ✅ Optional health endpoint (recommended)
+app.get("/health", (req, res) => {
+  res.json({ status: "OK" });
+});
+
+
+// ✅ API Routes
 app.use("/api/user", userRouter);
 app.use("/api/hotels", hotelRouter);
 app.use("/api/rooms", roomRouter);
 app.use("/api/bookings", bookingRouter);
 
-// ✅ Fallback
+
+// ✅ Fallback handler
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -54,6 +63,6 @@ app.use((req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () =>
-  console.log(`Server running on port ${PORT}`)
-);
+app.listen(PORT, () => {
+  console.log(`✅ Server running on port ${PORT}`);
+});
