@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import "dotenv/config";
 import { clerkMiddleware } from "@clerk/express";
+import path from "path"; // ✅ ADD THIS
 
 import connectDB from "./configs/db.js";
 
@@ -11,7 +12,9 @@ import roomRouter from "./routes/roomRoutes.js";
 import bookingRouter from "./routes/bookingRoutes.js";
 
 import clerkWebhooks from "./controllers/clerkWebhooks.js";
+import connectCloudinary from "./configs/cloudinary.js";
 
+connectCloudinary();
 connectDB();
 
 const app = express();
@@ -25,26 +28,26 @@ app.post(
   clerkWebhooks
 );
 
-// ✅ Normal body parsing AFTER webhook
+// ✅ Normal parsing AFTER webhook
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // ✅ Clerk middleware
 app.use(clerkMiddleware());
 
+// ✅ STATIC UPLOADS FIX (IMPORTANT)
+const __dirname = path.resolve();
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-
-
-// ✅ Root route (health check for browser)
+// ✅ Root route
 app.get("/", (req, res) => {
   res.send("Anumifly code work (API working)...");
 });
 
-// ✅ Optional health endpoint (recommended)
+// ✅ Health route
 app.get("/health", (req, res) => {
   res.json({ status: "OK" });
 });
-
 
 // ✅ API Routes
 app.use("/api/user", userRouter);
@@ -52,8 +55,7 @@ app.use("/api/hotels", hotelRouter);
 app.use("/api/rooms", roomRouter);
 app.use("/api/bookings", bookingRouter);
 
-
-// ✅ Fallback handler
+// ✅ Fallback
 app.use((req, res) => {
   res.status(404).json({
     success: false,

@@ -1,5 +1,7 @@
 import Room from "../models/Room.js";
 import Hotel from "../models/Hotel.js";
+import { v2 as cloudinary } from "cloudinary";
+import streamifier from "streamifier";
 
 // ✅ CREATE ROOM
 export const createRoom = async (req, res) => {
@@ -22,15 +24,35 @@ export const createRoom = async (req, res) => {
       });
     }
 
-    // ✅ FIX: store ONLY filenames
-    const imageNames = req.files?.map((file) => file.filename) || [];
+    // ✅ FIX: Upload images to Cloudinary (memoryStorage)
+    let imageUrls = [];
+
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        const uploadFromBuffer = (fileBuffer) => {
+          return new Promise((resolve, reject) => {
+            const stream = cloudinary.uploader.upload_stream(
+              { folder: "rooms" },
+              (error, result) => {
+                if (error) reject(error);
+                else resolve(result);
+              }
+            );
+            streamifier.createReadStream(fileBuffer).pipe(stream);
+          });
+        };
+
+        const result = await uploadFromBuffer(file.buffer);
+        imageUrls.push(result.secure_url);
+      }
+    }
 
     const room = await Room.create({
       hotel: hotel._id,
       roomType,
       pricePerNight: Number(pricePerNight),
       amenities: amenities ? JSON.parse(amenities) : [],
-      images: imageNames,
+      images: imageUrls, // ✅ Store Cloudinary URLs
     });
 
     res.json({

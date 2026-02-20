@@ -7,27 +7,22 @@ const roomSchema = new mongoose.Schema(
       ref: "Hotel",
       required: true,
     },
-
     roomType: {
       type: String,
       required: true,
     },
-
     pricePerNight: {
       type: Number,
       required: true,
     },
-
     amenities: {
       type: [String],
       default: [],
     },
-
     images: {
       type: [String],
       default: [],
     },
-
     isAvailable: {
       type: Boolean,
       default: true,
@@ -37,4 +32,5 @@ const roomSchema = new mongoose.Schema(
 );
 
 const Room = mongoose.model("Room", roomSchema);
-export default Room;
+
+export default Room;   // ✅ IMPORTANT
