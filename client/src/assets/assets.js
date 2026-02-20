@@ -45,7 +45,7 @@ import totalRevenueIcon from "./totalRevenueIcon.svg";
 // ✅ LOWERCASE FILENAMES
 import adnanImage from "./adnan.jpg";
 import anumImage from "./anum.jpg";
-import madeehaImage from "./madeeha.jpg";
+
 
 // Hosted fallback
 import hostedDefaultImage from "./anum.jpg";
@@ -142,15 +142,7 @@ export const testimonials = [
     review:
       "I've used many booking platforms before, but none compare to the personalized experience and attention to detail that QuickStay provides.",
   },
-  {
-    id: 2,
-    name: "Madeeha Rahi",
-    address: "New York, USA",
-    image: madeehaImage,
-    rating: 4,
-    review:
-      "QuickStay exceeded my expectations. The booking process was seamless, and the hotels were absolutely top-notch. Highly recommended!",
-  },
+ 
   {
     id: 3,
     name: "Anum Rahi",
