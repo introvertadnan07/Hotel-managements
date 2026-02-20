@@ -1,9 +1,9 @@
 import User from "../models/User.js";
-import clerkClient from "@clerk/clerk-sdk-node"; // if not already
+import clerkClient from "@clerk/clerk-sdk-node";
 
 export const protect = async (req, res, next) => {
   try {
-    const auth = req.auth();
+    const auth = req.auth;   // ✅ FIXED
 
     if (!auth?.userId) {
       return res.status(401).json({
@@ -32,19 +32,18 @@ export const protect = async (req, res, next) => {
       user = await User.create({
         clerkId: clerkUser.id,
         email,
-        username:
-          `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`.trim(),
+        username: `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`.trim(),
         image: clerkUser.imageUrl,
       });
 
       console.log("✅ User synced to DB");
     }
 
-    req.user = user;
+    req.user = user;   // ✅ REQUIRED
     next();
 
   } catch (error) {
-    console.error("Auth error:", error.message);
+    console.error("Auth error:", error);
 
     res.status(500).json({
       success: false,
