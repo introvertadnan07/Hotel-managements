@@ -42,12 +42,10 @@ import uploadArea from "./uploadArea.svg";
 import totalBookingIcon from "./totalBookingIcon.svg";
 import totalRevenueIcon from "./totalRevenueIcon.svg";
 
-
 // ✅ LOWERCASE FILENAMES
 import adnanImage from "./adnan.jpg";
 import anumImage from "./anum.jpg";
 import madeehaImage from "./madeeha.jpg";
-
 
 // Hosted fallback
 import hostedDefaultImage from "./anum.jpg";
