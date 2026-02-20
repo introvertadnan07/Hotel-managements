@@ -8,10 +8,7 @@ const Rooms = () => {
 
   return (
     <div className="px-6 md:px-16 lg:px-24 py-24">
-      <Title
-        title="All Rooms"
-        subTitle="Browse all available rooms"
-      />
+      <Title title="All Rooms" subTitle="Browse all available rooms" />
 
       <div className="flex flex-wrap gap-6 mt-10">
         {rooms.map((room, index) => (
