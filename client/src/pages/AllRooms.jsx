@@ -5,100 +5,34 @@ import { useAppContext } from "../context/AppContext";
 import { assets, facilityIcons } from "../assets/assets";
 import StarRating from "../components/StarRating";
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL; // ✅ FIX
-
-const CheckBox = ({ label, selected, onChange }) => {
-  return (
-    <label className="flex gap-3 items-center cursor-pointer mt-2 text-sm">
-      <input
-        type="checkbox"
-        checked={selected}
-        onChange={(e) => onChange(e.target.checked)}
-      />
-      <span className="font-light select-none">{label}</span>
-    </label>
-  );
-};
-
-const RadioButton = ({ label, selected, onChange }) => {
-  return (
-    <label className="flex gap-3 items-center cursor-pointer mt-2 text-sm">
-      <input
-        type="radio"
-        name="sort"
-        checked={selected}
-        onChange={onChange}
-      />
-      <span className="font-light select-none">{label}</span>
-    </label>
-  );
-};
-
 const AllRooms = () => {
   const { rooms, currency } = useAppContext();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
 
   const destination = searchParams.get("destination");
-
-  const [selectedFilters, setSelectedFilters] = useState({
-    roomType: [],
-    priceRange: [],
-  });
-
   const [selectedSort, setSelectedSort] = useState("");
 
-  const roomTypes = [
-    "Single Bed",
-    "Double Bed",
-    "Luxury Room",
-    "Family Suite",
-  ];
+  // ✅ UNIVERSAL IMAGE FIX
+  const getImage = (room) => {
+    const img = room?.images?.[0];
 
-  const priceRange = [
-    "0 to 500",
-    "500 to 1000",
-    "1000 to 2000",
-    "2000 to 3000",
-  ];
+    if (!img) return assets.placeholderImage;
 
-  const sortOptions = [
-    "Price Low to High",
-    "Price High to Low",
-    "Newest First",
-  ];
+    if (typeof img === "string" && img.startsWith("http")) {
+      return img; // Cloudinary
+    }
 
-  const handleFilterChange = (checked, value, type) => {
-    setSelectedFilters((prev) => {
-      const updated = { ...prev };
+    if (img.startsWith("/uploads")) {
+      return `${import.meta.env.VITE_BACKEND_URL}${img}`;
+    }
 
-      if (checked) {
-        updated[type] = [...updated[type], value];
-      } else {
-        updated[type] = updated[type].filter((item) => item !== value);
-      }
-
-      return updated;
-    });
+    return `${import.meta.env.VITE_BACKEND_URL}/uploads/${img}`;
   };
 
   const matchesDestination = (room) =>
     !destination ||
     room.hotel?.city?.toLowerCase().includes(destination.toLowerCase());
-
-  const matchesRoomType = (room) =>
-    selectedFilters.roomType.length === 0 ||
-    selectedFilters.roomType.includes(room.roomType);
-
-  const matchesPriceRange = (room) =>
-    selectedFilters.priceRange.length === 0 ||
-    selectedFilters.priceRange.some((range) => {
-      const [min, max] = range.split("to").map(Number);
-      return (
-        room.pricePerNight >= min &&
-        room.pricePerNight <= max
-      );
-    });
 
   const sortRooms = (a, b) => {
     if (selectedSort === "Price Low to High") {
@@ -113,22 +47,9 @@ const AllRooms = () => {
     return 0;
   };
 
-  const filterRooms = useMemo(() => {
-    return rooms
-      ?.filter(
-        (room) =>
-          matchesDestination(room) &&
-          matchesRoomType(room) &&
-          matchesPriceRange(room)
-      )
-      .sort(sortRooms);
-  }, [rooms, selectedFilters, selectedSort, destination]);
-
-  const clearFilters = () => {
-    setSelectedFilters({ roomType: [], priceRange: [] });
-    setSelectedSort("");
-    setSearchParams({});
-  };
+  const filteredRooms = useMemo(() => {
+    return rooms?.filter(matchesDestination).sort(sortRooms);
+  }, [rooms, selectedSort, destination]);
 
   return (
     <div className="flex flex-col lg:flex-row pt-28 px-6 md:px-16 lg:px-24">
@@ -137,18 +58,58 @@ const AllRooms = () => {
           Hotel Rooms
         </h1>
 
-        {filterRooms?.map((room) => (
-          <div key={room._id} className="flex gap-6 py-8 border-b">
+        {filteredRooms?.length === 0 && (
+          <p className="text-gray-500">No rooms found.</p>
+        )}
+
+        {filteredRooms?.map((room) => (
+          <div
+            key={room._id}
+            className="flex flex-col md:flex-row gap-6 py-8 border-b"
+          >
             <img
-              src={`${BACKEND_URL}${room.images?.[0] || "/placeholder.jpg"}`} // ✅ FIX
+              src={getImage(room)}   // ✅ FIXED
               alt="room"
-              className="md:w-1/2 h-64 object-cover rounded-xl shadow"
+              className="md:w-1/2 h-64 object-cover rounded-xl shadow cursor-pointer"
               onClick={() => navigate(`/rooms/${room._id}`)}
+              onError={(e) => {
+                e.target.src = assets.placeholderImage;
+              }}
             />
 
-            <div>
-              <h2>{room.hotel?.name}</h2>
-              <p>{currency} {room.pricePerNight}</p>
+            <div className="md:w-1/2">
+              <p className="text-gray-500">
+                {room.hotel?.city || "City not available"}
+              </p>
+
+              <h2 className="text-3xl font-playfair">
+                {room.hotel?.name || "Unknown Hotel"}
+              </h2>
+
+              <div className="flex items-center gap-2 mt-2">
+                <StarRating />
+                <span className="text-sm">200+ reviews</span>
+              </div>
+
+              <div className="flex flex-wrap gap-3 mt-4">
+                {room.amenities?.map((item, i) => (
+                  <div
+                    key={i}
+                    className="flex items-center gap-2 bg-gray-100 px-3 py-1 rounded"
+                  >
+                    <img
+                      src={facilityIcons[item]}
+                      className="w-4 h-4"
+                      alt=""
+                    />
+                    <span className="text-xs">{item}</span>
+                  </div>
+                ))}
+              </div>
+
+              <p className="text-xl mt-4 font-medium">
+                {currency} {room.pricePerNight} / night
+              </p>
             </div>
           </div>
         ))}
