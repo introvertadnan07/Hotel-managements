@@ -42,13 +42,15 @@ import uploadArea from "./uploadArea.svg";
 import totalBookingIcon from "./totalBookingIcon.svg";
 import totalRevenueIcon from "./totalRevenueIcon.svg";
 
-// ✅ FIXED lowercase filenames
+
+// ✅ LOWERCASE FILENAMES
 import adnanImage from "./adnan.jpg";
-import AnumImage from "./Anum.jpg";
-import MadeehaImage from "./madeeha.jpg";
+import anumImage from "./anum.jpg";
+import madeehaImage from "./madeeha.jpg";
+
 
 // Hosted fallback
-import hostedDefaultImage from "./Anum.jpg";
+import hostedDefaultImage from "./anum.jpg";
 
 export const assets = {
   logo,
@@ -146,7 +148,7 @@ export const testimonials = [
     id: 2,
     name: "Madeeha Rahi",
     address: "New York, USA",
-    image: MadeehaImage,
+    image: madeehaImage,
     rating: 4,
     review:
       "QuickStay exceeded my expectations. The booking process was seamless, and the hotels were absolutely top-notch. Highly recommended!",
@@ -155,7 +157,7 @@ export const testimonials = [
     id: 3,
     name: "Anum Rahi",
     address: "Kolkata, India",
-    image: AnumImage,
+    image: anumImage,
     rating: 5,
     review:
       "Amazing service! I always find the best luxury accommodations through QuickStay.",
