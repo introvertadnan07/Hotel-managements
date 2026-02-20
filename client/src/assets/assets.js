@@ -42,12 +42,12 @@ import uploadArea from "./uploadArea.svg";
 import totalBookingIcon from "./totalBookingIcon.svg";
 import totalRevenueIcon from "./totalRevenueIcon.svg";
 
-import adnanImage from "./adnan.jpg";
+import adnanImage from "./Adnan.jpg";
 import AnumImage from "./Anum.jpg";
 import MadeehaImage from "./Madeeha.jpg";
-import shaiobImage from "./Shaoib.jpg";
 
-// ✅ Hosted Image
+
+// Hosted fallback
 import hostedDefaultImage from "./Anum.jpg";
 
 export const assets = {
@@ -99,6 +99,10 @@ export const cities = [
   "Chennai",
   "Mumbai",
   "Kochi",
+  "Patna",
+  "Kochi",
+  "Ranchi",
+  "Hyderabad"
 ];
 
 export const exclusiveOffers = [
