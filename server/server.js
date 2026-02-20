@@ -36,7 +36,7 @@ const __dirname = path.resolve();
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 app.get("/", (req, res) => {
-  res.send("Anumifly code work...");
+  res.send("Anumifly code work (Api working)...");
 });
 
 app.use("/api/user", userRouter);
