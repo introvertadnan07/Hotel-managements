@@ -42,11 +42,11 @@ import uploadArea from "./uploadArea.svg";
 import totalBookingIcon from "./totalBookingIcon.svg";
 import totalRevenueIcon from "./totalRevenueIcon.svg";
 
-// ✅ LOWERCASE FILENAMES
+// ✅ Existing images only
 import adnanImage from "./adnan.jpg";
 import anumImage from "./anum.jpg";
 
-// ✅ Hosted fallback
+// Hosted fallback
 import hostedDefaultImage from "./anum.jpg";
 
 export const assets = {
@@ -139,7 +139,7 @@ export const testimonials = [
       "https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=200",
     rating: 5,
     review:
-      "I've used many booking platforms before, but none compare to the personalized experience and attention to detail that QuickStay provides.",
+      "I've used many booking platforms before, but none compare to the personalized experience that QuickStay provides.",
   },
   {
     id: 3,
@@ -147,8 +147,7 @@ export const testimonials = [
     address: "Kolkata, India",
     image: anumImage,
     rating: 5,
-    review:
-      "Amazing service! I always find the best luxury accommodations through QuickStay.",
+    review: "Amazing service!",
   },
   {
     id: 4,
@@ -156,8 +155,7 @@ export const testimonials = [
     address: "Kochi, India",
     image: adnanImage,
     rating: 5,
-    review:
-      "A seamless booking experience with top-tier accommodations.",
+    review: "A seamless booking experience.",
   },
 ];
 
@@ -168,29 +166,6 @@ export const facilityIcons = {
   "Mountain View": mountainIcon,
   "Pool Access": poolIcon,
 };
-
-export const roomCommonData = [
-  {
-    icon: homeIcon,
-    title: "Clean & Safe Stay",
-    description: "A well-maintained and hygienic space just for you.",
-  },
-  {
-    icon: badgeIcon,
-    title: "Enhanced Cleaning",
-    description: "This host follows strict cleaning standards.",
-  },
-  {
-    icon: locationFilledIcon,
-    title: "Excellent Location",
-    description: "90% of guests rated the location 5 stars.",
-  },
-  {
-    icon: heartIcon,
-    title: "Smooth Check-In",
-    description: "100% of guests gave check-in a 5-star rating.",
-  },
-];
 
 export const roomsDummyData = [
   {
@@ -208,7 +183,7 @@ export const userBookingsDummyData = [
     _id: "b1",
     hotel: {
       name: "Urbanza Suites",
-      address: "Main Road 123 Street, 23 Colony",
+      address: "Main Road 123 Street",
     },
     room: {
       roomType: "Double Bed",
