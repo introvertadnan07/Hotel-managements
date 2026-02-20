@@ -46,8 +46,7 @@ import totalRevenueIcon from "./totalRevenueIcon.svg";
 import adnanImage from "./adnan.jpg";
 import anumImage from "./anum.jpg";
 
-
-// Hosted fallback
+// ✅ Hosted fallback
 import hostedDefaultImage from "./anum.jpg";
 
 export const assets = {
@@ -100,7 +99,7 @@ export const cities = [
   "Kochi",
   "Patna",
   "Ranchi",
-  "Hyderabad"
+  "Hyderabad",
 ];
 
 export const exclusiveOffers = [
@@ -142,7 +141,6 @@ export const testimonials = [
     review:
       "I've used many booking platforms before, but none compare to the personalized experience and attention to detail that QuickStay provides.",
   },
- 
   {
     id: 3,
     name: "Anum Rahi",
