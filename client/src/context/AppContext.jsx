@@ -20,8 +20,9 @@ export const AppProvider = ({ children }) => {
 
   const currency = "₹";
 
+  // ✅ FIXED axios baseURL
   const api = axios.create({
-    baseURL: "/",
+    baseURL: import.meta.env.VITE_BACKEND_URL,
   });
 
   const fetchRooms = async () => {
