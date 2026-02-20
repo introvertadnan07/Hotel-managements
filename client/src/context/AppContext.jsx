@@ -18,7 +18,7 @@ export const AppProvider = ({ children }) => {
   const [rooms, setRooms] = useState([]);
   const [searchedCities, setSearchedCities] = useState([]);
 
-  const currency = "$";
+  const currency = "₹";
 
   const api = axios.create({
     baseURL: "/",

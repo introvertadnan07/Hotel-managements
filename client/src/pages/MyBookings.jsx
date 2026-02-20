@@ -67,7 +67,7 @@ const MyBookings = () => {
                 <img
                   src={
                     booking.room?.images?.length > 0
-                      ? booking.room.images[0]   // ✅ FIXED (Cloudinary URL)
+                      ? booking.room.images[0]   
                       : assets.hostedDefaultImage
                   }
                   alt="hotel"
@@ -93,7 +93,7 @@ const MyBookings = () => {
                   </div>
 
                   <p className="font-medium">
-                    Total: ${booking.totalPrice}
+                    Total: ₹{booking.totalPrice}
                   </p>
                 </div>
               </div>

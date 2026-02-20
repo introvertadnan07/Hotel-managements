@@ -24,7 +24,7 @@ const HotelCard = ({ room, index }) => {
   return (
     <Link to={`/rooms/${room._id}`} className="relative">
       <img
-        src={getImage()}   // ✅ FIXED
+        src={getImage()}   
         alt={room.roomType}
         className="max-w-[270px] w-full h-[180px] object-cover rounded-xl shadow"
         onError={(e) => {
@@ -60,7 +60,7 @@ const HotelCard = ({ room, index }) => {
         <div className="flex justify-between mt-4">
           <p>
             <span className="text-xl">
-              ${room.pricePerNight}
+              ₹{room.pricePerNight}
             </span>
             /night
           </p>
