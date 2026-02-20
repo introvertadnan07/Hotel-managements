@@ -1,4 +1,5 @@
 import User from "../models/User.js";
+import clerkClient from "@clerk/clerk-sdk-node"; // if not already
 
 export const protect = async (req, res, next) => {
   try {
@@ -11,15 +12,32 @@ export const protect = async (req, res, next) => {
       });
     }
 
-    const user = await User.findOne({ clerkId: auth.userId });
+    let user = await User.findOne({ clerkId: auth.userId });
 
+    // ✅ AUTO-SYNC if missing
     if (!user) {
-      console.log("❌ User not found in DB for clerkId:", auth.userId);
+      console.log("⚠️ User not in DB → syncing from Clerk");
 
-      return res.status(404).json({
-        success: false,
-        message: "User not found. Please login again.",
+      const clerkUser = await clerkClient.users.getUser(auth.userId);
+
+      const email = clerkUser.emailAddresses?.[0]?.emailAddress;
+
+      if (!email) {
+        return res.status(400).json({
+          success: false,
+          message: "User email not available",
+        });
+      }
+
+      user = await User.create({
+        clerkId: clerkUser.id,
+        email,
+        username:
+          `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`.trim(),
+        image: clerkUser.imageUrl,
       });
+
+      console.log("✅ User synced to DB");
     }
 
     req.user = user;

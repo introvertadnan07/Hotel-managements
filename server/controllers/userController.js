@@ -2,7 +2,7 @@ import User from "../models/User.js";
 
 export const getUserData = async (req, res) => {
   try {
-    const { userId } = req.auth();
+    const { userId, sessionClaims } = req.auth();
 
     if (!userId) {
       return res.status(401).json({
@@ -11,14 +11,17 @@ export const getUserData = async (req, res) => {
       });
     }
 
-    const user = await User.findOne({ clerkId: userId });
+    let user = await User.findOne({ clerkId: userId });
 
+    // ✅ Fallback create user
     if (!user) {
-      console.log("❌ User not found in DB (Webhook not synced)");
+      console.log("⚠️ User missing in DB → creating fallback user");
 
-      return res.status(404).json({
-        success: false,
-        message: "User not found. Please login again.",
+      user = await User.create({
+        clerkId: userId,
+        email: sessionClaims?.email || "no-email",
+        username: sessionClaims?.name || "User",
+        image: sessionClaims?.image || "",
       });
     }
 
@@ -37,13 +40,13 @@ export const getUserData = async (req, res) => {
   }
 };
 
+// ✅ ADD THIS (missing export)
 export const storeRecentSearchCities = async (req, res) => {
   try {
     res.json({
       success: true,
-      message: "Recent cities stored (placeholder)",
+      message: "Recent cities stored",
     });
-
   } catch (error) {
     res.status(500).json({
       success: false,

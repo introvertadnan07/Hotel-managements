@@ -13,20 +13,20 @@ const clerkWebhooks = async (req, res) => {
       "svix-signature": req.headers["svix-signature"],
     };
 
-    // ✅ Verify webhook
-    const evt = whook.verify(JSON.stringify(req.body), headers);
+    const body = req.body; // ✅ Buffer from express.raw()
 
+    const evt = whook.verify(body, headers);
     const { data, type } = evt;
 
     console.log("📩 Webhook type:", type);
 
-    // ✅ Extract PRIMARY email safely
     const primaryEmail = data.email_addresses?.find(
       (email) => email.id === data.primary_email_address_id
     );
 
     if (!primaryEmail?.email_address) {
-      throw new Error("No primary email found in Clerk webhook");
+      console.log("⚠️ No primary email for Clerk user:", data.id);
+      return res.json({ success: true }); // ✅ Prevent crash loop
     }
 
     const userData = {
@@ -41,15 +41,17 @@ const clerkWebhooks = async (req, res) => {
       case "user.created":
       case "user.updated":
         console.log("✅ Creating / Updating user");
+
         await User.findOneAndUpdate(
           { clerkId: data.id },
-          userData,
+          { $set: userData }, // ✅ Explicit update
           { upsert: true, new: true }
         );
         break;
 
       case "user.deleted":
         console.log("🗑 Deleting user");
+
         await User.findOneAndDelete({ clerkId: data.id });
         break;
 

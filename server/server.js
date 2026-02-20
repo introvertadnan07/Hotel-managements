@@ -18,6 +18,15 @@ connectDB();
 const app = express();
 
 app.use(cors());
+
+// ✅ Webhook route FIRST + raw body
+app.post(
+  "/api/webhooks/clerk",
+  express.raw({ type: "application/json" }),
+  clerkWebhooks
+);
+
+// ✅ Normal parsing AFTER webhook
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -30,15 +39,12 @@ app.get("/", (req, res) => {
   res.send("API running...");
 });
 
-// ✅ Clerk Webhook Route
-app.post("/api/webhooks/clerk", clerkWebhooks);
-
 app.use("/api/user", userRouter);
 app.use("/api/hotels", hotelRouter);
 app.use("/api/rooms", roomRouter);
 app.use("/api/bookings", bookingRouter);
 
-// ✅ JSON fallback
+// ✅ Fallback
 app.use((req, res) => {
   res.status(404).json({
     success: false,

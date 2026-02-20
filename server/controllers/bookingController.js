@@ -136,11 +136,16 @@ export const createBooking = async (req, res) => {
       totalPrice,
     });
 
-    // ✅ Send confirmation email
+    // =========================
+    // ✅ EMAIL SECTION (FIXED)
+    // =========================
+
     const userData = req.user;
 
-    if (!userData?.email) {
-      console.log("⚠️ No user email found. Skipping email.");
+    console.log("📧 Attempting email to:", userData?.email);
+
+    if (!userData?.email || userData.email === "no-email") {
+      console.log("❌ Email NOT sent → user email missing");
     } else {
       const mailOptions = {
         from: `"QuickStay" <${process.env.SENDER_EMAIL}>`,
@@ -152,7 +157,7 @@ export const createBooking = async (req, res) => {
 
             <p>Hi <strong>${userData.username || "Guest"}</strong>,</p>
 
-            <p>Your booking has been successfully confirmed. Here are your details:</p>
+            <p>Your booking has been successfully confirmed.</p>
 
             <table style="border-collapse: collapse; margin-top: 10px;">
               <tr>
@@ -196,9 +201,9 @@ export const createBooking = async (req, res) => {
 
       try {
         const info = await transporter.sendMail(mailOptions);
-        console.log("Email sent ✅", info.response);
+        console.log("✅ Email sent:", info.response);
       } catch (mailError) {
-        console.error("Email failed ❌:", mailError.message);
+        console.error("❌ Email failed:", mailError.message);
       }
     }
 
