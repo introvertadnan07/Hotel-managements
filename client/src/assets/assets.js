@@ -42,10 +42,10 @@ import uploadArea from "./uploadArea.svg";
 import totalBookingIcon from "./totalBookingIcon.svg";
 import totalRevenueIcon from "./totalRevenueIcon.svg";
 
-import adnanImage from "./Adnan.jpg";
+// ✅ FIXED lowercase filenames
+import adnanImage from "./adnan.jpg";
 import AnumImage from "./Anum.jpg";
-import MadeehaImage from "./Madeeha.jpg";
-
+import MadeehaImage from "./madeeha.jpg";
 
 // Hosted fallback
 import hostedDefaultImage from "./Anum.jpg";
@@ -88,7 +88,6 @@ export const assets = {
   exclusiveOffer2: exclusiveOfferCardImg2,
   exclusiveOffer3: exclusiveOfferCardImg3,
 
-  // ✅ NEW
   hostedDefaultImage,
 };
 
@@ -100,7 +99,6 @@ export const cities = [
   "Mumbai",
   "Kochi",
   "Patna",
-  "Kochi",
   "Ranchi",
   "Hyderabad"
 ];
@@ -215,8 +213,6 @@ export const roomsDummyData = [
   },
 ];
 
-
-// ✅ ✅ ✅ FIXED: Missing Export
 export const userBookingsDummyData = [
   {
     _id: "b1",
