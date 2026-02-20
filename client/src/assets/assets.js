@@ -42,9 +42,11 @@ import uploadArea from "./uploadArea.svg";
 import totalBookingIcon from "./totalBookingIcon.svg";
 import totalRevenueIcon from "./totalRevenueIcon.svg";
 
+// ✅ Local images (match filenames EXACTLY)
 import adnanImage from "./adnan.jpg";
 import anumImage from "./anum.jpg";
 
+// ✅ Hosted fallback
 import hostedDefaultImage from "./anum.jpg";
 
 export const assets = {
@@ -140,20 +142,22 @@ export const testimonials = [
       "I've used many booking platforms before, but none compare to the personalized experience that QuickStay provides.",
   },
   {
-    id: 3,
+    id: 2,
     name: "Anum Rahi",
     address: "Kolkata, India",
     image: anumImage,
     rating: 5,
-    review: "Amazing service!",
+    review:
+      "Beautiful rooms, smooth booking, and a very comfortable stay. Highly recommended!",
   },
   {
-    id: 4,
+    id: 3,
     name: "Md Adnan Qaisar",
     address: "Kochi, India",
     image: adnanImage,
     rating: 5,
-    review: "A seamless booking experience.",
+    review:
+      "A seamless booking experience with excellent hospitality.",
   },
 ];
 
@@ -165,8 +169,7 @@ export const facilityIcons = {
   "Pool Access": poolIcon,
 };
 
-
-// ✅ ✅ ✅ THIS WAS MISSING → ADD BACK
+// ✅ REQUIRED (your RoomDetails.jsx uses this)
 export const roomCommonData = [
   {
     icon: homeIcon,
