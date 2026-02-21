@@ -2,10 +2,9 @@ import express from "express";
 import cors from "cors";
 import "dotenv/config";
 import { clerkMiddleware } from "@clerk/express";
-import path from "path"; // ✅ ADD THIS
+import path from "path";
 
 import connectDB from "./configs/db.js";
-
 import userRouter from "./routes/userRoutes.js";
 import hotelRouter from "./routes/hotelRoutes.js";
 import roomRouter from "./routes/roomRoutes.js";
@@ -19,7 +18,18 @@ connectDB();
 
 const app = express();
 
-app.use(cors());
+// ✅ FIXED CORS
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://anumifly.vercel.app",
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+  })
+);
 
 // ✅ Clerk webhook (RAW body FIRST)
 app.post(
@@ -35,21 +45,19 @@ app.use(express.urlencoded({ extended: true }));
 // ✅ Clerk middleware
 app.use(clerkMiddleware());
 
-// ✅ STATIC UPLOADS FIX (IMPORTANT)
+// ✅ Static uploads
 const __dirname = path.resolve();
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// ✅ Root route
+// ✅ Routes
 app.get("/", (req, res) => {
-  res.send("Anumifly code work (API working)...");
+  res.send("API working...");
 });
 
-// ✅ Health route
 app.get("/health", (req, res) => {
   res.json({ status: "OK" });
 });
 
-// ✅ API Routes
 app.use("/api/user", userRouter);
 app.use("/api/hotels", hotelRouter);
 app.use("/api/rooms", roomRouter);
