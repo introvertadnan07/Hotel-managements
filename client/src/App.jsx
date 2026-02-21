@@ -10,10 +10,11 @@ import ListRoom from "./pages/hotelOwner/ListRoom";
 import AllRooms from "./pages/AllRooms";
 import RoomDetails from "./components/RoomDetails";
 
-import MyBookings from "./pages/MyBookings";   // ✅ ADD THIS
+import MyBookings from "./pages/MyBookings";   
 
 import HotelReg from "./components/HotelReg";
 import { useAppContext } from "./context/AppContext";
+import Loader from "./components/Loader";
 
 const App = () => {
   const { showHotelReg } = useAppContext();
@@ -26,12 +27,10 @@ const App = () => {
 
       <Routes>
         <Route path="/" element={<Home />} />
-
         <Route path="/rooms" element={<AllRooms />} />
         <Route path="/rooms/:id" element={<RoomDetails />} />
-
-        {/* ✅ FIXED ROUTE */}
         <Route path="/my-bookings" element={<MyBookings />} />
+        <Route path="/loader/:nextUrl" element={<Loader />} />
 
         <Route path="/owner" element={<OwnerLayout />}>
           <Route index element={<Dashboard />} />

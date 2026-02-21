@@ -6,19 +6,19 @@ import toast from "react-hot-toast";
 
 const MyBookings = () => {
   const { axios, getToken, user } = useAppContext();
-  const [bookings, setBooking] = useState([]);
 
-  // ✅ Normalize image path
+  const [bookings, setBooking] = useState([]);
+  const [payingId, setPayingId] = useState(null); // prevents double click
+
+  // ✅ Image resolver
   const getImageUrl = (img) => {
     if (!img) return assets.hostedDefaultImage;
-
     if (img.startsWith("http")) return img;
-
     if (img.startsWith("/")) img = img.slice(1);
-
     return `${import.meta.env.VITE_BACKEND_URL}/${img}`;
   };
 
+  // ✅ Fetch user bookings
   const fetchUserBookings = async () => {
     try {
       const token = await getToken();
@@ -40,10 +40,46 @@ const MyBookings = () => {
         toast.error(data.message);
       }
     } catch (error) {
-      toast.error(error.message);
+      toast.error(error.response?.data?.message || error.message);
     }
   };
 
+  // ✅ Stripe Payment Handler (FIXED)
+  const handlePayment = async (bookingId) => {
+    try {
+      const token = await getToken();
+
+      if (!token) {
+        toast.error("Please login first");
+        return;
+      }
+
+      setPayingId(bookingId);
+
+      const { data } = await axios.post(
+        "/api/bookings/stripe-payment",
+        { bookingId },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (data.success) {
+        window.location.href = data.url;
+      } else {
+        toast.error(data.message);
+        setPayingId(null);
+      }
+
+    } catch (error) {
+      toast.error(error.response?.data?.message || error.message);
+      setPayingId(null);
+    }
+  };
+
+  // ✅ Load bookings when user available
   useEffect(() => {
     if (user) fetchUserBookings();
   }, [user]);
@@ -57,12 +93,14 @@ const MyBookings = () => {
       />
 
       <div className="max-w-6xl mt-10 w-full text-gray-800">
+        {/* Header */}
         <div className="hidden md:grid grid-cols-[3fr_2fr_1fr] border-b pb-3 font-medium">
           <div>Hotels</div>
           <div>Date & Timings</div>
           <div>Payment</div>
         </div>
 
+        {/* Empty state */}
         {bookings.length === 0 ? (
           <p className="py-10 text-gray-500">No bookings found.</p>
         ) : (
@@ -98,7 +136,7 @@ const MyBookings = () => {
                   </div>
 
                   <p className="font-medium">
-                    Total: {booking.totalPrice}
+                    Total: ₹ {booking.totalPrice?.toLocaleString()}
                   </p>
                 </div>
               </div>
@@ -133,8 +171,12 @@ const MyBookings = () => {
                 </div>
 
                 {!booking.isPaid && (
-                  <button className="w-fit px-4 py-1.5 text-sm border rounded-full hover:bg-gray-100">
-                    Pay Now
+                  <button
+                    onClick={() => handlePayment(booking._id)}
+                    disabled={payingId === booking._id}
+                    className="w-fit px-4 py-1.5 text-sm border rounded-full hover:bg-gray-100 disabled:opacity-50"
+                  >
+                    {payingId === booking._id ? "Redirecting..." : "Pay Now"}
                   </button>
                 )}
               </div>
