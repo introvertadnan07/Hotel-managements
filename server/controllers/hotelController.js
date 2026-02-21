@@ -3,12 +3,37 @@ import User from "../models/User.js";
 
 export const registerHotel = async (req, res) => {
   try {
-    const { name, address, city, contact } = req.body;
+    // ✅ Ensure authenticated user exists
+    if (!req.user || !req.user.clerkId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
 
+    let { name, address, city, contact } = req.body;
+
+    // ✅ Trim inputs
+    name = name?.trim();
+    address = address?.trim();
+    city = city?.trim();
+    contact = contact?.trim();
+
+    // ✅ Validate fields
     if (!name || !address || !city || !contact) {
       return res.status(400).json({
         success: false,
         message: "All fields are required",
+      });
+    }
+
+    // ✅ Check user exists
+    const userExists = await User.findOne({ clerkId: req.user.clerkId });
+
+    if (!userExists) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found. Please login again.",
       });
     }
 
@@ -34,10 +59,8 @@ export const registerHotel = async (req, res) => {
     });
 
     // ✅ Update user role → hotelOwner
-    await User.findOneAndUpdate(
-      { clerkId: req.user.clerkId },
-      { role: "hotelOwner" }
-    );
+    userExists.role = "hotelOwner";
+    await userExists.save();
 
     res.json({
       success: true,
@@ -46,11 +69,11 @@ export const registerHotel = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Register hotel error:", error);
+    console.error("Register hotel error:", error.message);
 
     res.status(500).json({
       success: false,
-      message: "Server error",
+      message: error.message || "Server error",
     });
   }
 };
