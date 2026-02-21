@@ -11,6 +11,7 @@ import roomRouter from "./routes/roomRoutes.js";
 import bookingRouter from "./routes/bookingRoutes.js";
 
 import clerkWebhooks from "./controllers/clerkWebhooks.js";
+import { stripeWebhooks } from "./controllers/stripeWebhooks.js";
 import connectCloudinary from "./configs/cloudinary.js";
 
 // ✅ Init services
@@ -20,7 +21,7 @@ connectDB();
 const app = express();
 
 //
-// ✅ CORS CONFIG (FIXED)
+// ✅ CORS CONFIG
 //
 const allowedOrigins = [
   "http://localhost:5173",
@@ -43,7 +44,16 @@ app.use(
 );
 
 //
-// ✅ Clerk Webhook (RAW BODY FIRST)
+// ✅ Stripe Webhook (RAW BODY)
+//
+app.post(
+  "/api/webhooks/stripe",
+  express.raw({ type: "application/json" }),
+  stripeWebhooks
+);
+
+//
+// ✅ Clerk Webhook (RAW BODY)
 //
 app.post(
   "/api/webhooks/clerk",
@@ -52,7 +62,7 @@ app.post(
 );
 
 //
-// ✅ Normal body parsing AFTER webhook
+// ✅ Normal parsing AFTER webhooks
 //
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -69,29 +79,23 @@ const __dirname = path.resolve();
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 //
-// ✅ Root route
+// ✅ Routes
 //
 app.get("/", (req, res) => {
   res.send("✅ API working...");
 });
 
-//
-// ✅ Health check
-//
 app.get("/health", (req, res) => {
   res.json({ status: "OK" });
 });
 
-//
-// ✅ API Routes
-//
 app.use("/api/user", userRouter);
 app.use("/api/hotels", hotelRouter);
 app.use("/api/rooms", roomRouter);
 app.use("/api/bookings", bookingRouter);
 
 //
-// ✅ 404 Fallback
+// ✅ 404 fallback
 //
 app.use((req, res) => {
   res.status(404).json({
