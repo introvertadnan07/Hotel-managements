@@ -36,7 +36,6 @@ const AddRoom = () => {
       return;
     }
 
-    // ✅ Optional: Require at least one image
     const hasAtLeastOneImage = Object.values(images).some((img) => img);
     if (!hasAtLeastOneImage) {
       toast.error("Please upload at least one image");
@@ -63,20 +62,25 @@ const AddRoom = () => {
       const token = await getToken();
       if (!token) {
         toast.error("User not authenticated");
+        setLoading(false);
         return;
       }
 
-      const { data } = await axios.post("/api/rooms", formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      // ✅ FIXED API CALL (uses backend URL)
+      const { data } = await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/api/rooms`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
       if (data.success) {
         toast.success("Room added successfully");
 
-        // ✅ Reset form
         setRoomType("");
         setPricePerNight("");
 
@@ -162,7 +166,7 @@ const AddRoom = () => {
               <option value="">Select</option>
               <option>Single Bed</option>
               <option>Double Bed</option>
-              <option>Luxury Room</option> {/* ✅ FIXED */}
+              <option>Luxury Room</option>
               <option>Family Suite</option>
             </select>
           </div>
