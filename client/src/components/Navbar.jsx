@@ -55,11 +55,12 @@ const Navbar = () => {
   const navStyle =
     isOwnerPage || isScrolled
       ? "bg-white shadow-sm text-gray-700"
-      : "bg-transparent text-white";
+      : "bg-transparent text-white drop-shadow-sm";
 
   return (
-    <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${navStyle}`}>
-      
+    <nav
+      className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${navStyle}`}
+    >
       <div className="h-20 px-6 md:px-16 lg:px-24 xl:px-32 flex items-center justify-between">
 
         {/* ✅ Logo */}
@@ -75,11 +76,23 @@ const Navbar = () => {
 
         {/* ✅ Desktop Nav */}
         <div className="hidden md:flex items-center gap-8">
-          {navLinks.map((link) => (
-            <Link key={link.name} to={link.path}>
-              {link.name}
-            </Link>
-          ))}
+          {navLinks.map((link) => {
+            const isActive = location.pathname === link.path;
+
+            return (
+              <Link
+                key={link.name}
+                to={link.path}
+                className={`transition ${
+                  isActive
+                    ? "text-purple-500 font-medium"
+                    : "text-inherit hover:text-purple-400"
+                }`}
+              >
+                {link.name}
+              </Link>
+            );
+          })}
 
           {/* ✅ Owner Button */}
           {user && (
@@ -161,7 +174,7 @@ const Navbar = () => {
               key={link.name}
               to={link.path}
               onClick={() => setIsMenuOpen(false)}
-              className="text-lg"
+              className="text-lg text-gray-700 hover:text-purple-500 transition"
             >
               {link.name}
             </Link>
