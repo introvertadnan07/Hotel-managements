@@ -82,7 +82,7 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 // ✅ Routes
 //
 app.get("/", (req, res) => {
-  res.send("✅ API working...");
+  res.send("✅ Anumifly API working...");
 });
 
 app.get("/health", (req, res) => {
