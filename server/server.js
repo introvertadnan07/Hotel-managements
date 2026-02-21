@@ -21,24 +21,11 @@ connectDB();
 const app = express();
 
 //
-// ✅ CORS CONFIG
+// ✅ FIXED CORS CONFIG (supports Vercel previews)
 //
-const allowedOrigins = [
-  "http://localhost:5173",
-  "https://anumifly.vercel.app",
-];
-
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    origin: true,          // ✅ Allow all origins (localhost + previews + prod)
     credentials: true,
   })
 );
