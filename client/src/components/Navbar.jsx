@@ -29,6 +29,7 @@ const Navbar = () => {
 
   const location = useLocation();
   const isOwnerPage = location.pathname.startsWith("/owner");
+  const isHomePage = location.pathname === "/";
 
   const { openSignIn } = useClerk();
   const {
@@ -46,59 +47,59 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // ✅ Lock body scroll
+  // ✅ Lock body scroll when mobile menu open
   React.useEffect(() => {
     document.body.style.overflow = isMenuOpen ? "hidden" : "auto";
     return () => (document.body.style.overflow = "auto");
   }, [isMenuOpen]);
 
+  // ✅ Navbar styling logic
   const navStyle =
-    isOwnerPage || isScrolled
+    !isHomePage || isOwnerPage || isScrolled
       ? "bg-white shadow-sm text-black"
       : "bg-transparent text-white";
 
   return (
-    <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${navStyle}`}>
+    <nav
+      className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${navStyle}`}
+    >
       <div className="h-20 px-6 md:px-16 lg:px-24 xl:px-32 flex items-center justify-between">
-
+        
         {/* ✅ Logo */}
         <Link to="/">
           <img
             src={assets.logo}
             alt="logo"
             className={`h-9 ${
-              isOwnerPage || isScrolled ? "invert opacity-80" : ""
+              !isHomePage || isOwnerPage || isScrolled
+                ? "invert opacity-80"
+                : ""
             }`}
           />
         </Link>
 
         {/* ✅ Desktop Nav */}
         <div className="hidden md:flex items-center gap-8">
-          {navLinks.map((link) => {
-            const isActive = location.pathname === link.path;
-
-            return (
-              <Link
-                key={link.name}
-                to={link.path}
-                className={`transition ${
-                  isActive
-                    ? "font-semibold"
-                    : "hover:opacity-70"
-                }`}
-              >
-                {link.name}
-              </Link>
-            );
-          })}
+          {navLinks.map((link) => (
+            <Link
+              key={link.name}
+              to={link.path}
+              className="hover:text-gray-500 transition"
+            >
+              {link.name}
+            </Link>
+          ))}
 
           {/* ✅ Owner Button */}
           {user && (
             <button
               disabled={isCheckingOwner}
               onClick={() => {
-                if (isOwner) navigate("/owner");
-                else setShowHotelReg(true);
+                if (isOwner) {
+                  navigate("/owner");
+                } else {
+                  setShowHotelReg(true);
+                }
               }}
               className={`border px-4 py-1 rounded-full transition ${
                 isCheckingOwner
@@ -130,7 +131,7 @@ const Navbar = () => {
           ) : (
             <button
               onClick={openSignIn}
-              className="bg-black text-white px-8 py-2.5 rounded-full hover:opacity-80 transition"
+              className="bg-black text-white px-8 py-2.5 rounded-full hover:bg-gray-800 transition"
             >
               Login
             </button>
@@ -144,7 +145,7 @@ const Navbar = () => {
             alt="menu"
             onClick={() => setIsMenuOpen(true)}
             className={`h-4 cursor-pointer ${
-              isOwnerPage || isScrolled ? "invert" : ""
+              !isHomePage || isOwnerPage || isScrolled ? "invert" : ""
             }`}
           />
         </div>
@@ -169,7 +170,7 @@ const Navbar = () => {
               key={link.name}
               to={link.path}
               onClick={() => setIsMenuOpen(false)}
-              className="text-lg hover:opacity-70 transition"
+              className="text-lg"
             >
               {link.name}
             </Link>
@@ -180,8 +181,12 @@ const Navbar = () => {
               disabled={isCheckingOwner}
               onClick={() => {
                 setIsMenuOpen(false);
-                if (isOwner) navigate("/owner");
-                else setShowHotelReg(true);
+
+                if (isOwner) {
+                  navigate("/owner");
+                } else {
+                  setShowHotelReg(true);
+                }
               }}
               className={`border px-6 py-2 rounded-full transition ${
                 isCheckingOwner
