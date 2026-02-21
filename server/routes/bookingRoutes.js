@@ -4,17 +4,26 @@ import {
   createBooking,
   getHotelBookings,
   getUserBookings,
+  stripePayment,
 } from "../controllers/bookingController.js";
+
 import { protect } from "../middleware/authMiddleware.js";
 
 const bookingRouter = express.Router();
 
+// Availability
 bookingRouter.post("/check-availability", checkAvailabilityAPI);
+
+// Booking
 bookingRouter.post("/book", protect, createBooking);
 
-// ✅ FIXED → POST instead of GET
+// User bookings
 bookingRouter.post("/user", protect, getUserBookings);
 
+// Hotel owner dashboard
 bookingRouter.post("/hotel", protect, getHotelBookings);
+
+// Stripe payment
+bookingRouter.post("/stripe-payment", protect, stripePayment);
 
 export default bookingRouter;
