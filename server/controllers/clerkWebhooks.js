@@ -44,7 +44,7 @@ const clerkWebhooks = async (req, res) => {
 
         await User.findOneAndUpdate(
           { clerkId: data.id },
-          { $set: userData }, // ✅ Explicit update
+          { $set: userData }, 
           { upsert: true, new: true }
         );
         break;
