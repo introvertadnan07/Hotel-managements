@@ -13,57 +13,86 @@ import bookingRouter from "./routes/bookingRoutes.js";
 import clerkWebhooks from "./controllers/clerkWebhooks.js";
 import connectCloudinary from "./configs/cloudinary.js";
 
+// ✅ Init services
 connectCloudinary();
 connectDB();
 
 const app = express();
 
-// ✅ FIXED CORS
+//
+// ✅ CORS CONFIG (FIXED)
+//
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://anumifly.vercel.app",
+];
+
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "https://anumifly.vercel.app",
-    ],
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   })
 );
 
-// ✅ Clerk webhook (RAW body FIRST)
+//
+// ✅ Clerk Webhook (RAW BODY FIRST)
+//
 app.post(
   "/api/webhooks/clerk",
   express.raw({ type: "application/json" }),
   clerkWebhooks
 );
 
-// ✅ Normal parsing AFTER webhook
+//
+// ✅ Normal body parsing AFTER webhook
+//
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+//
 // ✅ Clerk middleware
+//
 app.use(clerkMiddleware());
 
+//
 // ✅ Static uploads
+//
 const __dirname = path.resolve();
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
-// ✅ Routes
+//
+// ✅ Root route
+//
 app.get("/", (req, res) => {
-  res.send("API working...");
+  res.send("✅ API working...");
 });
 
+//
+// ✅ Health check
+//
 app.get("/health", (req, res) => {
   res.json({ status: "OK" });
 });
 
+//
+// ✅ API Routes
+//
 app.use("/api/user", userRouter);
 app.use("/api/hotels", hotelRouter);
 app.use("/api/rooms", roomRouter);
 app.use("/api/bookings", bookingRouter);
 
-// ✅ Fallback
+//
+// ✅ 404 Fallback
+//
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -71,6 +100,9 @@ app.use((req, res) => {
   });
 });
 
+//
+// ✅ Server start
+//
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
