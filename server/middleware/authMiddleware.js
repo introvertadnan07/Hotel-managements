@@ -1,9 +1,9 @@
 import User from "../models/User.js";
-import clerkClient from "@clerk/clerk-sdk-node";
+import { clerkClient } from "@clerk/express";
 
 export const protect = async (req, res, next) => {
   try {
-    const auth = req.auth;   // ✅ FIXED
+    const auth = req.auth;
 
     if (!auth?.userId) {
       return res.status(401).json({
@@ -14,11 +14,24 @@ export const protect = async (req, res, next) => {
 
     let user = await User.findOne({ clerkId: auth.userId });
 
+    //
     // ✅ AUTO-SYNC if missing
+    //
     if (!user) {
       console.log("⚠️ User not in DB → syncing from Clerk");
 
-      const clerkUser = await clerkClient.users.getUser(auth.userId);
+      let clerkUser;
+
+      try {
+        clerkUser = await clerkClient.users.getUser(auth.userId);
+      } catch (clerkError) {
+        console.error("Clerk fetch error:", clerkError.message);
+
+        return res.status(401).json({
+          success: false,
+          message: "Authentication failed. Please login again.",
+        });
+      }
 
       const email = clerkUser.emailAddresses?.[0]?.emailAddress;
 
@@ -34,16 +47,21 @@ export const protect = async (req, res, next) => {
         email,
         username: `${clerkUser.firstName || ""} ${clerkUser.lastName || ""}`.trim(),
         image: clerkUser.imageUrl,
+        role: "user", // ✅ safe default
       });
 
       console.log("✅ User synced to DB");
     }
 
-    req.user = user;   // ✅ REQUIRED
+    //
+    // ✅ Attach user to request
+    //
+    req.user = user;
+
     next();
 
   } catch (error) {
-    console.error("Auth error:", error);
+    console.error("Auth middleware error:", error.message);
 
     res.status(500).json({
       success: false,
