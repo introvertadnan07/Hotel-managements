@@ -2,7 +2,6 @@ import axios from "axios";
 import { createContext, useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUser, useAuth } from "@clerk/clerk-react";
-import toast from "react-hot-toast";
 
 const AppContext = createContext(null);
 
@@ -20,9 +19,19 @@ export const AppProvider = ({ children }) => {
 
   const currency = "₹";
 
-  // ✅ FIXED axios baseURL
+  // ✅ Improved axios instance
   const api = axios.create({
     baseURL: import.meta.env.VITE_BACKEND_URL,
+    withCredentials: true,
+  });
+
+  // ✅ Auto attach Clerk token
+  api.interceptors.request.use(async (config) => {
+    const token = await getToken();
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
   });
 
   const fetchRooms = async () => {
@@ -41,16 +50,7 @@ export const AppProvider = ({ children }) => {
     try {
       setIsCheckingOwner(true);
 
-      const token = await getToken();
-
-      if (!token) {
-        setIsOwner(false);
-        return;
-      }
-
-      const { data } = await api.get("/api/user", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const { data } = await api.get("/api/user");
 
       if (data?.success) {
         setIsOwner(data.user.role === "hotelOwner");
