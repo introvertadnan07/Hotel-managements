@@ -46,7 +46,7 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // ✅ Lock body scroll when mobile menu open
+  // ✅ Lock body scroll
   React.useEffect(() => {
     document.body.style.overflow = isMenuOpen ? "hidden" : "auto";
     return () => (document.body.style.overflow = "auto");
@@ -54,13 +54,11 @@ const Navbar = () => {
 
   const navStyle =
     isOwnerPage || isScrolled
-      ? "bg-white shadow-sm text-gray-700"
-      : "bg-transparent text-white drop-shadow-sm";
+      ? "bg-white shadow-sm text-black"
+      : "bg-transparent text-white";
 
   return (
-    <nav
-      className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${navStyle}`}
-    >
+    <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${navStyle}`}>
       <div className="h-20 px-6 md:px-16 lg:px-24 xl:px-32 flex items-center justify-between">
 
         {/* ✅ Logo */}
@@ -85,8 +83,8 @@ const Navbar = () => {
                 to={link.path}
                 className={`transition ${
                   isActive
-                    ? "text-purple-500 font-medium"
-                    : "text-inherit hover:text-purple-400"
+                    ? "font-semibold"
+                    : "hover:opacity-70"
                 }`}
               >
                 {link.name}
@@ -99,11 +97,8 @@ const Navbar = () => {
             <button
               disabled={isCheckingOwner}
               onClick={() => {
-                if (isOwner) {
-                  navigate("/owner");
-                } else {
-                  setShowHotelReg(true);
-                }
+                if (isOwner) navigate("/owner");
+                else setShowHotelReg(true);
               }}
               className={`border px-4 py-1 rounded-full transition ${
                 isCheckingOwner
@@ -135,7 +130,7 @@ const Navbar = () => {
           ) : (
             <button
               onClick={openSignIn}
-              className="bg-black text-white px-8 py-2.5 rounded-full hover:bg-gray-800 transition"
+              className="bg-black text-white px-8 py-2.5 rounded-full hover:opacity-80 transition"
             >
               Login
             </button>
@@ -174,7 +169,7 @@ const Navbar = () => {
               key={link.name}
               to={link.path}
               onClick={() => setIsMenuOpen(false)}
-              className="text-lg text-gray-700 hover:text-purple-500 transition"
+              className="text-lg hover:opacity-70 transition"
             >
               {link.name}
             </Link>
@@ -185,12 +180,8 @@ const Navbar = () => {
               disabled={isCheckingOwner}
               onClick={() => {
                 setIsMenuOpen(false);
-
-                if (isOwner) {
-                  navigate("/owner");
-                } else {
-                  setShowHotelReg(true);
-                }
+                if (isOwner) navigate("/owner");
+                else setShowHotelReg(true);
               }}
               className={`border px-6 py-2 rounded-full transition ${
                 isCheckingOwner
