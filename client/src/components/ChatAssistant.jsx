@@ -42,7 +42,7 @@ const ChatAssistant = () => {
     <div className="fixed bottom-6 right-6 w-80 bg-white rounded-2xl shadow-xl flex flex-col">
       
       <div className="p-4 border-b font-semibold">
-        🤖 AI Assistant
+        🤖 AI Anumifly Assistant
       </div>
 
       <div className="p-3 h-64 overflow-y-auto space-y-2">
