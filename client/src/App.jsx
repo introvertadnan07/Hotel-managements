@@ -11,10 +11,12 @@ import AllRooms from "./pages/AllRooms";
 import RoomDetails from "./components/RoomDetails";
 
 import MyBookings from "./pages/MyBookings";
-import Wishlist from "./pages/Wishlist";   // ⭐ ADDED
+import Wishlist from "./pages/Wishlist";
 
 import HotelReg from "./components/HotelReg";
 import Loader from "./components/Loader";
+
+import ChatAssistant from "./components/ChatAssistant";   
 
 import { useAppContext } from "./context/AppContext";
 
@@ -25,6 +27,8 @@ const App = () => {
     <>
       <Navbar />
 
+      <ChatAssistant />   
+
       {showHotelReg && <HotelReg />}
 
       <Routes>
@@ -33,7 +37,7 @@ const App = () => {
         <Route path="/rooms" element={<AllRooms />} />
         <Route path="/rooms/:id" element={<RoomDetails />} />
         <Route path="/my-bookings" element={<MyBookings />} />
-        <Route path="/wishlist" element={<Wishlist />} /> {/* ⭐ NEW */}
+        <Route path="/wishlist" element={<Wishlist />} />
         <Route path="/loader/:nextUrl" element={<Loader />} />
 
         {/* 🏨 Owner Routes */}

@@ -93,3 +93,53 @@ export const getRecommendations = async (req, res) => {
     });
   }
 };
+
+// ⭐ AI CHAT ASSISTANT
+export const chatAssistant = async (req, res) => {
+  try {
+    const { message } = req.body;
+
+    const rooms = await Room.find()
+      .populate("hotel")
+      .limit(5);
+
+    const roomContext = rooms.map(room => ({
+      name: room.roomType,
+      price: room.pricePerNight,
+      hotel: room.hotel?.name,
+    }));
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4.1-mini",
+      messages: [
+        {
+          role: "system",
+          content: `
+You are a smart hotel booking assistant.
+
+Available rooms:
+${JSON.stringify(roomContext, null, 2)}
+
+Answer user questions naturally and helpfully.
+          `,
+        },
+        {
+          role: "user",
+          content: message,
+        },
+      ],
+    });
+
+    res.json({
+      success: true,
+      reply: completion.choices[0].message.content,
+    });
+
+  } catch (error) {
+    console.error("AI Chat Error:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "AI assistant failed",
+    });
+  }
+};
