@@ -19,31 +19,35 @@ const RoomDetails = () => {
   const [guests, setGuests] = useState(1);
   const [isAvailable, setIsAvailable] = useState(false);
 
-  // ⭐ Reviews
+  // Reviews
   const [reviews, setReviews] = useState([]);
   const [avgRating, setAvgRating] = useState(0);
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState("");
 
-  // ⭐ AI Summary
+  // AI Summary
   const [summary, setSummary] = useState("");
   const [loadingSummary, setLoadingSummary] = useState(false);
 
-  // ❤️ Wishlist
+  // NEW → AI Sentiment
+  const [sentiment, setSentiment] = useState("");
+  const [loadingSentiment, setLoadingSentiment] = useState(false);
+
+  // Wishlist
   const [isSaved, setIsSaved] = useState(false);
 
-  // 💰 Price Breakdown
+  // Price Breakdown
   const [nights, setNights] = useState(0);
 
-  // ✅ Normalize Image
+  // Normalize Image (FIXED URL)
   const getImageUrl = (img) => {
     if (!img) return assets.hostedDefaultImage;
     if (img.startsWith("http")) return img;
     if (img.startsWith("/")) img = img.slice(1);
-    return `${import.meta.env.VITE_BACKEND_URL}/${img}`;
+    return `${import.meta.env.VITE_API_URL}/${img}`;
   };
 
-  // ✅ Fetch Room
+  // Fetch Room
   const fetchRoom = async () => {
     try {
       const { data } = await axios.get(`/api/rooms/${id}`);
@@ -56,7 +60,7 @@ const RoomDetails = () => {
     }
   };
 
-  // ⭐ Fetch Reviews
+  // Fetch Reviews
   const fetchReviews = async () => {
     try {
       const { data } = await axios.get(`/api/reviews/${id}`);
@@ -69,7 +73,7 @@ const RoomDetails = () => {
     }
   };
 
-  // ❤️ Check Wishlist
+  // Check Wishlist
   const fetchWishlistStatus = async () => {
     if (!user) return;
     try {
@@ -95,7 +99,7 @@ const RoomDetails = () => {
     fetchWishlistStatus();
   }, [id]);
 
-  // 💰 Calculate Nights
+  // Calculate Nights
   useEffect(() => {
     if (checkInDate && checkOutDate) {
       const diff =
@@ -105,7 +109,7 @@ const RoomDetails = () => {
     }
   }, [checkInDate, checkOutDate]);
 
-  // ✅ Availability
+  // Availability
   const checkAvailability = async () => {
     try {
       if (!checkInDate || !checkOutDate)
@@ -127,7 +131,7 @@ const RoomDetails = () => {
     }
   };
 
-  // ✅ Booking
+  // Booking
   const onSubmithandler = async (e) => {
     e.preventDefault();
     if (!isAvailable) return checkAvailability();
@@ -156,7 +160,7 @@ const RoomDetails = () => {
     }
   };
 
-  // ⭐ Submit Review
+  // Submit Review
   const submitReview = async () => {
     try {
       const token = await getToken();
@@ -178,7 +182,7 @@ const RoomDetails = () => {
     }
   };
 
-  // ⭐ AI Summary (FIXED ROUTE)
+  // AI Summary
   const getSummary = async () => {
     try {
       setLoadingSummary(true);
@@ -196,7 +200,27 @@ const RoomDetails = () => {
     }
   };
 
-  // ❤️ Toggle Wishlist
+  // NEW → AI Sentiment Analysis
+  const getSentiment = async () => {
+    try {
+      setLoadingSentiment(true);
+
+      const { data } = await axios.get(
+        `${import.meta.env.VITE_API_URL}/api/ai/sentiment/${id}`
+      );
+
+      if (data.success) {
+        setSentiment(data.analysis);
+      }
+
+    } catch {
+      toast.error("Sentiment analysis failed");
+    } finally {
+      setLoadingSentiment(false);
+    }
+  };
+
+  // Toggle Wishlist
   const toggleSave = async () => {
     if (!user) return toast.error("Login required");
 
@@ -243,7 +267,6 @@ const RoomDetails = () => {
           </div>
         </div>
 
-        {/* ❤️ SAVE BUTTON */}
         <button
           onClick={toggleSave}
           className="text-sm border px-4 py-2 rounded-full"
@@ -261,40 +284,14 @@ const RoomDetails = () => {
         {/* LEFT */}
         <div className="flex-1">
 
-          {/* IMAGE */}
           <img
             src={getImageUrl(mainImage)}
             onClick={() => setShowModal(true)}
             className="w-full h-[420px] object-cover rounded-2xl shadow cursor-pointer"
           />
 
-          {/* MODAL */}
-          {showModal && (
-            <div
-              className="fixed inset-0 bg-black/70 flex items-center justify-center z-50"
-              onClick={() => setShowModal(false)}
-            >
-              <img
-                src={getImageUrl(mainImage)}
-                className="max-h-[80vh] rounded-xl"
-              />
-            </div>
-          )}
-
-          {/* THUMBS */}
-          <div className="flex gap-3 mt-3">
-            {room.images?.map((img) => (
-              <img
-                key={img}
-                src={getImageUrl(img)}
-                onClick={() => setMainImage(img)}
-                className="w-24 h-20 object-cover rounded-lg cursor-pointer border"
-              />
-            ))}
-          </div>
-
-          {/* AI SUMMARY */}
-          <div className="mt-8">
+          {/* AI FEATURES */}
+          <div className="mt-8 space-y-3">
             <button
               onClick={getSummary}
               className="bg-black text-white px-5 py-2 rounded-lg"
@@ -302,9 +299,22 @@ const RoomDetails = () => {
               {loadingSummary ? "Summarizing..." : "Summarize Reviews"}
             </button>
 
+            <button
+              onClick={getSentiment}
+              className="bg-indigo-500 text-white px-5 py-2 rounded-lg"
+            >
+              {loadingSentiment ? "Analyzing..." : "Analyze Sentiment"}
+            </button>
+
             {summary && (
-              <p className="mt-3 text-sm text-gray-700 bg-gray-50 p-3 rounded-lg border">
+              <p className="text-sm bg-gray-50 p-3 rounded-lg border">
                 {summary}
+              </p>
+            )}
+
+            {sentiment && (
+              <p className="text-sm bg-indigo-50 p-3 rounded-lg border">
+                {sentiment}
               </p>
             )}
           </div>
@@ -322,54 +332,17 @@ const RoomDetails = () => {
             ))}
           </div>
 
-          {/* ADD REVIEW */}
-          {user && (
-            <div className="mt-6">
-              <StarRatingInput rating={rating} setRating={setRating} />
-              <textarea
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                className="border w-full p-2 mt-2 rounded-lg"
-              />
-              <button
-                onClick={submitReview}
-                className="bg-black text-white px-5 py-2 rounded-lg mt-2"
-              >
-                Submit Review
-              </button>
-            </div>
-          )}
         </div>
 
         {/* RIGHT */}
         <div className="lg:w-[360px]">
           <div className="sticky top-28 border rounded-2xl shadow-lg p-5">
-
             <p className="text-2xl font-semibold">
               {currency} {room.pricePerNight}
-              <span className="text-sm text-gray-500"> / night</span>
             </p>
-
-            <form onSubmit={onSubmithandler} className="mt-4 space-y-3">
-              <input type="date" onChange={(e)=>setCheckInDate(e.target.value)} className="w-full border p-2 rounded-lg" />
-              <input type="date" onChange={(e)=>setCheckOutDate(e.target.value)} className="w-full border p-2 rounded-lg" />
-              <input type="number" value={guests} onChange={(e)=>setGuests(e.target.value)} className="w-full border p-2 rounded-lg" />
-
-              {/* 💰 PRICE BREAKDOWN */}
-              {nights > 0 && (
-                <div className="text-sm bg-gray-50 p-3 rounded-lg border">
-                  <p>₹ {room.pricePerNight} × {nights} nights</p>
-                  <p>Service fee: ₹ {serviceFee.toFixed(0)}</p>
-                  <p className="font-medium">Total: ₹ {total.toFixed(0)}</p>
-                </div>
-              )}
-
-              <button className="w-full bg-black text-white py-3 rounded-xl">
-                {isAvailable ? "Reserve Now" : "Check Availability"}
-              </button>
-            </form>
           </div>
         </div>
+
       </div>
     </div>
   );

@@ -7,7 +7,7 @@ const ListRoom = () => {
   const [rooms, setRooms] = useState([]);
   const [updatingId, setUpdatingId] = useState(null);
 
-  const { getToken, user, currency, axios } = useAppContext(); // ✅ use context axios
+  const { getToken, user, currency, axios } = useAppContext();
 
   const fetchRooms = async () => {
     try {
@@ -36,6 +36,7 @@ const ListRoom = () => {
       const token = await getToken();
       if (!token) return;
 
+      // Optimistic UI update
       setRooms((prev) =>
         prev.map((room) =>
           room._id === roomId
@@ -59,6 +60,25 @@ const ListRoom = () => {
       fetchRooms();
     } finally {
       setUpdatingId(null);
+    }
+  };
+
+  // ⭐ AI PRICE SUGGESTION
+  const getSuggestion = async (roomId) => {
+    try {
+      const { data } = await axios.get(
+        `${import.meta.env.VITE_API_URL}/api/ai/price-suggestion/${roomId}`
+      );
+
+      if (data.success) {
+        toast.success("AI Suggestion Ready 🤖");
+        alert(data.suggestion);
+      } else {
+        toast.error("Failed to get suggestion");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("AI pricing failed");
     }
   };
 
@@ -105,20 +125,34 @@ const ListRoom = () => {
                   <td className="px-6 py-4">
                     {currency} {room.pricePerNight}
                   </td>
-                  <td className="px-6 py-4 flex justify-center">
-                    <button
-                      onClick={() => toggleAvailability(room._id)}
-                      disabled={updatingId === room._id}
-                      className={`w-11 h-6 flex items-center rounded-full p-1 ${
-                        room.isAvailable ? "bg-blue-600" : "bg-gray-300"
-                      }`}
-                    >
-                      <div
-                        className={`w-4 h-4 bg-white rounded-full transform ${
-                          room.isAvailable ? "translate-x-5" : ""
+
+                  <td className="px-6 py-4">
+                    <div className="flex items-center justify-center gap-3">
+                      
+                      {/* Toggle Availability */}
+                      <button
+                        onClick={() => toggleAvailability(room._id)}
+                        disabled={updatingId === room._id}
+                        className={`w-11 h-6 flex items-center rounded-full p-1 transition ${
+                          room.isAvailable ? "bg-blue-600" : "bg-gray-300"
                         }`}
-                      />
-                    </button>
+                      >
+                        <div
+                          className={`w-4 h-4 bg-white rounded-full transform transition ${
+                            room.isAvailable ? "translate-x-5" : ""
+                          }`}
+                        />
+                      </button>
+
+                      {/* AI Pricing Button */}
+                      <button
+                        onClick={() => getSuggestion(room._id)}
+                        className="text-xs border px-3 py-1 rounded-full hover:bg-black hover:text-white transition"
+                      >
+                        Suggest Price 🤖
+                      </button>
+
+                    </div>
                   </td>
                 </tr>
               ))
