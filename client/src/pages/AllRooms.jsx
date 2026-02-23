@@ -13,7 +13,7 @@ const AllRooms = () => {
   const destination = searchParams.get("destination");
   const [selectedSort, setSelectedSort] = useState("");
 
-  // ✅ UNIVERSAL IMAGE FIX
+  // ✅ UNIVERSAL IMAGE FIX (UPDATED)
   const getImage = (room) => {
     const img = room?.images?.[0];
 
@@ -24,10 +24,10 @@ const AllRooms = () => {
     }
 
     if (img.startsWith("/uploads")) {
-      return `${import.meta.env.VITE_BACKEND_URL}${img}`;
+      return `${import.meta.env.VITE_API_URL}${img}`;
     }
 
-    return `${import.meta.env.VITE_BACKEND_URL}/uploads/${img}`;
+    return `${import.meta.env.VITE_API_URL}/uploads/${img}`;
   };
 
   const matchesDestination = (room) =>
@@ -48,7 +48,12 @@ const AllRooms = () => {
   };
 
   const filteredRooms = useMemo(() => {
-    return rooms?.filter(matchesDestination).sort(sortRooms);
+    if (!rooms) return [];
+
+    return [...rooms] // ✅ SAFE COPY (important)
+      .filter(matchesDestination)
+      .sort(sortRooms);
+
   }, [rooms, selectedSort, destination]);
 
   return (
@@ -58,17 +63,17 @@ const AllRooms = () => {
           Hotel Rooms
         </h1>
 
-        {filteredRooms?.length === 0 && (
+        {filteredRooms.length === 0 && (
           <p className="text-gray-500">No rooms found.</p>
         )}
 
-        {filteredRooms?.map((room) => (
+        {filteredRooms.map((room) => (
           <div
             key={room._id}
             className="flex flex-col md:flex-row gap-6 py-8 border-b"
           >
             <img
-              src={getImage(room)}   // ✅ FIXED
+              src={getImage(room)}
               alt="room"
               className="md:w-1/2 h-64 object-cover rounded-xl shadow cursor-pointer"
               onClick={() => navigate(`/rooms/${room._id}`)}
