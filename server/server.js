@@ -9,6 +9,8 @@ import userRouter from "./routes/userRoutes.js";
 import hotelRouter from "./routes/hotelRoutes.js";
 import roomRouter from "./routes/roomRoutes.js";
 import bookingRouter from "./routes/bookingRoutes.js";
+import reviewRouter from "./routes/reviewRoutes.js";
+import wishlistRouter from "./routes/wishlistRoutes.js"; // ⭐ NEW
 
 import clerkWebhooks from "./controllers/clerkWebhooks.js";
 import { stripeWebhooks } from "./controllers/stripeWebhooks.js";
@@ -21,11 +23,11 @@ connectDB();
 const app = express();
 
 //
-// ✅ FIXED CORS CONFIG (supports Vercel previews)
+// ✅ CORS
 //
 app.use(
   cors({
-    origin: true,          // ✅ Allow all origins (localhost + previews + prod)
+    origin: true,
     credentials: true,
   })
 );
@@ -80,6 +82,8 @@ app.use("/api/user", userRouter);
 app.use("/api/hotels", hotelRouter);
 app.use("/api/rooms", roomRouter);
 app.use("/api/bookings", bookingRouter);
+app.use("/api/reviews", reviewRouter);
+app.use("/api/wishlist", wishlistRouter); // ⭐ IMPORTANT
 
 //
 // ✅ 404 fallback
