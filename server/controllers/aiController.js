@@ -32,7 +32,10 @@ export const getReviewSummary = async (req, res) => {
           content:
             "Summarize hotel room reviews in a short, friendly paragraph.",
         },
-        { role: "user", content: reviewText },
+        {
+          role: "user",
+          content: reviewText,
+        },
       ],
     });
 
@@ -43,7 +46,10 @@ export const getReviewSummary = async (req, res) => {
 
   } catch (error) {
     console.error("AI Summary Error:", error.message);
-    res.status(500).json({ success: false, message: "Summary failed" });
+    res.status(500).json({
+      success: false,
+      message: "Failed to generate summary",
+    });
   }
 };
 
@@ -64,13 +70,19 @@ export const getRecommendations = async (req, res) => {
     const rooms = await Room.find({
       _id: { $ne: roomId },
       roomType: currentRoom.roomType,
-    }).limit(4).populate("hotel");
+    }).limit(4);
 
-    res.json({ success: true, rooms });
+    res.json({
+      success: true,
+      rooms,
+    });
 
   } catch (error) {
     console.error("Recommendation Error:", error.message);
-    res.status(500).json({ success: false, message: "Recommendation failed" });
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch recommendations",
+    });
   }
 };
 
@@ -81,7 +93,16 @@ export const chatAssistant = async (req, res) => {
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4.1-mini",
-      messages: [{ role: "user", content: message }],
+      messages: [
+        {
+          role: "system",
+          content: "You are a smart hotel booking assistant.",
+        },
+        {
+          role: "user",
+          content: message,
+        },
+      ],
     });
 
     res.json({
@@ -91,12 +112,15 @@ export const chatAssistant = async (req, res) => {
 
   } catch (error) {
     console.error("AI Chat Error:", error.message);
-    res.status(500).json({ success: false, message: "Chat failed" });
+    res.status(500).json({
+      success: false,
+      message: "AI assistant failed",
+    });
   }
 };
 
-// ⭐ AI PRICE SUGGESTION
-export const getPriceSuggestion = async (req, res) => {
+// ⭐ NEW → AI DESCRIPTION GENERATOR
+export const generateRoomDescription = async (req, res) => {
   try {
     const { roomId } = req.params;
 
@@ -110,63 +134,36 @@ export const getPriceSuggestion = async (req, res) => {
     }
 
     const prompt = `
-Suggest a competitive price.
+Write a compelling and attractive hotel room description.
 
 Room Type: ${room.roomType}
-Current Price: ₹${room.pricePerNight}
+Price: ₹${room.pricePerNight}
 Amenities: ${room.amenities.join(", ")}
-City: ${room.hotel?.city}
+Hotel: ${room.hotel?.name}
+Location: ${room.hotel?.city}
+
+Keep it short, engaging, and luxurious.
 `;
 
     const completion = await openai.chat.completions.create({
       model: "gpt-4.1-mini",
-      messages: [{ role: "user", content: prompt }],
-    });
-
-    res.json({
-      success: true,
-      suggestion: completion.choices[0].message.content,
-    });
-
-  } catch (error) {
-    console.error("Pricing Error:", error.message);
-    res.status(500).json({ success: false, message: "Pricing failed" });
-  }
-};
-
-// ⭐ AI SENTIMENT ANALYSIS
-export const getSentimentAnalysis = async (req, res) => {
-  try {
-    const { roomId } = req.params;
-
-    const reviews = await Review.find({ room: roomId });
-
-    if (!reviews.length) {
-      return res.json({
-        success: true,
-        analysis: "No reviews available.",
-      });
-    }
-
-    const reviewText = reviews.map(r => r.comment).join("\n");
-
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4.1-mini",
       messages: [
-        {
-          role: "user",
-          content: `Analyze sentiment:\n${reviewText}`,
-        },
+        { role: "system", content: "You are a hotel marketing expert." },
+        { role: "user", content: prompt },
       ],
     });
 
     res.json({
       success: true,
-      analysis: completion.choices[0].message.content,
+      description: completion.choices[0].message.content,
     });
 
   } catch (error) {
-    console.error("Sentiment Error:", error.message);
-    res.status(500).json({ success: false, message: "Sentiment failed" });
+    console.error("AI Description Error:", error.message);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to generate description",
+    });
   }
 };

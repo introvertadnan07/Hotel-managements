@@ -36,7 +36,7 @@ const ListRoom = () => {
       const token = await getToken();
       if (!token) return;
 
-      // Optimistic UI update
+      // ✅ Optimistic UI update
       setRooms((prev) =>
         prev.map((room) =>
           room._id === roomId
@@ -82,6 +82,25 @@ const ListRoom = () => {
     }
   };
 
+  // ⭐ NEW → AI DESCRIPTION GENERATOR
+  const generateDescription = async (roomId) => {
+    try {
+      const { data } = await axios.get(
+        `${import.meta.env.VITE_API_URL}/api/ai/generate-description/${roomId}`
+      );
+
+      if (data.success) {
+        toast.success("Description Generated ✨");
+        alert(data.description);
+      } else {
+        toast.error("Failed to generate description");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("AI description failed");
+    }
+  };
+
   useEffect(() => {
     if (user) fetchRooms();
   }, [user]);
@@ -119,9 +138,11 @@ const ListRoom = () => {
               rooms.map((room) => (
                 <tr key={room._id} className="border-t">
                   <td className="px-6 py-4">{room.roomType}</td>
+
                   <td className="px-6 py-4">
                     {room.amenities.join(", ")}
                   </td>
+
                   <td className="px-6 py-4">
                     {currency} {room.pricePerNight}
                   </td>
@@ -129,7 +150,7 @@ const ListRoom = () => {
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-center gap-3">
                       
-                      {/* Toggle Availability */}
+                      {/* ✅ Toggle Availability */}
                       <button
                         onClick={() => toggleAvailability(room._id)}
                         disabled={updatingId === room._id}
@@ -144,12 +165,20 @@ const ListRoom = () => {
                         />
                       </button>
 
-                      {/* AI Pricing Button */}
+                      {/* 🤖 AI Price */}
                       <button
                         onClick={() => getSuggestion(room._id)}
                         className="text-xs border px-3 py-1 rounded-full hover:bg-black hover:text-white transition"
                       >
                         Suggest Price 🤖
+                      </button>
+
+                      {/* ✨ AI Description */}
+                      <button
+                        onClick={() => generateDescription(room._id)}
+                        className="text-xs border px-3 py-1 rounded-full hover:bg-indigo-500 hover:text-white transition"
+                      >
+                        Generate Description ✨
                       </button>
 
                     </div>
