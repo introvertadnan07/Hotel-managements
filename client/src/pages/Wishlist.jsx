@@ -1,15 +1,25 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useAuth } from "@clerk/clerk-react";
+import { assets } from "../assets/assets"; 
 
 const Wishlist = () => {
   const { getToken } = useAuth();
   const [wishlist, setWishlist] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // ✅ Image resolver (safe)
+  const getImageUrl = (img) => {
+    if (!img) return assets?.placeholderImage || "";
+    if (img.startsWith("http")) return img;
+    if (img.startsWith("/")) img = img.slice(1);
+    return `${import.meta.env.VITE_API_URL}/${img}`;
+  };
+
   const fetchWishlist = async () => {
     try {
       const token = await getToken();
+      if (!token) return;
 
       const { data } = await axios.get(
         `${import.meta.env.VITE_API_URL}/api/wishlist`,
@@ -30,12 +40,15 @@ const Wishlist = () => {
     }
   };
 
+  // ✅ FIX → Your backend uses POST /toggle (NOT delete)
   const removeFromWishlist = async (roomId) => {
     try {
       const token = await getToken();
+      if (!token) return;
 
-      const { data } = await axios.delete(
-        `${import.meta.env.VITE_API_URL}/api/wishlist/${roomId}`,
+      const { data } = await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/wishlist/toggle`,
+        { roomId },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -88,19 +101,27 @@ const Wishlist = () => {
               className="bg-white rounded-2xl shadow hover:shadow-lg transition"
             >
               <img
-                src={room.images?.[0]}
-                alt={room.name}
+                src={getImageUrl(room.images?.[0])}
+                alt={room.roomType}
                 className="w-full h-48 object-cover rounded-t-2xl"
+                onError={(e) => {
+                  if (assets?.placeholderImage)
+                    e.target.src = assets.placeholderImage;
+                }}
               />
 
               <div className="p-4">
-                <h3 className="text-lg font-semibold">{room.name}</h3>
+                <h3 className="text-lg font-semibold">
+                  {room.roomType}
+                </h3>
+
                 <p className="text-gray-500 text-sm">
                   {room.hotel?.name}
                 </p>
 
+                {/* ✅ FIXED PRICE */}
                 <p className="font-bold mt-2">
-                  ₹{room.price} / night
+                  ₹{room.pricePerNight} / night
                 </p>
 
                 <button
