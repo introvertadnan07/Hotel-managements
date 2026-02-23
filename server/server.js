@@ -10,12 +10,12 @@ import hotelRouter from "./routes/hotelRoutes.js";
 import roomRouter from "./routes/roomRoutes.js";
 import bookingRouter from "./routes/bookingRoutes.js";
 import reviewRouter from "./routes/reviewRoutes.js";
-import wishlistRouter from "./routes/wishlistRoutes.js"; // ⭐ NEW
+import wishlistRouter from "./routes/wishlistRoutes.js";
+import aiRouter from "./routes/aiRoutes.js";   // ⭐ AI ROUTES
 
 import clerkWebhooks from "./controllers/clerkWebhooks.js";
 import { stripeWebhooks } from "./controllers/stripeWebhooks.js";
 import connectCloudinary from "./configs/cloudinary.js";
-import aiRouter from "./routes/aiRoutes.js";
 
 // ✅ Init services
 connectCloudinary();
@@ -84,7 +84,9 @@ app.use("/api/hotels", hotelRouter);
 app.use("/api/rooms", roomRouter);
 app.use("/api/bookings", bookingRouter);
 app.use("/api/reviews", reviewRouter);
-app.use("/api/wishlist", wishlistRouter); // ⭐ IMPORTANT
+app.use("/api/wishlist", wishlistRouter);
+
+app.use("/api/ai", aiRouter);   // ⭐⭐⭐ IMPORTANT FIX ⭐⭐⭐
 
 //
 // ✅ 404 fallback

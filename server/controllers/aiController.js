@@ -6,6 +6,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
+// ⭐ AI REVIEW SUMMARY
 export const getReviewSummary = async (req, res) => {
   try {
     const { roomId } = req.params;
@@ -20,7 +21,7 @@ export const getReviewSummary = async (req, res) => {
     }
 
     const reviewText = reviews
-      .map((r) => `Rating: ${r.rating}, Comment: ${r.comment}`)
+      .map(r => `Rating: ${r.rating}, Comment: ${r.comment}`)
       .join("\n");
 
     const completion = await openai.chat.completions.create({
@@ -29,7 +30,7 @@ export const getReviewSummary = async (req, res) => {
         {
           role: "system",
           content:
-            "Summarize hotel room reviews in a short, friendly paragraph. Mention positives and any common complaints if present.",
+            "Summarize hotel room reviews in a short, friendly paragraph. Mention positives and common complaints if any.",
         },
         {
           role: "user",
@@ -44,11 +45,51 @@ export const getReviewSummary = async (req, res) => {
       success: true,
       summary,
     });
+
   } catch (error) {
     console.error("AI Summary Error:", error.message);
     res.status(500).json({
       success: false,
       message: "Failed to generate summary",
+    });
+  }
+};
+
+// ⭐ SMART RECOMMENDATIONS
+export const getRecommendations = async (req, res) => {
+  try {
+    const { roomId } = req.params;
+
+    const currentRoom = await Room.findById(roomId);
+
+    if (!currentRoom) {
+      return res.status(404).json({
+        success: false,
+        message: "Room not found",
+      });
+    }
+
+    const rooms = await Room.find({
+      _id: { $ne: roomId },
+      roomType: currentRoom.roomType,
+      pricePerNight: {
+        $gte: currentRoom.pricePerNight * 0.7,
+        $lte: currentRoom.pricePerNight * 1.3,
+      },
+    })
+      .limit(4)
+      .populate("hotel");
+
+    res.json({
+      success: true,
+      rooms,
+    });
+
+  } catch (error) {
+    console.error("Recommendation Error:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch recommendations",
     });
   }
 };
