@@ -63,11 +63,11 @@ const ListRoom = () => {
     }
   };
 
-  // ⭐ AI PRICE SUGGESTION
+  // 🤖 AI PRICE SUGGESTION (FIXED)
   const getSuggestion = async (roomId) => {
     try {
       const { data } = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/ai/price-suggestion/${roomId}`
+        `/api/ai/price-suggestion/${roomId}`
       );
 
       if (data.success) {
@@ -82,11 +82,11 @@ const ListRoom = () => {
     }
   };
 
-  // ⭐ NEW → AI DESCRIPTION GENERATOR
+  // ✨ AI DESCRIPTION GENERATOR (FIXED)
   const generateDescription = async (roomId) => {
     try {
       const { data } = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/ai/generate-description/${roomId}`
+        `/api/ai/generate-description/${roomId}`
       );
 
       if (data.success) {
@@ -150,7 +150,7 @@ const ListRoom = () => {
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-center gap-3">
                       
-                      {/* ✅ Toggle Availability */}
+                      {/* Toggle */}
                       <button
                         onClick={() => toggleAvailability(room._id)}
                         disabled={updatingId === room._id}
@@ -165,7 +165,7 @@ const ListRoom = () => {
                         />
                       </button>
 
-                      {/* 🤖 AI Price */}
+                      {/* AI Price */}
                       <button
                         onClick={() => getSuggestion(room._id)}
                         className="text-xs border px-3 py-1 rounded-full hover:bg-black hover:text-white transition"
@@ -173,7 +173,7 @@ const ListRoom = () => {
                         Suggest Price 🤖
                       </button>
 
-                      {/* ✨ AI Description */}
+                      {/* AI Description */}
                       <button
                         onClick={() => generateDescription(room._id)}
                         className="text-xs border px-3 py-1 rounded-full hover:bg-indigo-500 hover:text-white transition"

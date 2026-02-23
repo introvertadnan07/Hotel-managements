@@ -21,7 +21,7 @@ export const getReviewSummary = async (req, res) => {
     }
 
     const reviewText = reviews
-      .map(r => `Rating: ${r.rating}, Comment: ${r.comment}`)
+      .map((r) => `Rating: ${r.rating}, Comment: ${r.comment}`)
       .join("\n");
 
     const completion = await openai.chat.completions.create({
@@ -43,9 +43,9 @@ export const getReviewSummary = async (req, res) => {
       success: true,
       summary: completion.choices[0].message.content,
     });
-
   } catch (error) {
     console.error("AI Summary Error:", error.message);
+
     res.status(500).json({
       success: false,
       message: "Failed to generate summary",
@@ -76,9 +76,9 @@ export const getRecommendations = async (req, res) => {
       success: true,
       rooms,
     });
-
   } catch (error) {
     console.error("Recommendation Error:", error.message);
+
     res.status(500).json({
       success: false,
       message: "Failed to fetch recommendations",
@@ -109,9 +109,9 @@ export const chatAssistant = async (req, res) => {
       success: true,
       reply: completion.choices[0].message.content,
     });
-
   } catch (error) {
     console.error("AI Chat Error:", error.message);
+
     res.status(500).json({
       success: false,
       message: "AI assistant failed",
@@ -119,7 +119,7 @@ export const chatAssistant = async (req, res) => {
   }
 };
 
-// ⭐ NEW → AI DESCRIPTION GENERATOR
+// ⭐ AI DESCRIPTION GENERATOR
 export const generateRoomDescription = async (req, res) => {
   try {
     const { roomId } = req.params;
@@ -157,13 +157,59 @@ Keep it short, engaging, and luxurious.
       success: true,
       description: completion.choices[0].message.content,
     });
-
   } catch (error) {
     console.error("AI Description Error:", error.message);
 
     res.status(500).json({
       success: false,
       message: "Failed to generate description",
+    });
+  }
+};
+
+// ⭐ NEW → AI PRICE SUGGESTION
+export const getPriceSuggestion = async (req, res) => {
+  try {
+    const { roomId } = req.params;
+
+    const room = await Room.findById(roomId).populate("hotel");
+
+    if (!room) {
+      return res.status(404).json({
+        success: false,
+        message: "Room not found",
+      });
+    }
+
+    const prompt = `
+Suggest an optimal price per night for this hotel room.
+
+Room Type: ${room.roomType}
+Current Price: ₹${room.pricePerNight}
+Location: ${room.hotel?.city}
+Amenities: ${room.amenities.join(", ")}
+
+Give a short recommendation with reasoning.
+`;
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4.1-mini",
+      messages: [
+        { role: "system", content: "You are a hotel pricing expert." },
+        { role: "user", content: prompt },
+      ],
+    });
+
+    res.json({
+      success: true,
+      suggestion: completion.choices[0].message.content,
+    });
+  } catch (error) {
+    console.error("AI Pricing Error:", error.message);
+
+    res.status(500).json({
+      success: false,
+      message: "AI pricing failed",
     });
   }
 };
