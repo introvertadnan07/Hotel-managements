@@ -7,6 +7,7 @@ const wishlistSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+
     room: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Room",
@@ -16,7 +17,7 @@ const wishlistSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// ✅ Prevent duplicate saves
+// ✅ Prevent duplicate wishlist items
 wishlistSchema.index({ user: 1, room: 1 }, { unique: true });
 
 const Wishlist = mongoose.model("Wishlist", wishlistSchema);

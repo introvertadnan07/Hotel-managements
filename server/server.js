@@ -5,19 +5,20 @@ import { clerkMiddleware } from "@clerk/express";
 import path from "path";
 
 import connectDB from "./configs/db.js";
+import connectCloudinary from "./configs/cloudinary.js";
+
 import userRouter from "./routes/userRoutes.js";
 import hotelRouter from "./routes/hotelRoutes.js";
 import roomRouter from "./routes/roomRoutes.js";
 import bookingRouter from "./routes/bookingRoutes.js";
 import reviewRouter from "./routes/reviewRoutes.js";
 import wishlistRouter from "./routes/wishlistRoutes.js";
-import aiRouter from "./routes/aiRoutes.js";   // ⭐ AI ROUTES
+import aiRouter from "./routes/aiRoutes.js";
 
 import clerkWebhooks from "./controllers/clerkWebhooks.js";
 import { stripeWebhooks } from "./controllers/stripeWebhooks.js";
-import connectCloudinary from "./configs/cloudinary.js";
 
-// ✅ Init services
+// ✅ Initialize services
 connectCloudinary();
 connectDB();
 
@@ -34,7 +35,8 @@ app.use(
 );
 
 //
-// ✅ Stripe Webhook (RAW BODY)
+// ✅ Stripe Webhook (RAW body required)
+// IMPORTANT → Must come BEFORE express.json()
 //
 app.post(
   "/api/webhooks/stripe",
@@ -43,7 +45,7 @@ app.post(
 );
 
 //
-// ✅ Clerk Webhook (RAW BODY)
+// ✅ Clerk Webhook (RAW body required)
 //
 app.post(
   "/api/webhooks/clerk",
@@ -52,24 +54,24 @@ app.post(
 );
 
 //
-// ✅ Normal parsing AFTER webhooks
+// ✅ Body parsers (AFTER webhooks)
 //
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 //
-// ✅ Clerk middleware
+// ✅ Clerk Middleware
 //
 app.use(clerkMiddleware());
 
 //
-// ✅ Static uploads
+// ✅ Static folder
 //
 const __dirname = path.resolve();
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 //
-// ✅ Routes
+// ✅ Health Routes
 //
 app.get("/", (req, res) => {
   res.send("✅ Anumifly API working...");
@@ -79,14 +81,16 @@ app.get("/health", (req, res) => {
   res.json({ status: "OK" });
 });
 
+//
+// ✅ API Routes
+//
 app.use("/api/user", userRouter);
 app.use("/api/hotels", hotelRouter);
 app.use("/api/rooms", roomRouter);
 app.use("/api/bookings", bookingRouter);
 app.use("/api/reviews", reviewRouter);
 app.use("/api/wishlist", wishlistRouter);
-
-app.use("/api/ai", aiRouter);   // ⭐⭐⭐ IMPORTANT FIX ⭐⭐⭐
+app.use("/api/ai", aiRouter);
 
 //
 // ✅ 404 fallback
@@ -99,7 +103,7 @@ app.use((req, res) => {
 });
 
 //
-// ✅ Server start
+// ✅ Start Server
 //
 const PORT = process.env.PORT || 5000;
 

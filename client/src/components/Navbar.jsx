@@ -16,10 +16,23 @@ const BookIcon = () => (
   </svg>
 );
 
+const HeartIcon = () => (
+  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
+    <path
+      d="M12 21s-6.716-4.35-9.193-7.364C.84 11.29 1.13 7.9 3.514 6.1c2.07-1.56 4.927-1.12 6.486.97C11.559 4.98 14.416 4.54 16.486 6.1c2.385 1.8 2.674 5.19.707 7.536C18.716 16.65 12 21 12 21Z"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
 const Navbar = () => {
   const navLinks = [
     { name: "Home", path: "/" },
     { name: "Hotels", path: "/rooms" },
+    { name: "Wishlist", path: "/wishlist" }, // ⭐ ADDED
     { name: "Experience", path: "/" },
     { name: "About", path: "/" },
   ];
@@ -53,11 +66,13 @@ const Navbar = () => {
     return () => (document.body.style.overflow = "auto");
   }, [isMenuOpen]);
 
-  // ✅ Navbar styling logic
   const navStyle =
     !isHomePage || isOwnerPage || isScrolled
       ? "bg-white shadow-sm text-black"
       : "bg-transparent text-white";
+
+  // ✅ Active link style
+  const isActive = (path) => location.pathname === path;
 
   return (
     <nav
@@ -84,7 +99,9 @@ const Navbar = () => {
             <Link
               key={link.name}
               to={link.path}
-              className="hover:text-gray-500 transition"
+              className={`transition hover:text-gray-500 ${
+                isActive(link.path) ? "font-semibold" : ""
+              }`}
             >
               {link.name}
             </Link>
@@ -125,6 +142,13 @@ const Navbar = () => {
                   label="My Bookings"
                   labelIcon={<BookIcon />}
                   onClick={() => navigate("/my-bookings")}
+                />
+
+                {/* ⭐ Wishlist inside Clerk menu */}
+                <UserButton.Action
+                  label="Wishlist"
+                  labelIcon={<HeartIcon />}
+                  onClick={() => navigate("/wishlist")}
                 />
               </UserButton.MenuItems>
             </UserButton>
@@ -170,7 +194,9 @@ const Navbar = () => {
               key={link.name}
               to={link.path}
               onClick={() => setIsMenuOpen(false)}
-              className="text-lg"
+              className={`text-lg ${
+                isActive(link.path) ? "font-semibold" : ""
+              }`}
             >
               {link.name}
             </Link>

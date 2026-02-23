@@ -10,11 +10,13 @@ import ListRoom from "./pages/hotelOwner/ListRoom";
 import AllRooms from "./pages/AllRooms";
 import RoomDetails from "./components/RoomDetails";
 
-import MyBookings from "./pages/MyBookings";   
+import MyBookings from "./pages/MyBookings";
+import Wishlist from "./pages/Wishlist";   // ⭐ ADDED
 
 import HotelReg from "./components/HotelReg";
-import { useAppContext } from "./context/AppContext";
 import Loader from "./components/Loader";
+
+import { useAppContext } from "./context/AppContext";
 
 const App = () => {
   const { showHotelReg } = useAppContext();
@@ -26,12 +28,15 @@ const App = () => {
       {showHotelReg && <HotelReg />}
 
       <Routes>
+        {/* 🌍 Public Routes */}
         <Route path="/" element={<Home />} />
         <Route path="/rooms" element={<AllRooms />} />
         <Route path="/rooms/:id" element={<RoomDetails />} />
         <Route path="/my-bookings" element={<MyBookings />} />
+        <Route path="/wishlist" element={<Wishlist />} /> {/* ⭐ NEW */}
         <Route path="/loader/:nextUrl" element={<Loader />} />
 
+        {/* 🏨 Owner Routes */}
         <Route path="/owner" element={<OwnerLayout />}>
           <Route index element={<Dashboard />} />
           <Route path="add-room" element={<AddRoom />} />
