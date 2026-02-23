@@ -15,6 +15,7 @@ import wishlistRouter from "./routes/wishlistRoutes.js"; // ⭐ NEW
 import clerkWebhooks from "./controllers/clerkWebhooks.js";
 import { stripeWebhooks } from "./controllers/stripeWebhooks.js";
 import connectCloudinary from "./configs/cloudinary.js";
+import aiRouter from "./routes/aiRoutes.js";
 
 // ✅ Init services
 connectCloudinary();

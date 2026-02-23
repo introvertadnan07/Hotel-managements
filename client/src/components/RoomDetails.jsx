@@ -12,6 +12,7 @@ const RoomDetails = () => {
 
   const [room, setRoom] = useState(null);
   const [mainImage, setMainImage] = useState("");
+  const [showModal, setShowModal] = useState(false);
 
   const [checkInDate, setCheckInDate] = useState("");
   const [checkOutDate, setCheckOutDate] = useState("");
@@ -25,65 +26,75 @@ const RoomDetails = () => {
   const [comment, setComment] = useState("");
 
   // ❤️ Wishlist
-  const [saved, setSaved] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
 
-  // ✅ Normalize images
+  // ✅ Normalize image URLs
   const getImageUrl = (img) => {
     if (!img) return assets.hostedDefaultImage;
-
     if (img.startsWith("http")) return img;
-
     if (img.startsWith("/")) img = img.slice(1);
-
     return `${import.meta.env.VITE_BACKEND_URL}/${img}`;
   };
 
-  // ✅ Fetch Room
+  // ✅ Fetch room
   const fetchRoom = async () => {
     try {
       const { data } = await axios.get(`/api/rooms/${id}`);
-
       if (data.success) {
         setRoom(data.room);
         setMainImage(data.room.images?.[0] || "");
       }
     } catch (error) {
-      console.error("Room fetch error:", error.message);
+      toast.error("Failed to load room");
     }
   };
 
-  // ⭐ Fetch Reviews
+  // ⭐ Fetch reviews
   const fetchReviews = async () => {
     try {
       const { data } = await axios.get(`/api/reviews/${id}`);
-
       if (data.success) {
         setReviews(data.reviews || []);
         setAvgRating(data.avgRating || 0);
       }
     } catch (error) {
-      console.error("Review fetch error:", error.message);
+        console.log("Review fetch error");
     }
+  };
+
+  // ❤️ Check wishlist
+  const fetchWishlistStatus = async () => {
+    if (!user) return;
+
+    try {
+      const token = await getToken();
+      const { data } = await axios.get(`/api/wishlist/check/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (data.success) setIsSaved(data.saved);
+    } catch (error) {}
   };
 
   useEffect(() => {
     fetchRoom();
     fetchReviews();
+    fetchWishlistStatus();
   }, [id]);
 
-  // ✅ Check Availability
+  // ✅ Availability check
   const checkAvailability = async () => {
+    if (!checkInDate || !checkOutDate) {
+      toast.error("Select dates first");
+      return;
+    }
+
+    if (checkInDate >= checkOutDate) {
+      toast.error("Invalid date selection");
+      return;
+    }
+
     try {
-      if (!checkInDate || !checkOutDate) {
-        toast.error("Please select dates");
-        return;
-      }
-
-      if (checkInDate >= checkOutDate) {
-        toast.error("Invalid date selection");
-        return;
-      }
-
       const { data } = await axios.post(
         "/api/bookings/check-availability",
         { room: id, checkInDate, checkOutDate }
@@ -91,18 +102,17 @@ const RoomDetails = () => {
 
       if (data.success) {
         setIsAvailable(data.isAvailable);
-
         data.isAvailable
           ? toast.success("Room available")
           : toast.error("Room not available");
       }
     } catch (error) {
-      toast.error(error.message);
+      toast.error("Availability check failed");
     }
   };
 
-  // ✅ Booking Submit
-  const onSubmithandler = async (e) => {
+  // ✅ Booking
+  const onSubmitHandler = async (e) => {
     e.preventDefault();
 
     if (!isAvailable) return checkAvailability();
@@ -125,17 +135,20 @@ const RoomDetails = () => {
       if (data.success) {
         toast.success("Booking confirmed");
         navigate("/my-bookings");
-        window.scrollTo(0, 0);
-      } else {
-        toast.error(data.message);
-      }
+      } else toast.error(data.message);
+
     } catch (error) {
-      toast.error(error.message);
+      toast.error("Booking failed");
     }
   };
 
   // ⭐ Submit Review
   const submitReview = async () => {
+    if (!comment) {
+      toast.error("Write something");
+      return;
+    }
+
     try {
       const token = await getToken();
 
@@ -149,16 +162,20 @@ const RoomDetails = () => {
         toast.success("Review added");
         setComment("");
         fetchReviews();
-      } else {
-        toast.error(data.message);
-      }
+      } else toast.error(data.message);
+
     } catch (error) {
-      toast.error("Login required");
+      toast.error("Review failed");
     }
   };
 
   // ❤️ Toggle Wishlist
   const toggleSave = async () => {
+    if (!user) {
+      toast.error("Login required");
+      return;
+    }
+
     try {
       const token = await getToken();
 
@@ -169,21 +186,32 @@ const RoomDetails = () => {
       );
 
       if (data.success) {
-        setSaved(data.saved);
-        toast.success(data.message);
+        setIsSaved(!isSaved);
+        toast.success(isSaved ? "Removed from wishlist" : "Saved");
       }
     } catch (error) {
-      toast.error("Login required");
+      toast.error("Wishlist failed");
     }
   };
+
+  // 💰 Price calculation
+  const nights =
+    checkInDate && checkOutDate
+      ? Math.ceil(
+          (new Date(checkOutDate) - new Date(checkInDate)) /
+            (1000 * 60 * 60 * 24)
+        )
+      : 0;
+
+  const totalPrice = nights * (room?.pricePerNight || 0);
 
   if (!room) return <p className="pt-32 text-center">Loading...</p>;
 
   return (
     <div className="pt-28 px-6 md:px-16 lg:px-24 xl:px-32">
 
-      {/* ⭐ HEADER */}
-      <div className="flex items-center justify-between">
+      {/* HEADER */}
+      <div className="flex justify-between items-start">
         <div>
           <h1 className="text-3xl font-playfair">
             {room.hotel?.name} ({room.roomType})
@@ -196,31 +224,29 @@ const RoomDetails = () => {
             </span>
           </div>
 
-          <p className="text-gray-500 mt-1">
-            {room.hotel?.address}
-          </p>
+          <p className="text-gray-500 mt-1">{room.hotel?.address}</p>
         </div>
 
-        {/* ❤️ Save Button */}
+        {/* ❤️ Wishlist */}
         <button
           onClick={toggleSave}
-          className="border px-4 py-1.5 rounded-full text-sm hover:bg-black hover:text-white transition"
+          className="border px-4 py-2 rounded-full text-sm hover:bg-black hover:text-white transition"
         >
-          {saved ? "Saved ❤️" : "Save"}
+          {isSaved ? "Saved ❤️" : "Save 🤍"}
         </button>
       </div>
 
-      {/* ⭐ MAIN LAYOUT */}
+      {/* LAYOUT */}
       <div className="flex flex-col lg:flex-row gap-12 mt-8">
 
-        {/* ✅ LEFT */}
+        {/* LEFT */}
         <div className="flex-1">
 
           {/* Gallery */}
           <img
             src={getImageUrl(mainImage)}
-            alt="room"
-            className="w-full h-[420px] object-cover rounded-2xl shadow"
+            onClick={() => setShowModal(true)}
+            className="w-full h-[420px] object-cover rounded-2xl shadow cursor-pointer"
           />
 
           <div className="flex gap-3 mt-3">
@@ -229,7 +255,7 @@ const RoomDetails = () => {
                 key={img}
                 src={getImageUrl(img)}
                 onClick={() => setMainImage(img)}
-                className={`w-24 h-20 object-cover rounded-lg cursor-pointer border transition ${
+                className={`w-24 h-20 object-cover rounded-lg cursor-pointer border ${
                   mainImage === img ? "border-black" : "border-gray-200"
                 }`}
               />
@@ -239,77 +265,37 @@ const RoomDetails = () => {
           {/* Amenities */}
           <div className="flex flex-wrap gap-3 mt-6">
             {room.amenities?.map((item) => (
-              <div
-                key={item}
-                className="flex items-center gap-2 border px-3 py-1 rounded-full text-sm"
-              >
+              <div key={item} className="flex items-center gap-2 border px-3 py-1 rounded-full text-sm">
                 <img src={facilityIcons[item]} className="w-4 h-4" />
                 {item}
               </div>
             ))}
           </div>
 
-          {/* Features */}
-          <div className="mt-10 space-y-4">
-            {roomCommonData.map((item) => (
-              <div key={item.title} className="flex items-start gap-3">
-                <img src={item.icon} className="w-5 mt-1" />
-                <div>
-                  <p className="font-medium">{item.title}</p>
-                  <p className="text-sm text-gray-500">
-                    {item.description}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* ⭐ REVIEWS */}
+          {/* Reviews */}
           <div className="mt-12">
             <h2 className="text-2xl font-semibold mb-4">Reviews</h2>
 
             <div className="space-y-4">
               {reviews.map((review) => (
                 <div key={review._id} className="border rounded-xl p-4">
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={review.user?.image || assets.defaultAvatar}
-                      className="w-10 h-10 rounded-full object-cover"
-                    />
-
-                    <div>
-                      <p className="font-medium">
-                        {review.user?.username}
-                      </p>
-                      <StarRating rating={review.rating} />
-                    </div>
-                  </div>
-
-                  <p className="text-sm text-gray-600 mt-2">
-                    {review.comment}
-                  </p>
+                  <p className="font-medium">{review.user?.username}</p>
+                  <StarRating rating={review.rating} />
+                  <p className="text-sm text-gray-600 mt-2">{review.comment}</p>
                 </div>
               ))}
             </div>
 
-            {/* Add Review */}
             {user && (
               <div className="mt-6 border-t pt-4">
-                <h3 className="font-medium mb-2">Add Review</h3>
-
                 <StarRatingInput rating={rating} setRating={setRating} />
-
                 <textarea
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
-                  placeholder="Share your experience..."
                   className="border rounded-lg w-full p-2 mt-2 text-sm"
+                  placeholder="Share your experience..."
                 />
-
-                <button
-                  onClick={submitReview}
-                  className="mt-3 bg-black text-white px-6 py-2 rounded-lg hover:opacity-90"
-                >
+                <button onClick={submitReview} className="mt-3 bg-black text-white px-6 py-2 rounded-lg">
                   Submit Review
                 </button>
               </div>
@@ -317,7 +303,7 @@ const RoomDetails = () => {
           </div>
         </div>
 
-        {/* ⭐ STICKY BOOKING CARD */}
+        {/* STICKY BOOKING CARD */}
         <div className="lg:w-[360px]">
           <div className="sticky top-28 border rounded-2xl shadow-lg p-5">
 
@@ -326,46 +312,38 @@ const RoomDetails = () => {
               <span className="text-sm text-gray-500"> / night</span>
             </p>
 
-            <form onSubmit={onSubmithandler} className="mt-4 space-y-3">
+            <form onSubmit={onSubmitHandler} className="mt-4 space-y-3">
+              <input type="date" value={checkInDate} onChange={(e)=>setCheckInDate(e.target.value)} className="w-full border rounded-lg px-3 py-2 text-sm"/>
+              <input type="date" value={checkOutDate} onChange={(e)=>setCheckOutDate(e.target.value)} className="w-full border rounded-lg px-3 py-2 text-sm"/>
+              <input type="number" value={guests} min="1" onChange={(e)=>setGuests(e.target.value)} className="w-full border rounded-lg px-3 py-2 text-sm"/>
 
-              <input
-                type="date"
-                value={checkInDate}
-                min={new Date().toISOString().split("T")[0]}
-                onChange={(e) => {
-                  setCheckInDate(e.target.value);
-                  setIsAvailable(false);
-                }}
-                className="w-full border rounded-lg px-3 py-2 text-sm"
-              />
+              {nights > 0 && (
+                <div className="text-sm text-gray-600">
+                  <p>{currency} {room.pricePerNight} × {nights} nights</p>
+                  <p className="font-medium">Total: {currency} {totalPrice}</p>
+                </div>
+              )}
 
-              <input
-                type="date"
-                value={checkOutDate}
-                min={checkInDate}
-                disabled={!checkInDate}
-                onChange={(e) => {
-                  setCheckOutDate(e.target.value);
-                  setIsAvailable(false);
-                }}
-                className="w-full border rounded-lg px-3 py-2 text-sm"
-              />
-
-              <input
-                type="number"
-                value={guests}
-                min="1"
-                onChange={(e) => setGuests(e.target.value)}
-                className="w-full border rounded-lg px-3 py-2 text-sm"
-              />
-
-              <button className="w-full bg-black text-white py-3 rounded-xl mt-2 hover:opacity-90">
+              <button className="w-full bg-black text-white py-3 rounded-xl">
                 {isAvailable ? "Reserve Now" : "Check Availability"}
               </button>
             </form>
           </div>
         </div>
       </div>
+
+      {/* IMAGE MODAL */}
+      {showModal && (
+        <div
+          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
+          onClick={() => setShowModal(false)}
+        >
+          <img
+            src={getImageUrl(mainImage)}
+            className="max-h-[80vh] rounded-xl"
+          />
+        </div>
+      )}
     </div>
   );
 };
