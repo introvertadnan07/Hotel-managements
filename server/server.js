@@ -25,18 +25,20 @@ connectDB();
 const app = express();
 
 //
-// ✅ CORS
+// ✅ CORS (FIXED)
 //
 app.use(
   cors({
-    origin: true,
+    origin: [
+      "http://localhost:5173",
+      "https://anumifly-dnbjorm97-introvertadnan07s-projects.vercel.app",
+    ],
     credentials: true,
   })
 );
 
 //
 // ✅ Stripe Webhook (RAW body required)
-// IMPORTANT → Must come BEFORE express.json()
 //
 app.post(
   "/api/webhooks/stripe",
@@ -54,7 +56,7 @@ app.post(
 );
 
 //
-// ✅ Body parsers (AFTER webhooks)
+// ✅ Body parsers
 //
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
