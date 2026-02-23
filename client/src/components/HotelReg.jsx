@@ -27,7 +27,7 @@ const HotelReg = () => {
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
-  // ✅ Submit Handler (FIXED REDIRECT LOGIC)
+  // ✅ Submit Handler (FIXED API URL)
   const onSubmitHandler = async (e) => {
     e.preventDefault();
 
@@ -42,7 +42,7 @@ const HotelReg = () => {
       const token = await getToken();
 
       const { data } = await axios.post(
-        "/api/hotels",
+        `${import.meta.env.VITE_API_URL}/api/hotels`,  // ⭐ FIXED
         { name, contact, address, city },
         {
           headers: {
@@ -61,7 +61,6 @@ const HotelReg = () => {
       } else {
         toast.error(data.message);
 
-        // ✅ FIX → Redirect if already registered
         if (data.message?.toLowerCase().includes("already")) {
           setIsOwner(true);
           setShowHotelReg(false);
@@ -75,7 +74,6 @@ const HotelReg = () => {
 
       toast.error(message);
 
-      // ✅ ALSO redirect if backend throws "already"
       if (message.toLowerCase().includes("already")) {
         setIsOwner(true);
         setShowHotelReg(false);
@@ -97,7 +95,6 @@ const HotelReg = () => {
         onClick={(e) => e.stopPropagation()}
         className="bg-white rounded-xl w-[860px] max-w-[95%] grid md:grid-cols-2 relative overflow-hidden shadow-2xl"
       >
-        {/* ✅ Close Button */}
         <img
           src={assets.closeIcon}
           alt="close"
@@ -105,7 +102,6 @@ const HotelReg = () => {
           className="absolute top-5 right-5 h-4 cursor-pointer z-[1001]"
         />
 
-        {/* ✅ Left Image */}
         <div className="h-48 md:h-full">
           <img
             src={assets.regImage}
@@ -114,7 +110,6 @@ const HotelReg = () => {
           />
         </div>
 
-        {/* ✅ Right Form */}
         <div className="p-6 md:p-10">
           <h3 className="text-lg font-semibold mb-4">
             Register Your Hotel
