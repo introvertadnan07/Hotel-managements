@@ -8,17 +8,15 @@ const MyBookings = () => {
   const { axios, getToken, user } = useAppContext();
 
   const [bookings, setBooking] = useState([]);
-  const [payingId, setPayingId] = useState(null); // prevents double click
+  const [payingId, setPayingId] = useState(null);
 
-  // ✅ Image resolver
   const getImageUrl = (img) => {
     if (!img) return assets.hostedDefaultImage;
     if (img.startsWith("http")) return img;
     if (img.startsWith("/")) img = img.slice(1);
-    return `${import.meta.env.VITE_BACKEND_URL}/${img}`;
+    return `${import.meta.env.VITE_API_URL}/${img}`;
   };
 
-  // ✅ Fetch user bookings
   const fetchUserBookings = async () => {
     try {
       const token = await getToken();
@@ -44,7 +42,6 @@ const MyBookings = () => {
     }
   };
 
-  // ✅ Stripe Payment Handler (FIXED)
   const handlePayment = async (bookingId) => {
     try {
       const token = await getToken();
@@ -79,7 +76,6 @@ const MyBookings = () => {
     }
   };
 
-  // ✅ Load bookings when user available
   useEffect(() => {
     if (user) fetchUserBookings();
   }, [user]);
@@ -93,14 +89,12 @@ const MyBookings = () => {
       />
 
       <div className="max-w-6xl mt-10 w-full text-gray-800">
-        {/* Header */}
         <div className="hidden md:grid grid-cols-[3fr_2fr_1fr] border-b pb-3 font-medium">
           <div>Hotels</div>
           <div>Date & Timings</div>
           <div>Payment</div>
         </div>
 
-        {/* Empty state */}
         {bookings.length === 0 ? (
           <p className="py-10 text-gray-500">No bookings found.</p>
         ) : (
@@ -109,7 +103,6 @@ const MyBookings = () => {
               key={booking._id}
               className="grid grid-cols-1 md:grid-cols-[3fr_2fr_1fr] gap-6 border-b py-6"
             >
-              {/* ✅ Hotel Info */}
               <div className="flex gap-4">
                 <img
                   src={getImageUrl(booking.room?.images?.[0])}
@@ -125,56 +118,23 @@ const MyBookings = () => {
                     </span>
                   </p>
 
-                  <div className="flex items-center gap-1 text-sm text-gray-500">
-                    <img src={assets.locationIcon} className="h-4" />
-                    <span>{booking.hotel?.address}</span>
-                  </div>
-
-                  <div className="flex items-center gap-1 text-sm text-gray-500">
-                    <img src={assets.guestsIcon} className="h-4" />
-                    <span>Guests: {booking.guests}</span>
-                  </div>
-
                   <p className="font-medium">
                     Total: ₹ {booking.totalPrice?.toLocaleString()}
                   </p>
                 </div>
               </div>
 
-              {/* ✅ Dates */}
-              <div className="text-sm space-y-1">
-                <p>
-                  <span className="font-medium">Check-In:</span>{" "}
-                  {new Date(booking.checkInDate).toDateString()}
-                </p>
-                <p>
-                  <span className="font-medium">Check-Out:</span>{" "}
-                  {new Date(booking.checkOutDate).toDateString()}
-                </p>
+              <div className="text-sm">
+                <p>Check-In: {new Date(booking.checkInDate).toDateString()}</p>
+                <p>Check-Out: {new Date(booking.checkOutDate).toDateString()}</p>
               </div>
 
-              {/* ✅ Payment */}
-              <div className="flex flex-col gap-3">
-                <div className="flex items-center gap-2">
-                  <span
-                    className={`h-3 w-3 rounded-full ${
-                      booking.isPaid ? "bg-green-500" : "bg-red-500"
-                    }`}
-                  />
-                  <span
-                    className={`text-sm font-medium ${
-                      booking.isPaid ? "text-green-600" : "text-red-500"
-                    }`}
-                  >
-                    {booking.isPaid ? "Paid" : "Unpaid"}
-                  </span>
-                </div>
-
+              <div>
                 {!booking.isPaid && (
                   <button
                     onClick={() => handlePayment(booking._id)}
                     disabled={payingId === booking._id}
-                    className="w-fit px-4 py-1.5 text-sm border rounded-full hover:bg-gray-100 disabled:opacity-50"
+                    className="px-4 py-1.5 text-sm border rounded-full"
                   >
                     {payingId === booking._id ? "Redirecting..." : "Pay Now"}
                   </button>
