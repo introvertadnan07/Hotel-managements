@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import { assets, cities } from "../assets/assets";
 import { useAppContext } from "../context/AppContext";
 import { useAuth } from "@clerk/clerk-react";
 import toast from "react-hot-toast";
 
 const HotelReg = () => {
-  const { setShowHotelReg, navigate, fetchUser } = useAppContext();
+  const { setShowHotelReg, setIsOwner, navigate, axios } = useAppContext();
   const { getToken } = useAuth();
 
   const [name, setName] = useState("");
@@ -15,14 +14,10 @@ const HotelReg = () => {
   const [city, setCity] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // ✅ Close modal on ESC
   useEffect(() => {
     const handler = (e) => {
-      if (e.key === "Escape") {
-        setShowHotelReg(false);
-      }
+      if (e.key === "Escape") setShowHotelReg(false);
     };
-
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, []);
@@ -40,35 +35,31 @@ const HotelReg = () => {
 
       const token = await getToken();
 
+      if (!token) {
+        toast.error("Authentication failed. Please login again.");
+        return;
+      }
+
       const { data } = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/hotels`,
-        { name, contact, address, city },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        "/api/hotels",
+        { name, contact, address, city }
       );
 
       if (data.success) {
         toast.success("Hotel registered successfully");
 
+        setIsOwner(true);
         setShowHotelReg(false);
-
-        await fetchUser();   // ⭐ TRUE OWNER SYNC
         navigate("/owner");
-
       } else {
         toast.error(data.message);
 
         if (data.message?.toLowerCase().includes("already")) {
+          setIsOwner(true);
           setShowHotelReg(false);
-
-          await fetchUser(); // ⭐ STILL SYNC
           navigate("/owner");
         }
       }
-
     } catch (error) {
       const message =
         error.response?.data?.message || "Registration failed";
@@ -76,12 +67,12 @@ const HotelReg = () => {
       toast.error(message);
 
       if (message.toLowerCase().includes("already")) {
+        setIsOwner(true);
         setShowHotelReg(false);
-
-        await fetchUser();
         navigate("/owner");
       }
 
+      console.log("REG ERROR:", error.response?.data);
     } finally {
       setLoading(false);
     }
@@ -101,7 +92,7 @@ const HotelReg = () => {
           src={assets.closeIcon}
           alt="close"
           onClick={() => setShowHotelReg(false)}
-          className="absolute top-5 right-5 h-4 cursor-pointer z-[1001]"
+          className="absolute top-5 right-5 h-4 cursor-pointer"
         />
 
         <div className="h-48 md:h-full">
@@ -117,55 +108,41 @@ const HotelReg = () => {
             Register Your Hotel
           </h3>
 
-          <label className="text-xs text-gray-500">
-            Hotel Name
-          </label>
           <input
+            placeholder="Hotel Name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="w-full border border-gray-200 rounded px-3 py-2 mb-3 outline-none focus:border-black"
+            className="w-full border rounded px-3 py-2 mb-3"
           />
 
-          <label className="text-xs text-gray-500">
-            Phone
-          </label>
           <input
+            placeholder="Phone"
             value={contact}
             onChange={(e) => setContact(e.target.value)}
-            className="w-full border border-gray-200 rounded px-3 py-2 mb-3 outline-none focus:border-black"
+            className="w-full border rounded px-3 py-2 mb-3"
           />
 
-          <label className="text-xs text-gray-500">
-            Address
-          </label>
           <input
+            placeholder="Address"
             value={address}
             onChange={(e) => setAddress(e.target.value)}
-            className="w-full border border-gray-200 rounded px-3 py-2 mb-3 outline-none focus:border-black"
+            className="w-full border rounded px-3 py-2 mb-3"
           />
 
-          <label className="text-xs text-gray-500">
-            City
-          </label>
           <select
             value={city}
             onChange={(e) => setCity(e.target.value)}
-            className="w-full border border-gray-200 rounded px-3 py-2 mb-4 outline-none focus:border-black"
+            className="w-full border rounded px-3 py-2 mb-4"
           >
-            <option value="" disabled>
-              Select City
-            </option>
+            <option value="" disabled>Select City</option>
             {cities.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
+              <option key={c} value={c}>{c}</option>
             ))}
           </select>
 
           <button
-            type="submit"
             disabled={loading}
-            className="bg-indigo-500 hover:bg-indigo-600 transition text-white px-4 py-2 rounded w-full"
+            className="bg-indigo-500 text-white py-2 rounded w-full"
           >
             {loading ? "Registering..." : "Register"}
           </button>
