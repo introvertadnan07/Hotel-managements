@@ -32,9 +32,9 @@ const Navbar = () => {
   const navLinks = [
     { name: "Home", path: "/" },
     { name: "Hotels", path: "/rooms" },
-    { name: "Wishlist", path: "/wishlist" }, // ⭐ ADDED
-    { name: "Experience", path: "/" },
-    { name: "About", path: "/" },
+    { name: "Wishlist", path: "/wishlist" },
+    { name: "Experience", path: "/experience" },   // ✅ FIXED
+    { name: "About", path: "/about" },             // ✅ FIXED
   ];
 
   const [isScrolled, setIsScrolled] = React.useState(false);
@@ -60,7 +60,7 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // ✅ Lock body scroll when mobile menu open
+  // ✅ Lock body scroll (mobile menu)
   React.useEffect(() => {
     document.body.style.overflow = isMenuOpen ? "hidden" : "auto";
     return () => (document.body.style.overflow = "auto");
@@ -79,13 +79,13 @@ const Navbar = () => {
       className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${navStyle}`}
     >
       <div className="h-20 px-6 md:px-16 lg:px-24 xl:px-32 flex items-center justify-between">
-        
+
         {/* ✅ Logo */}
         <Link to="/">
           <img
             src={assets.logo}
             alt="logo"
-            className={`h-9 ${
+            className={`h-9 transition ${
               !isHomePage || isOwnerPage || isScrolled
                 ? "invert opacity-80"
                 : ""
@@ -99,11 +99,16 @@ const Navbar = () => {
             <Link
               key={link.name}
               to={link.path}
-              className={`transition hover:text-gray-500 ${
+              className={`relative transition hover:text-gray-500 ${
                 isActive(link.path) ? "font-semibold" : ""
               }`}
             >
               {link.name}
+
+              {/* Active underline */}
+              {isActive(link.path) && (
+                <span className="absolute left-0 -bottom-1 w-full h-[2px] bg-black rounded-full" />
+              )}
             </Link>
           ))}
 
@@ -143,8 +148,6 @@ const Navbar = () => {
                   labelIcon={<BookIcon />}
                   onClick={() => navigate("/my-bookings")}
                 />
-
-                {/* ⭐ Wishlist inside Clerk menu */}
                 <UserButton.Action
                   label="Wishlist"
                   labelIcon={<HeartIcon />}

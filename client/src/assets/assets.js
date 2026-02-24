@@ -6,20 +6,24 @@ import locationIcon from "./locationIcon.svg";
 import starIconFilled from "./starIconFilled.svg";
 import arrowIcon from "./arrowIcon.svg";
 import starIconOutlined from "./starIconOutlined.svg";
+
 import instagramIcon from "./instagramIcon.svg";
 import facebookIcon from "./facebookIcon.svg";
 import twitterIcon from "./twitterIcon.svg";
 import linkendinIcon from "./linkendinIcon.svg";
+
 import freeWifiIcon from "./freeWifiIcon.svg";
 import freeBreakfastIcon from "./freeBreakfastIcon.svg";
 import roomServiceIcon from "./roomServiceIcon.svg";
 import mountainIcon from "./mountainIcon.svg";
 import poolIcon from "./poolIcon.svg";
+
 import homeIcon from "./homeIcon.svg";
 import closeIcon from "./closeIcon.svg";
 import locationFilledIcon from "./locationFilledIcon.svg";
 import heartIcon from "./heartIcon.svg";
 import badgeIcon from "./badgeIcon.svg";
+
 import menuIcon from "./menuIcon.svg";
 import closeMenu from "./closeMenu.svg";
 import guestsIcon from "./guestsIcon.svg";
@@ -42,12 +46,15 @@ import uploadArea from "./uploadArea.svg";
 import totalBookingIcon from "./totalBookingIcon.svg";
 import totalRevenueIcon from "./totalRevenueIcon.svg";
 
-// ✅ Local images (must match filenames EXACTLY)
+
+import experiencehero from "./heroexperience.jpg";
+import spa from "./spa.jpg";
+import dining from "./dining.jpg";
+import pool from "./pool.jpg";
+
+//  Local testimonial images
 import adnanImage from "./adnan.jpg";
 import anumImage from "./anum.jpg";
-
-// ✅ Hosted fallback
-import hostedDefaultImage from "./anum.jpg";
 
 export const assets = {
   logo,
@@ -58,23 +65,28 @@ export const assets = {
   starIconFilled,
   arrowIcon,
   starIconOutlined,
+
   instagramIcon,
   facebookIcon,
   twitterIcon,
   linkendinIcon,
+
   freeWifiIcon,
   freeBreakfastIcon,
   roomServiceIcon,
   mountainIcon,
   poolIcon,
-  closeIcon,
+
   homeIcon,
+  closeIcon,
   locationFilledIcon,
   heartIcon,
   badgeIcon,
+
   menuIcon,
   closeMenu,
   guestsIcon,
+
   regImage,
   addIcon,
   dashboardIcon,
@@ -87,9 +99,17 @@ export const assets = {
   exclusiveOffer2: exclusiveOfferCardImg2,
   exclusiveOffer3: exclusiveOfferCardImg3,
 
-  hostedDefaultImage,
-};
+  // Experience page
+  experiencehero,
+  spa,
+  dining,
+  pool,
 
+  // ⭐ ADD THESE (THIS FIXES YOUR ISSUE)
+  adnanImage,
+  anumImage,
+};
+// Cities
 export const cities = [
   "Dubai",
   "Singapore",
@@ -102,6 +122,7 @@ export const cities = [
   "Hyderabad",
 ];
 
+// Exclusive Offers
 export const exclusiveOffers = [
   {
     _id: 1,
@@ -130,6 +151,7 @@ export const exclusiveOffers = [
   },
 ];
 
+// Testimonials
 export const testimonials = [
   {
     id: 1,
@@ -139,7 +161,7 @@ export const testimonials = [
       "https://images.unsplash.com/photo-1633332755192-727a05c4013d?q=80&w=200",
     rating: 5,
     review:
-      "I've used many booking platforms before, but none compare to the personalized experience that QuickStay provides.",
+      "I've used many booking platforms before, but none compare to the personalized experience.",
   },
   {
     id: 2,
@@ -148,7 +170,7 @@ export const testimonials = [
     image: anumImage,
     rating: 5,
     review:
-      "Beautiful rooms, smooth booking, and a very comfortable stay. Highly recommended!",
+      "Beautiful rooms, smooth booking, and a very comfortable stay.",
   },
   {
     id: 3,
@@ -161,6 +183,7 @@ export const testimonials = [
   },
 ];
 
+//  Facility Icons Mapping
 export const facilityIcons = {
   "Free WiFi": freeWifiIcon,
   "Free Breakfast": freeBreakfastIcon,
@@ -169,7 +192,7 @@ export const facilityIcons = {
   "Pool Access": poolIcon,
 };
 
-// ✅ REQUIRED (used in RoomDetails.jsx)
+//  Room Details Highlights
 export const roomCommonData = [
   {
     icon: homeIcon,
@@ -193,6 +216,7 @@ export const roomCommonData = [
   },
 ];
 
+//  Dummy Rooms
 export const roomsDummyData = [
   {
     _id: "1",
@@ -204,6 +228,7 @@ export const roomsDummyData = [
   },
 ];
 
+//  Dummy Bookings
 export const userBookingsDummyData = [
   {
     _id: "b1",
