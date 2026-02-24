@@ -25,14 +25,21 @@ connectDB();
 const app = express();
 
 //
-// ✅ CORS (FIXED)
+// ✅ SMART CORS FIX (Handles localhost + Vercel + Preview)
 //
 app.use(
   cors({
-    origin: [
-      "http://localhost:5173",
-      "https://anumifly-dnbjorm97-introvertadnan07s-projects.vercel.app",
-    ],
+    origin: (origin, callback) => {
+      if (
+        !origin || // allow Postman / curl / mobile apps
+        origin.includes("localhost") ||
+        origin.includes("vercel.app")
+      ) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
   })
 );
@@ -56,7 +63,7 @@ app.post(
 );
 
 //
-// ✅ Body parsers
+// ✅ Body parsers (AFTER webhooks)
 //
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -67,7 +74,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(clerkMiddleware());
 
 //
-// ✅ Static folder
+// ✅ Static Uploads Folder
 //
 const __dirname = path.resolve();
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
@@ -95,7 +102,7 @@ app.use("/api/wishlist", wishlistRouter);
 app.use("/api/ai", aiRouter);
 
 //
-// ✅ 404 fallback
+// ✅ 404 Fallback
 //
 app.use((req, res) => {
   res.status(404).json({
@@ -106,7 +113,7 @@ app.use((req, res) => {
 
 //
 // ✅ Start Server
-//w
+//
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
