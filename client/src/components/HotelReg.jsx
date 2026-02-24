@@ -6,7 +6,7 @@ import { useAuth } from "@clerk/clerk-react";
 import toast from "react-hot-toast";
 
 const HotelReg = () => {
-  const { setShowHotelReg, setIsOwner, navigate } = useAppContext();
+  const { setShowHotelReg, navigate, fetchUser } = useAppContext();
   const { getToken } = useAuth();
 
   const [name, setName] = useState("");
@@ -27,7 +27,6 @@ const HotelReg = () => {
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
-  // ✅ Submit Handler (FIXED API URL)
   const onSubmitHandler = async (e) => {
     e.preventDefault();
 
@@ -42,7 +41,7 @@ const HotelReg = () => {
       const token = await getToken();
 
       const { data } = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/hotels`,  // ⭐ FIXED
+        `${import.meta.env.VITE_API_URL}/api/hotels`,
         { name, contact, address, city },
         {
           headers: {
@@ -54,16 +53,18 @@ const HotelReg = () => {
       if (data.success) {
         toast.success("Hotel registered successfully");
 
-        setIsOwner(true);
         setShowHotelReg(false);
+
+        await fetchUser();   // ⭐ TRUE OWNER SYNC
         navigate("/owner");
 
       } else {
         toast.error(data.message);
 
         if (data.message?.toLowerCase().includes("already")) {
-          setIsOwner(true);
           setShowHotelReg(false);
+
+          await fetchUser(); // ⭐ STILL SYNC
           navigate("/owner");
         }
       }
@@ -75,8 +76,9 @@ const HotelReg = () => {
       toast.error(message);
 
       if (message.toLowerCase().includes("already")) {
-        setIsOwner(true);
         setShowHotelReg(false);
+
+        await fetchUser();
         navigate("/owner");
       }
 
