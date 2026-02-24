@@ -6,21 +6,20 @@ import { assets, facilityIcons } from "../assets/assets";
 import StarRating from "../components/StarRating";
 
 const AllRooms = () => {
-  const { rooms, currency } = useAppContext();
+  const { rooms, currency, addToCompare, compareRooms } = useAppContext();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   const destination = searchParams.get("destination");
   const [selectedSort, setSelectedSort] = useState("");
 
-  // ✅ UNIVERSAL IMAGE FIX (UPDATED)
   const getImage = (room) => {
     const img = room?.images?.[0];
 
     if (!img) return assets.placeholderImage;
 
     if (typeof img === "string" && img.startsWith("http")) {
-      return img; // Cloudinary
+      return img;
     }
 
     if (img.startsWith("/uploads")) {
@@ -50,18 +49,13 @@ const AllRooms = () => {
   const filteredRooms = useMemo(() => {
     if (!rooms) return [];
 
-    return [...rooms] // ✅ SAFE COPY (important)
-      .filter(matchesDestination)
-      .sort(sortRooms);
-
+    return [...rooms].filter(matchesDestination).sort(sortRooms);
   }, [rooms, selectedSort, destination]);
 
   return (
     <div className="flex flex-col lg:flex-row pt-28 px-6 md:px-16 lg:px-24">
       <div className="flex-1">
-        <h1 className="text-4xl font-playfair mb-2">
-          Hotel Rooms
-        </h1>
+        <h1 className="text-4xl font-playfair mb-2">Hotel Rooms</h1>
 
         {filteredRooms.length === 0 && (
           <p className="text-gray-500">No rooms found.</p>
@@ -115,6 +109,15 @@ const AllRooms = () => {
               <p className="text-xl mt-4 font-medium">
                 {currency} {room.pricePerNight} / night
               </p>
+
+              {/* ⭐ Compare Button */}
+              <button
+                onClick={() => addToCompare(room)}
+                disabled={compareRooms.length >= 2}
+                className="mt-3 text-xs border px-3 py-1 rounded-full hover:bg-black hover:text-white transition disabled:opacity-40"
+              >
+                Compare ⚖️
+              </button>
             </div>
           </div>
         ))}

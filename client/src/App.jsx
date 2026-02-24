@@ -1,7 +1,8 @@
 import { Routes, Route, useLocation } from "react-router-dom";
+import { useState } from "react";
+
 import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
-
 import Experience from "./pages/Experience";
 import About from "./pages/About";
 
@@ -21,6 +22,9 @@ import Loader from "./components/Loader";
 
 import ChatAssistant from "./components/ChatAssistant";
 
+import CompareBar from "./components/CompareBar";
+import CompareModal from "./components/CompareModal";
+
 import { useAppContext } from "./context/AppContext";
 
 const App = () => {
@@ -29,11 +33,22 @@ const App = () => {
 
   const isOwnerRoute = location.pathname.startsWith("/owner");
 
+  const [showCompare, setShowCompare] = useState(false);
+
   return (
     <>
       <Navbar />
 
       {!isOwnerRoute && <ChatAssistant />}
+
+      {!isOwnerRoute && (
+        <>
+          <CompareBar onCompare={() => setShowCompare(true)} />
+          {showCompare && (
+            <CompareModal onClose={() => setShowCompare(false)} />
+          )}
+        </>
+      )}
 
       {showHotelReg && <HotelReg />}
 
@@ -41,8 +56,8 @@ const App = () => {
         <Route path="/" element={<Home />} />
         <Route path="/rooms" element={<AllRooms />} />
         <Route path="/rooms/:id" element={<RoomDetails />} />
-        <Route path="/experience" element={<Experience />} /> 
-        <Route path="/about" element={<About />} /> 
+        <Route path="/experience" element={<Experience />} />
+        <Route path="/about" element={<About />} />
         <Route path="/my-bookings" element={<MyBookings />} />
         <Route path="/wishlist" element={<Wishlist />} />
         <Route path="/loader/:nextUrl" element={<Loader />} />
