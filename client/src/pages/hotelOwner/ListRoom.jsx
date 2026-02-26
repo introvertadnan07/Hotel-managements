@@ -7,36 +7,30 @@ const ListRoom = () => {
   const [rooms, setRooms] = useState([]);
   const [updatingId, setUpdatingId] = useState(null);
 
-  const { getToken, user, currency, axios } = useAppContext();
+  const { user, currency, axios } = useAppContext();
 
+  // ✅ Fetch Owner Rooms (NO manual token)
   const fetchRooms = async () => {
     try {
-      const token = await getToken();
-      if (!token) return;
-
-      const { data } = await axios.get("/api/rooms/owner", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const { data } = await axios.get("/api/rooms/owner");
 
       if (data.success) {
-        setRooms(data.rooms);
+        setRooms(data.rooms || []);
       } else {
         toast.error(data.message || "Failed to load rooms");
       }
     } catch (error) {
-      console.error(error);
+      console.error("Fetch Rooms Error:", error);
       toast.error("Failed to load rooms");
     }
   };
 
+  // ✅ Toggle Availability (Optimistic UI)
   const toggleAvailability = async (roomId) => {
     try {
       setUpdatingId(roomId);
 
-      const token = await getToken();
-      if (!token) return;
-
-      // ✅ Optimistic UI update
+      // Optimistic update
       setRooms((prev) =>
         prev.map((room) =>
           room._id === roomId
@@ -47,15 +41,15 @@ const ListRoom = () => {
 
       const { data } = await axios.post(
         "/api/rooms/toggle-availability",
-        { roomId },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { roomId }
       );
 
       if (!data.success) {
-        toast.error(data.message);
-        fetchRooms();
+        toast.error(data.message || "Update failed");
+        fetchRooms(); // rollback
       }
     } catch (error) {
+      console.error("Toggle Error:", error);
       toast.error("Failed to update availability");
       fetchRooms();
     } finally {
@@ -63,7 +57,7 @@ const ListRoom = () => {
     }
   };
 
-  // 🤖 AI PRICE SUGGESTION (FIXED)
+  // 🤖 AI PRICE SUGGESTION
   const getSuggestion = async (roomId) => {
     try {
       const { data } = await axios.get(
@@ -77,12 +71,12 @@ const ListRoom = () => {
         toast.error("Failed to get suggestion");
       }
     } catch (error) {
-      console.error(error);
+      console.error("AI Price Error:", error);
       toast.error("AI pricing failed");
     }
   };
 
-  // ✨ AI DESCRIPTION GENERATOR (FIXED)
+  // ✨ AI DESCRIPTION GENERATOR
   const generateDescription = async (roomId) => {
     try {
       const { data } = await axios.get(
@@ -96,7 +90,7 @@ const ListRoom = () => {
         toast.error("Failed to generate description");
       }
     } catch (error) {
-      console.error(error);
+      console.error("AI Description Error:", error);
       toast.error("AI description failed");
     }
   };
@@ -137,10 +131,14 @@ const ListRoom = () => {
             ) : (
               rooms.map((room) => (
                 <tr key={room._id} className="border-t">
-                  <td className="px-6 py-4">{room.roomType}</td>
+                  <td className="px-6 py-4">
+                    {room.roomType || "Room"}
+                  </td>
 
                   <td className="px-6 py-4">
-                    {room.amenities.join(", ")}
+                    {room.amenities?.length > 0
+                      ? room.amenities.join(", ")
+                      : "No amenities"}
                   </td>
 
                   <td className="px-6 py-4">
@@ -148,19 +146,23 @@ const ListRoom = () => {
                   </td>
 
                   <td className="px-6 py-4">
-                    <div className="flex items-center justify-center gap-3">
-                      
+                    <div className="flex items-center justify-center gap-3 flex-wrap">
+
                       {/* Toggle */}
                       <button
                         onClick={() => toggleAvailability(room._id)}
                         disabled={updatingId === room._id}
                         className={`w-11 h-6 flex items-center rounded-full p-1 transition ${
-                          room.isAvailable ? "bg-blue-600" : "bg-gray-300"
+                          room.isAvailable
+                            ? "bg-blue-600"
+                            : "bg-gray-300"
                         }`}
                       >
                         <div
                           className={`w-4 h-4 bg-white rounded-full transform transition ${
-                            room.isAvailable ? "translate-x-5" : ""
+                            room.isAvailable
+                              ? "translate-x-5"
+                              : ""
                           }`}
                         />
                       </button>

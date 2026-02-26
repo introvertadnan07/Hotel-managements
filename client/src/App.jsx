@@ -1,4 +1,4 @@
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, useLocation, Navigate } from "react-router-dom";
 import { useState } from "react";
 
 import Navbar from "./components/Navbar";
@@ -19,7 +19,6 @@ import Wishlist from "./pages/Wishlist";
 
 import HotelReg from "./components/HotelReg";
 import Loader from "./components/Loader";
-
 import ChatAssistant from "./components/ChatAssistant";
 
 import CompareBar from "./components/CompareBar";
@@ -28,11 +27,10 @@ import CompareModal from "./components/CompareModal";
 import { useAppContext } from "./context/AppContext";
 
 const App = () => {
-  const { showHotelReg } = useAppContext();
+  const { showHotelReg, isOwner } = useAppContext();
   const location = useLocation();
 
   const isOwnerRoute = location.pathname.startsWith("/owner");
-
   const [showCompare, setShowCompare] = useState(false);
 
   return (
@@ -62,7 +60,17 @@ const App = () => {
         <Route path="/wishlist" element={<Wishlist />} />
         <Route path="/loader/:nextUrl" element={<Loader />} />
 
-        <Route path="/owner" element={<OwnerLayout />}>
+        {/* 🔐 PROTECTED OWNER ROUTE */}
+        <Route
+          path="/owner/*"
+          element={
+            isOwner ? (
+              <OwnerLayout />
+            ) : (
+              <Navigate to="/" />
+            )
+          }
+        >
           <Route index element={<Dashboard />} />
           <Route path="add-room" element={<AddRoom />} />
           <Route path="list-room" element={<ListRoom />} />

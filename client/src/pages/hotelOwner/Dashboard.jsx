@@ -5,7 +5,7 @@ import { useAppContext } from "../../context/AppContext";
 import toast from "react-hot-toast";
 
 const Dashboard = () => {
-  const { currency, user, getToken, axios } = useAppContext();
+  const { currency, user, axios } = useAppContext();
 
   const [dashboardData, setDashboardData] = useState({
     bookings: [],
@@ -15,32 +15,25 @@ const Dashboard = () => {
 
   const [loading, setLoading] = useState(true);
 
-  // ✅ Fetch Dashboard Data
+  // ✅ Fetch Dashboard Data (NO manual token handling)
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
 
-      const token = await getToken();
-      if (!token) return;
-
-      const { data } = await axios.post(
-        "/api/bookings/hotel",
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${token}`, 
-          },
-        }
-      );
+      const { data } = await axios.post("/api/bookings/hotel");
 
       if (data.success) {
-        setDashboardData(data.dashboardData);
+        setDashboardData({
+          bookings: data.dashboardData?.bookings || [],
+          totalBookings: data.dashboardData?.totalBookings || 0,
+          totalRevenue: data.dashboardData?.totalRevenue || 0,
+        });
       } else {
         toast.error(data.message || "Failed to load dashboard");
       }
     } catch (error) {
       toast.error("Failed to load dashboard");
-      console.error(error);
+      console.error("Dashboard fetch error:", error);
     } finally {
       setLoading(false);
     }
@@ -62,11 +55,14 @@ const Dashboard = () => {
       />
 
       {loading ? (
-        <div className="mt-10 text-gray-500">Loading dashboard...</div>
+        <div className="mt-10 text-gray-500">
+          Loading dashboard...
+        </div>
       ) : (
         <>
-          {/* ✅ Stats */}
+          {/* ================= STATS ================= */}
           <div className="flex gap-4 my-8 flex-wrap">
+
             {/* Total Bookings */}
             <div className="bg-blue-50 border border-blue-100 rounded-xl flex p-4 pr-8 shadow-sm">
               <img
@@ -76,7 +72,9 @@ const Dashboard = () => {
               />
 
               <div className="flex flex-col sm:ml-4 font-medium">
-                <p className="text-blue-600 text-lg">Total Bookings</p>
+                <p className="text-blue-600 text-lg">
+                  Total Bookings
+                </p>
                 <p className="text-gray-700 text-base">
                   {dashboardData.totalBookings}
                 </p>
@@ -92,15 +90,20 @@ const Dashboard = () => {
               />
 
               <div className="flex flex-col sm:ml-4 font-medium">
-                <p className="text-green-600 text-lg">Total Revenue</p>
+                <p className="text-green-600 text-lg">
+                  Total Revenue
+                </p>
                 <p className="text-gray-700 text-base">
-                  {currency} {dashboardData.totalRevenue.toLocaleString()}
+                  {currency}{" "}
+                  {Number(
+                    dashboardData.totalRevenue
+                  ).toLocaleString()}
                 </p>
               </div>
             </div>
           </div>
 
-          {/* ✅ Recent Bookings */}
+          {/* ================= RECENT BOOKINGS ================= */}
           <h2 className="text-xl text-gray-800 font-medium mb-4">
             Recent Bookings
           </h2>
@@ -149,7 +152,8 @@ const Dashboard = () => {
                       </td>
 
                       <td className="py-3 px-4 text-center text-gray-700">
-                        {currency} {item.totalPrice.toLocaleString()}
+                        {currency}{" "}
+                        {Number(item.totalPrice).toLocaleString()}
                       </td>
 
                       <td className="py-3 px-4 text-center">
@@ -160,7 +164,9 @@ const Dashboard = () => {
                               : "bg-amber-100 text-amber-600"
                           }`}
                         >
-                          {item.isPaid ? "Completed" : "Pending"}
+                          {item.isPaid
+                            ? "Completed"
+                            : "Pending"}
                         </span>
                       </td>
                     </tr>

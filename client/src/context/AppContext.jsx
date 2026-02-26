@@ -10,13 +10,15 @@ export const AppProvider = ({ children }) => {
   const { user } = useUser();
   const { getToken } = useAuth();
 
-  const [isOwner, setIsOwner] = useState(null);
+  // ================= ROLE SYSTEM =================
+  const [role, setRole] = useState("user");
   const [isCheckingOwner, setIsCheckingOwner] = useState(true);
 
+  // ================= UI STATES =================
   const [showHotelReg, setShowHotelReg] = useState(false);
   const [rooms, setRooms] = useState([]);
 
-  // ⭐ COMPARE FEATURE
+  // ================= COMPARE SYSTEM =================
   const [compareRooms, setCompareRooms] = useState([]);
 
   const addToCompare = (room) => {
@@ -28,11 +30,14 @@ export const AppProvider = ({ children }) => {
   };
 
   const removeFromCompare = (roomId) => {
-    setCompareRooms((prev) => prev.filter((r) => r._id !== roomId));
+    setCompareRooms((prev) =>
+      prev.filter((r) => r._id !== roomId)
+    );
   };
 
   const clearCompare = () => setCompareRooms([]);
 
+  // ================= CONFIG =================
   const currency = "₹";
 
   const api = axios.create({
@@ -40,45 +45,54 @@ export const AppProvider = ({ children }) => {
     withCredentials: true,
   });
 
-  // ✅ Auto attach Clerk token
+  // Attach Clerk token automatically
   api.interceptors.request.use(async (config) => {
     const token = await getToken();
     if (token) config.headers.Authorization = `Bearer ${token}`;
     return config;
   });
 
+  // ================= FETCH ROOMS =================
   const fetchRooms = async () => {
     try {
       const { data } = await api.get("/api/rooms");
       if (data?.success) setRooms(data.rooms || []);
     } catch (error) {
-      console.log("ROOM FETCH ERROR:", error.response?.status);
+      console.log("ROOM FETCH ERROR:", error?.response?.status);
     }
   };
 
+  // ================= FETCH USER ROLE =================
   const fetchUser = async () => {
     try {
       setIsCheckingOwner(true);
+
       const { data } = await api.get("/api/user");
 
       if (data?.success) {
-        setIsOwner(data.user.role === "hotelOwner");
-      } else setIsOwner(false);
-    } catch {
-      setIsOwner(false);
+        setRole(data.user.role || "user");
+      } else {
+        setRole("user");
+      }
+    } catch (error) {
+      console.log("USER FETCH ERROR:", error?.response?.status);
+      setRole("user");
     } finally {
       setIsCheckingOwner(false);
     }
   };
 
+  // Sync role on login/logout
   useEffect(() => {
-    if (user) fetchUser();
-    else {
-      setIsOwner(false);
+    if (user) {
+      fetchUser();
+    } else {
+      setRole("user");
       setIsCheckingOwner(false);
     }
   }, [user]);
 
+  // Load rooms on first render
   useEffect(() => {
     fetchRooms();
   }, []);
@@ -86,21 +100,29 @@ export const AppProvider = ({ children }) => {
   return (
     <AppContext.Provider
       value={{
+        // Navigation
         navigate,
-        user,
-        isOwner,
-        isCheckingOwner,
 
+        // Auth
+        user,
+        role,
+        isOwner: role === "hotelOwner",
+        isCheckingOwner,
+        fetchUser,
+
+        // UI
         showHotelReg,
         setShowHotelReg,
 
+        // Axios
         axios: api,
-        currency,
 
+        // Rooms
         rooms,
         fetchRooms,
+        currency,
 
-        // ⭐ Compare
+        // Compare Feature
         compareRooms,
         addToCompare,
         removeFromCompare,
