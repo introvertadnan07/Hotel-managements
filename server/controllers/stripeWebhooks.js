@@ -1,5 +1,9 @@
 import Stripe from "stripe";
 import Booking from "../models/Booking.js";
+import User from "../models/User.js";
+import Room from "../models/Room.js";
+import { generateInvoicePDF } from "../utils/generateInvoice.js";
+import { sendInvoiceEmail } from "../utils/sendInvoiceEmail.js";
 
 export const stripeWebhooks = async (request, response) => {
   const stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -18,13 +22,9 @@ export const stripeWebhooks = async (request, response) => {
     return response.status(400).send(`Webhook Error: ${error.message}`);
   }
 
-  //
-  // ✅ HANDLE EVENTS (OUTSIDE CATCH)
-  //
   try {
     if (event.type === "checkout.session.completed") {
       const session = event.data.object;
-
       const bookingId = session.metadata?.bookingId;
 
       if (!bookingId) {
@@ -34,12 +34,25 @@ export const stripeWebhooks = async (request, response) => {
 
       console.log("✅ Payment success for booking:", bookingId);
 
-      await Booking.findByIdAndUpdate(bookingId, {
-        isPaid: true,
-        paymentMethod: "Stripe",
-      });
-    } else {
-      console.log("Unhandled event type:", event.type);
+      const booking = await Booking.findById(bookingId)
+        .populate("user")
+        .populate("room");
+
+      if (!booking) return response.json({ received: true });
+
+      booking.isPaid = true;
+      booking.paymentMethod = "Stripe";
+      await booking.save();
+
+      // ✅ Generate Invoice
+      const invoicePath = await generateInvoicePDF(
+        booking,
+        booking.user,
+        booking.room
+      );
+
+      // ✅ Send Email
+      await sendInvoiceEmail(booking.user, invoicePath);
     }
 
     response.json({ received: true });

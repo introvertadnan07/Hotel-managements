@@ -1,8 +1,8 @@
 import express from "express";
 import cors from "cors";
 import "dotenv/config";
-import { clerkMiddleware } from "@clerk/express";
 import path from "path";
+import { clerkMiddleware } from "@clerk/express";
 
 import connectDB from "./configs/db.js";
 import connectCloudinary from "./configs/cloudinary.js";
@@ -18,20 +18,22 @@ import aiRouter from "./routes/aiRoutes.js";
 import clerkWebhooks from "./controllers/clerkWebhooks.js";
 import { stripeWebhooks } from "./controllers/stripeWebhooks.js";
 
-// ✅ Initialize services
+//
+// ✅ Initialize Services
+//
 connectCloudinary();
 connectDB();
 
 const app = express();
 
 //
-// ✅ SMART CORS FIX (Handles localhost + Vercel + Preview)
+// ✅ SMART CORS (localhost + vercel + preview)
 //
 app.use(
   cors({
     origin: (origin, callback) => {
       if (
-        !origin || // allow Postman / curl / mobile apps
+        !origin ||
         origin.includes("localhost") ||
         origin.includes("vercel.app")
       ) {
@@ -45,8 +47,9 @@ app.use(
 );
 
 //
-// ✅ Stripe Webhook (RAW body required)
-//
+// ✅ Stripe Webhook (RAW body REQUIRED)
+// MUST be before express.json()
+// 
 app.post(
   "/api/webhooks/stripe",
   express.raw({ type: "application/json" }),
@@ -54,7 +57,7 @@ app.post(
 );
 
 //
-// ✅ Clerk Webhook (RAW body required)
+// ✅ Clerk Webhook (RAW body REQUIRED)
 //
 app.post(
   "/api/webhooks/clerk",
@@ -63,7 +66,7 @@ app.post(
 );
 
 //
-// ✅ Body parsers (AFTER webhooks)
+// ✅ Body Parsers (AFTER webhooks)
 //
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -74,7 +77,8 @@ app.use(express.urlencoded({ extended: true }));
 app.use(clerkMiddleware());
 
 //
-// ✅ Static Uploads Folder
+// ✅ Static Uploads (local dev only)
+// NOTE: Vercel filesystem is temporary
 //
 const __dirname = path.resolve();
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
@@ -102,7 +106,7 @@ app.use("/api/wishlist", wishlistRouter);
 app.use("/api/ai", aiRouter);
 
 //
-// ✅ 404 Fallback
+// ✅ 404 Fallback (LAST middleware)
 //
 app.use((req, res) => {
   res.status(404).json({
