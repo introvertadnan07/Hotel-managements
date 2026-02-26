@@ -40,12 +40,6 @@ const bookingSchema = new mongoose.Schema(
       required: true,
     },
 
-    status: {
-      type: String,
-      enum: ["pending", "confirmed", "cancelled"],
-      default: "pending",
-    },
-
     paymentMethod: {
       type: String,
       default: "Pay At Hotel",
@@ -60,5 +54,4 @@ const bookingSchema = new mongoose.Schema(
 );
 
 const Booking = mongoose.model("Booking", bookingSchema);
-
 export default Booking;

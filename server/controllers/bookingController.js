@@ -7,7 +7,7 @@ import Hotel from "../models/Hotel.js";
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 //
-// ✅ CHECK AVAILABILITY
+// CHECK AVAILABILITY
 //
 export const checkAvailabilityAPI = async (req, res) => {
   try {
@@ -24,16 +24,13 @@ export const checkAvailabilityAPI = async (req, res) => {
       isAvailable: existingBookings.length === 0,
     });
   } catch (error) {
-    console.error("Availability error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Availability check failed",
-    });
+    console.error(error);
+    res.status(500).json({ success: false });
   }
 };
 
 //
-// ✅ CREATE BOOKING
+// CREATE BOOKING
 //
 export const createBooking = async (req, res) => {
   try {
@@ -42,109 +39,76 @@ export const createBooking = async (req, res) => {
     const room = await Room.findById(roomId).populate("hotel");
 
     if (!room) {
-      return res.status(404).json({
-        success: false,
-        message: "Room not found",
-      });
+      return res.status(404).json({ success: false, message: "Room not found" });
     }
 
     const booking = await Booking.create({
-      user: req.user._id, // ✅ IMPORTANT FIX
+      user: req.user._id,
       hotel: room.hotel._id,
       room: room._id,
       checkInDate,
       checkOutDate,
       guests,
       totalPrice: room.pricePerNight,
-      isPaid: false,
     });
 
-    res.json({
-      success: true,
-      booking,
-    });
+    res.json({ success: true, booking });
   } catch (error) {
-    console.error("Create booking error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Booking creation failed",
-    });
+    console.error(error);
+    res.status(500).json({ success: false });
   }
 };
 
 //
-// ✅ USER BOOKINGS
+// USER BOOKINGS
 //
 export const getUserBookings = async (req, res) => {
   try {
-    const bookings = await Booking.find({
-      user: req.user._id, // ✅ FIXED
-    })
+    const bookings = await Booking.find({ user: req.user._id })
       .populate("hotel")
       .populate("room")
       .sort({ createdAt: -1 });
 
-    res.json({
-      success: true,
-      bookings,
-    });
+    res.json({ success: true, bookings });
   } catch (error) {
-    console.error("User bookings error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch bookings",
-    });
+    console.error("User booking error:", error);
+    res.status(500).json({ success: false });
   }
 };
 
 //
-// ✅ HOTEL OWNER DASHBOARD
+// HOTEL OWNER DASHBOARD
 //
 export const getHotelBookings = async (req, res) => {
   try {
-    const hotel = await Hotel.findOne({
-      owner: req.user.clerkId,
-    });
+    const hotel = await Hotel.findOne({ owner: req.user.clerkId });
 
     if (!hotel) {
-      return res.status(404).json({
-        success: false,
-        message: "Hotel not found",
-      });
+      return res.status(404).json({ success: false });
     }
 
-    const bookings = await Booking.find({
-      hotel: hotel._id,
-    })
+    const bookings = await Booking.find({ hotel: hotel._id })
       .populate("room")
-      .populate("user") // ✅ now works because user is ObjectId
+      .populate("user")
       .sort({ createdAt: -1 });
 
     const totalBookings = bookings.length;
-
     const totalRevenue = bookings
       .filter((b) => b.isPaid)
       .reduce((sum, b) => sum + b.totalPrice, 0);
 
     res.json({
       success: true,
-      dashboardData: {
-        bookings,
-        totalBookings,
-        totalRevenue,
-      },
+      dashboardData: { bookings, totalBookings, totalRevenue },
     });
   } catch (error) {
-    console.error("Hotel dashboard error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to fetch hotel bookings",
-    });
+    console.error(error);
+    res.status(500).json({ success: false });
   }
 };
 
 //
-// ✅ STRIPE PAYMENT
+// STRIPE PAYMENT
 //
 export const stripePayment = async (req, res) => {
   try {
@@ -155,10 +119,7 @@ export const stripePayment = async (req, res) => {
       .populate("hotel");
 
     if (!booking) {
-      return res.status(404).json({
-        success: false,
-        message: "Booking not found",
-      });
+      return res.status(404).json({ success: false });
     }
 
     const session = await stripe.checkout.sessions.create({
@@ -178,41 +139,28 @@ export const stripePayment = async (req, res) => {
       ],
       success_url: `${process.env.FRONTEND_URL}/my-bookings`,
       cancel_url: `${process.env.FRONTEND_URL}/my-bookings`,
-      metadata: {
-        bookingId: booking._id.toString(),
-      },
+      metadata: { bookingId: booking._id.toString() },
     });
 
-    res.json({
-      success: true,
-      url: session.url,
-    });
+    res.json({ success: true, url: session.url });
   } catch (error) {
-    console.error("Stripe error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Stripe session creation failed",
-    });
+    console.error(error);
+    res.status(500).json({ success: false });
   }
 };
 
 //
-// ✅ STREAMING INVOICE (VERCEL SAFE)
+// STREAMING INVOICE
 //
 export const downloadInvoice = async (req, res) => {
   try {
-    const { bookingId } = req.params;
-
-    const booking = await Booking.findById(bookingId)
-      .populate("room")
+    const booking = await Booking.findById(req.params.bookingId)
       .populate("hotel")
+      .populate("room")
       .populate("user");
 
     if (!booking || !booking.isPaid) {
-      return res.status(404).json({
-        success: false,
-        message: "Invoice not available",
-      });
+      return res.status(404).json({ success: false });
     }
 
     res.setHeader("Content-Type", "application/pdf");
@@ -232,7 +180,7 @@ export const downloadInvoice = async (req, res) => {
     doc.text(`Customer: ${booking.user.username}`);
     doc.text(`Hotel: ${booking.hotel.name}`);
     doc.text(`Room: ${booking.room.roomType}`);
-    doc.text(`Total Amount: ₹${booking.totalPrice}`);
+    doc.text(`Total: ₹${booking.totalPrice}`);
     doc.text(`Status: Paid`);
     doc.moveDown();
     doc.text(`Check-In: ${new Date(booking.checkInDate).toDateString()}`);
@@ -241,9 +189,6 @@ export const downloadInvoice = async (req, res) => {
     doc.end();
   } catch (error) {
     console.error("Invoice error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Invoice generation failed",
-    });
+    res.status(500).json({ success: false });
   }
 };
