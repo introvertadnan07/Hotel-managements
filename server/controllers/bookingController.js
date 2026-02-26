@@ -1,10 +1,8 @@
 import Stripe from "stripe";
+import PDFDocument from "pdfkit";
 import Booking from "../models/Booking.js";
 import Room from "../models/Room.js";
 import Hotel from "../models/Hotel.js";
-import User from "../models/User.js";
-import path from "path";
-import fs from "fs";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -21,13 +19,12 @@ export const checkAvailabilityAPI = async (req, res) => {
       checkOutDate: { $gte: checkInDate },
     });
 
-    const isAvailable = existingBookings.length === 0;
-
     res.json({
       success: true,
-      isAvailable,
+      isAvailable: existingBookings.length === 0,
     });
   } catch (error) {
+    console.error("Availability error:", error);
     res.status(500).json({
       success: false,
       message: "Availability check failed",
@@ -51,16 +48,14 @@ export const createBooking = async (req, res) => {
       });
     }
 
-    const totalPrice = room.pricePerNight;
-
     const booking = await Booking.create({
-      user: req.user.clerkId,
+      user: req.user._id, // ✅ IMPORTANT FIX
       hotel: room.hotel._id,
       room: room._id,
       checkInDate,
       checkOutDate,
       guests,
-      totalPrice,
+      totalPrice: room.pricePerNight,
       isPaid: false,
     });
 
@@ -69,6 +64,7 @@ export const createBooking = async (req, res) => {
       booking,
     });
   } catch (error) {
+    console.error("Create booking error:", error);
     res.status(500).json({
       success: false,
       message: "Booking creation failed",
@@ -82,7 +78,7 @@ export const createBooking = async (req, res) => {
 export const getUserBookings = async (req, res) => {
   try {
     const bookings = await Booking.find({
-      user: req.user.clerkId,
+      user: req.user._id, // ✅ FIXED
     })
       .populate("hotel")
       .populate("room")
@@ -93,6 +89,7 @@ export const getUserBookings = async (req, res) => {
       bookings,
     });
   } catch (error) {
+    console.error("User bookings error:", error);
     res.status(500).json({
       success: false,
       message: "Failed to fetch bookings",
@@ -101,7 +98,7 @@ export const getUserBookings = async (req, res) => {
 };
 
 //
-// ✅ HOTEL OWNER DASHBOARD BOOKINGS
+// ✅ HOTEL OWNER DASHBOARD
 //
 export const getHotelBookings = async (req, res) => {
   try {
@@ -120,10 +117,11 @@ export const getHotelBookings = async (req, res) => {
       hotel: hotel._id,
     })
       .populate("room")
-      .populate("user")
+      .populate("user") // ✅ now works because user is ObjectId
       .sort({ createdAt: -1 });
 
     const totalBookings = bookings.length;
+
     const totalRevenue = bookings
       .filter((b) => b.isPaid)
       .reduce((sum, b) => sum + b.totalPrice, 0);
@@ -137,6 +135,7 @@ export const getHotelBookings = async (req, res) => {
       },
     });
   } catch (error) {
+    console.error("Hotel dashboard error:", error);
     res.status(500).json({
       success: false,
       message: "Failed to fetch hotel bookings",
@@ -145,7 +144,7 @@ export const getHotelBookings = async (req, res) => {
 };
 
 //
-// ✅ STRIPE PAYMENT SESSION
+// ✅ STRIPE PAYMENT
 //
 export const stripePayment = async (req, res) => {
   try {
@@ -189,6 +188,7 @@ export const stripePayment = async (req, res) => {
       url: session.url,
     });
   } catch (error) {
+    console.error("Stripe error:", error);
     res.status(500).json({
       success: false,
       message: "Stripe session creation failed",
@@ -197,13 +197,16 @@ export const stripePayment = async (req, res) => {
 };
 
 //
-// ✅ DOWNLOAD INVOICE
+// ✅ STREAMING INVOICE (VERCEL SAFE)
 //
 export const downloadInvoice = async (req, res) => {
   try {
     const { bookingId } = req.params;
 
-    const booking = await Booking.findById(bookingId);
+    const booking = await Booking.findById(bookingId)
+      .populate("room")
+      .populate("hotel")
+      .populate("user");
 
     if (!booking || !booking.isPaid) {
       return res.status(404).json({
@@ -212,20 +215,35 @@ export const downloadInvoice = async (req, res) => {
       });
     }
 
-    const filePath = path.join("uploads", `invoice-${booking._id}.pdf`);
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=invoice-${booking._id}.pdf`
+    );
 
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({
-        success: false,
-        message: "Invoice file not found",
-      });
-    }
+    const doc = new PDFDocument({ margin: 50 });
+    doc.pipe(res);
 
-    res.download(filePath);
+    doc.fontSize(22).text("Anumifly Invoice", { align: "center" });
+    doc.moveDown();
+
+    doc.fontSize(12);
+    doc.text(`Booking ID: ${booking._id}`);
+    doc.text(`Customer: ${booking.user.username}`);
+    doc.text(`Hotel: ${booking.hotel.name}`);
+    doc.text(`Room: ${booking.room.roomType}`);
+    doc.text(`Total Amount: ₹${booking.totalPrice}`);
+    doc.text(`Status: Paid`);
+    doc.moveDown();
+    doc.text(`Check-In: ${new Date(booking.checkInDate).toDateString()}`);
+    doc.text(`Check-Out: ${new Date(booking.checkOutDate).toDateString()}`);
+
+    doc.end();
   } catch (error) {
+    console.error("Invoice error:", error);
     res.status(500).json({
       success: false,
-      message: "Invoice download failed",
+      message: "Invoice generation failed",
     });
   }
 };
