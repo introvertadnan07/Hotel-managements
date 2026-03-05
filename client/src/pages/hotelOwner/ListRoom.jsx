@@ -48,7 +48,6 @@ const ListRoom = () => {
         toast.error(data.message || "Update failed");
         fetchRooms();
       }
-
     } catch (error) {
       console.error("Toggle Error:", error);
       toast.error("Failed to update availability");
@@ -61,25 +60,51 @@ const ListRoom = () => {
   // AI PRICE SUGGESTION
   const getSuggestion = async (roomId) => {
     try {
-      const { data } = await axios.get(
-        `/api/ai/price-suggestion/${roomId}`
-      );
+      const { data } = await axios.get(`/api/ai/price-suggestion/${roomId}`);
 
       if (data.success) {
         toast.success("AI Suggestion Ready 🤖");
 
         Swal.fire({
-          title: "AI Price Recommendation",
-          html: `<div style="text-align:left;white-space:pre-line;">${data.suggestion}</div>`,
-          icon: "info",
-          width: 600,
-          confirmButtonText: "OK",
+          title: "🤖 AI Pricing Assistant",
+          html: `
+            <div style="text-align:left;font-size:14px;line-height:1.6">
+
+              <div style="
+                background:#f9fafb;
+                border-radius:12px;
+                padding:14px;
+                border:1px solid #e5e7eb;
+                margin-bottom:12px;
+              ">
+                <strong style="color:#2563eb">Recommended Price</strong>
+                <div style="font-size:22px;font-weight:600;margin-top:6px">
+                  ₹${data.price} / night
+                </div>
+              </div>
+
+              <div style="
+                background:#ffffff;
+                border-radius:12px;
+                padding:14px;
+                border:1px solid #e5e7eb;
+              ">
+                <strong>AI Explanation</strong>
+                <p style="margin-top:6px;white-space:pre-line">
+                  ${data.reason || data.suggestion}
+                </p>
+              </div>
+
+            </div>
+          `,
+          width: 650,
+          confirmButtonText: "Got it",
+          confirmButtonColor: "#2563eb",
         });
 
       } else {
         toast.error("Failed to get suggestion");
       }
-
     } catch (error) {
       console.error("AI Price Error:", error);
       toast.error("AI pricing failed");
@@ -89,25 +114,34 @@ const ListRoom = () => {
   // AI DESCRIPTION GENERATOR
   const generateDescription = async (roomId) => {
     try {
-      const { data } = await axios.get(
-        `/api/ai/generate-description/${roomId}`
-      );
+      const { data } = await axios.get(`/api/ai/generate-description/${roomId}`);
 
       if (data.success) {
         toast.success("Description Generated ✨");
 
         Swal.fire({
-          title: "AI Generated Description",
-          html: `<div style="text-align:left;white-space:pre-line;">${data.description}</div>`,
-          icon: "success",
-          width: 600,
-          confirmButtonText: "OK",
+          title: "✨ AI Generated Description",
+          html: `
+            <div style="
+              text-align:left;
+              font-size:14px;
+              line-height:1.7;
+              background:#f9fafb;
+              border-radius:12px;
+              padding:16px;
+              border:1px solid #e5e7eb;
+            ">
+              ${data.description}
+            </div>
+          `,
+          width: 650,
+          confirmButtonText: "Use this",
+          confirmButtonColor: "#4f46e5",
         });
 
       } else {
         toast.error("Failed to generate description");
       }
-
     } catch (error) {
       console.error("AI Description Error:", error);
       toast.error("AI description failed");
@@ -131,6 +165,7 @@ const ListRoom = () => {
 
       <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
         <table className="w-full text-sm text-left">
+
           <thead className="bg-gray-50">
             <tr>
               <th className="px-6 py-3">Name</th>
@@ -210,6 +245,7 @@ const ListRoom = () => {
               ))
             )}
           </tbody>
+
         </table>
       </div>
     </div>
