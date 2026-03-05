@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import Title from "../../components/Title";
 import { useAppContext } from "../../context/AppContext";
 import toast from "react-hot-toast";
+import Swal from "sweetalert2";
 
 const ListRoom = () => {
   const [rooms, setRooms] = useState([]);
@@ -9,7 +10,7 @@ const ListRoom = () => {
 
   const { user, currency, axios } = useAppContext();
 
-  // ✅ Fetch Owner Rooms (NO manual token)
+  // Fetch Owner Rooms
   const fetchRooms = async () => {
     try {
       const { data } = await axios.get("/api/rooms/owner");
@@ -25,12 +26,11 @@ const ListRoom = () => {
     }
   };
 
-  // ✅ Toggle Availability (Optimistic UI)
+  // Toggle Availability
   const toggleAvailability = async (roomId) => {
     try {
       setUpdatingId(roomId);
 
-      // Optimistic update
       setRooms((prev) =>
         prev.map((room) =>
           room._id === roomId
@@ -46,8 +46,9 @@ const ListRoom = () => {
 
       if (!data.success) {
         toast.error(data.message || "Update failed");
-        fetchRooms(); // rollback
+        fetchRooms();
       }
+
     } catch (error) {
       console.error("Toggle Error:", error);
       toast.error("Failed to update availability");
@@ -57,7 +58,7 @@ const ListRoom = () => {
     }
   };
 
-  // 🤖 AI PRICE SUGGESTION
+  // AI PRICE SUGGESTION
   const getSuggestion = async (roomId) => {
     try {
       const { data } = await axios.get(
@@ -66,17 +67,26 @@ const ListRoom = () => {
 
       if (data.success) {
         toast.success("AI Suggestion Ready 🤖");
-        alert(data.suggestion);
+
+        Swal.fire({
+          title: "AI Price Recommendation",
+          html: `<div style="text-align:left;white-space:pre-line;">${data.suggestion}</div>`,
+          icon: "info",
+          width: 600,
+          confirmButtonText: "OK",
+        });
+
       } else {
         toast.error("Failed to get suggestion");
       }
+
     } catch (error) {
       console.error("AI Price Error:", error);
       toast.error("AI pricing failed");
     }
   };
 
-  // ✨ AI DESCRIPTION GENERATOR
+  // AI DESCRIPTION GENERATOR
   const generateDescription = async (roomId) => {
     try {
       const { data } = await axios.get(
@@ -85,10 +95,19 @@ const ListRoom = () => {
 
       if (data.success) {
         toast.success("Description Generated ✨");
-        alert(data.description);
+
+        Swal.fire({
+          title: "AI Generated Description",
+          html: `<div style="text-align:left;white-space:pre-line;">${data.description}</div>`,
+          icon: "success",
+          width: 600,
+          confirmButtonText: "OK",
+        });
+
       } else {
         toast.error("Failed to generate description");
       }
+
     } catch (error) {
       console.error("AI Description Error:", error);
       toast.error("AI description failed");
@@ -131,6 +150,7 @@ const ListRoom = () => {
             ) : (
               rooms.map((room) => (
                 <tr key={room._id} className="border-t">
+
                   <td className="px-6 py-4">
                     {room.roomType || "Room"}
                   </td>
@@ -185,6 +205,7 @@ const ListRoom = () => {
 
                     </div>
                   </td>
+
                 </tr>
               ))
             )}
