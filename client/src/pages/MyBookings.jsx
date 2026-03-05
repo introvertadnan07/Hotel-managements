@@ -10,8 +10,9 @@ const MyBookings = () => {
   const [bookings, setBookings] = useState([]);
   const [payingId, setPayingId] = useState(null);
   const [downloadingId, setDownloadingId] = useState(null);
+  const [cancelingId, setCancelingId] = useState(null);
 
-  // ✅ Safe image handler
+  // Safe image handler
   const getImageUrl = (img) => {
     if (!img) return assets.hostedDefaultImage;
     if (img.startsWith("http")) return img;
@@ -19,80 +20,91 @@ const MyBookings = () => {
     return `${import.meta.env.VITE_API_URL}/${img}`;
   };
 
-  // ✅ Fetch bookings
+  // Fetch user bookings
   const fetchUserBookings = async () => {
     try {
       const { data } = await axios.post("/api/bookings/user");
+
       if (data.success) {
-        setBookings(data.bookings);
+        setBookings(data.bookings || []);
+      } else {
+        toast.error(data.message || "Failed to load bookings");
       }
-    } catch {
+    } catch (error) {
       toast.error("Failed to load bookings");
     }
   };
 
-  // ✅ Stripe payment
+  // Stripe payment
   const handlePayment = async (bookingId) => {
     try {
       setPayingId(bookingId);
 
-      const { data } = await axios.post(
-        "/api/bookings/stripe-payment",
-        { bookingId }
-      );
+      const { data } = await axios.post("/api/bookings/stripe-payment", {
+        bookingId,
+      });
 
       if (data.success) {
         window.location.href = data.url;
       } else {
-        toast.error(data.message);
+        toast.error(data.message || "Payment failed");
         setPayingId(null);
       }
-    } catch {
+    } catch (error) {
       toast.error("Payment failed");
       setPayingId(null);
     }
   };
 
-  // ✅ Cancel booking
+  // Cancel booking
   const handleCancel = async (bookingId) => {
+    const confirmCancel = window.confirm(
+      "Are you sure you want to cancel this booking?"
+    );
+
+    if (!confirmCancel) return;
+
     try {
-      const { data } = await axios.post(
-        `/api/bookings/${bookingId}/cancel`
-      );
+      setCancelingId(bookingId);
+
+      const { data } = await axios.post(`/api/bookings/${bookingId}/cancel`);
 
       if (data.success) {
-        toast.success("Booking cancelled");
+        toast.success("Booking cancelled successfully");
         fetchUserBookings();
       } else {
-        toast.error(data.message);
+        toast.error(data.message || "Cancellation failed");
       }
-    } catch {
+    } catch (error) {
       toast.error("Cancellation failed");
+    } finally {
+      setCancelingId(null);
     }
   };
 
-  // ✅ Download invoice
+  // Download invoice
   const downloadInvoice = async (bookingId) => {
     try {
       setDownloadingId(bookingId);
 
-      const response = await axios.get(
-        `/api/bookings/invoice/${bookingId}`,
-        { responseType: "blob" }
-      );
+      const response = await axios.get(`/api/bookings/invoice/${bookingId}`, {
+        responseType: "blob",
+      });
 
       const blob = new Blob([response.data], {
         type: "application/pdf",
       });
 
       const url = window.URL.createObjectURL(blob);
+
       const link = document.createElement("a");
       link.href = url;
       link.download = `invoice-${bookingId}.pdf`;
+
       document.body.appendChild(link);
       link.click();
       link.remove();
-    } catch {
+    } catch (error) {
       toast.error("Invoice download failed");
     } finally {
       setDownloadingId(null);
@@ -100,7 +112,9 @@ const MyBookings = () => {
   };
 
   useEffect(() => {
-    if (user) fetchUserBookings();
+    if (user) {
+      fetchUserBookings();
+    }
   }, [user]);
 
   return (
@@ -163,6 +177,7 @@ const MyBookings = () => {
                   Check-In:{" "}
                   {new Date(booking.checkInDate).toDateString()}
                 </p>
+
                 <p>
                   Check-Out:{" "}
                   {new Date(booking.checkOutDate).toDateString()}
@@ -171,21 +186,18 @@ const MyBookings = () => {
 
               {/* ACTION SECTION */}
               <div className="flex gap-3 items-center">
-
-                {/* Pending Payment */}
+                {/* Pending payment */}
                 {booking.status === "pending" && (
                   <button
                     onClick={() => handlePayment(booking._id)}
                     disabled={payingId === booking._id}
                     className="px-4 py-1.5 text-sm border rounded-full"
                   >
-                    {payingId === booking._id
-                      ? "Redirecting..."
-                      : "Pay Now"}
+                    {payingId === booking._id ? "Redirecting..." : "Pay Now"}
                   </button>
                 )}
 
-                {/* Confirmed Booking */}
+                {/* Confirmed booking */}
                 {booking.status === "confirmed" && (
                   <>
                     <button
@@ -201,9 +213,12 @@ const MyBookings = () => {
                     {new Date(booking.checkInDate) > new Date() && (
                       <button
                         onClick={() => handleCancel(booking._id)}
+                        disabled={cancelingId === booking._id}
                         className="px-4 py-1.5 text-sm border border-red-500 text-red-500 rounded-full"
                       >
-                        Cancel
+                        {cancelingId === booking._id
+                          ? "Cancelling..."
+                          : "Cancel"}
                       </button>
                     )}
                   </>
@@ -215,7 +230,6 @@ const MyBookings = () => {
                     Refunded
                   </span>
                 )}
-
               </div>
             </div>
           ))
