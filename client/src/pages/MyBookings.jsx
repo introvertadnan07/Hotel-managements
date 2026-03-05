@@ -3,6 +3,7 @@ import Title from "../components/Title";
 import { assets } from "../assets/assets";
 import { useAppContext } from "../context/AppContext";
 import toast from "react-hot-toast";
+import Swal from "sweetalert2";
 
 const MyBookings = () => {
   const { axios, user } = useAppContext();
@@ -56,13 +57,20 @@ const MyBookings = () => {
     }
   };
 
-  // Cancel booking
+  // Cancel booking with professional modal
   const handleCancel = async (bookingId) => {
-    const confirmCancel = window.confirm(
-      "Are you sure you want to cancel this booking?"
-    );
 
-    if (!confirmCancel) return;
+    const result = await Swal.fire({
+      title: "Cancel booking?",
+      text: "You will lose this reservation.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#ef4444",
+      cancelButtonColor: "#6b7280",
+      confirmButtonText: "Yes, cancel booking",
+    });
+
+    if (!result.isConfirmed) return;
 
     try {
       setCancelingId(bookingId);
@@ -75,6 +83,7 @@ const MyBookings = () => {
       } else {
         toast.error(data.message || "Cancellation failed");
       }
+
     } catch {
       toast.error("Cancellation failed");
     } finally {
@@ -104,6 +113,7 @@ const MyBookings = () => {
       document.body.appendChild(link);
       link.click();
       link.remove();
+
     } catch {
       toast.error("Invoice download failed");
     } finally {
@@ -124,6 +134,7 @@ const MyBookings = () => {
       />
 
       <div className="max-w-6xl mt-10 w-full text-gray-800">
+
         {bookings.length === 0 ? (
           <p className="py-10 text-gray-500">No bookings found.</p>
         ) : (
@@ -132,6 +143,7 @@ const MyBookings = () => {
               key={booking._id}
               className="grid grid-cols-1 md:grid-cols-[3fr_2fr_1fr] gap-6 border-b py-6"
             >
+
               {/* LEFT */}
               <div className="flex gap-4">
                 <img
@@ -237,6 +249,7 @@ const MyBookings = () => {
             </div>
           ))
         )}
+
       </div>
     </div>
   );
