@@ -6,25 +6,33 @@ import { useUser, useAuth } from "@clerk/clerk-react";
 const AppContext = createContext(null);
 
 export const AppProvider = ({ children }) => {
+
   const navigate = useNavigate();
+
   const { user } = useUser();
   const { getToken } = useAuth();
 
   // ================= ROLE SYSTEM =================
+
   const [role, setRole] = useState("user");
   const [isCheckingOwner, setIsCheckingOwner] = useState(true);
 
   // ================= UI STATES =================
+
   const [showHotelReg, setShowHotelReg] = useState(false);
   const [rooms, setRooms] = useState([]);
 
   // ================= COMPARE SYSTEM =================
+
   const [compareRooms, setCompareRooms] = useState([]);
 
   const addToCompare = (room) => {
     setCompareRooms((prev) => {
+
       if (prev.find((r) => r._id === room._id)) return prev;
+
       if (prev.length >= 2) return prev;
+
       return [...prev, room];
     });
   };
@@ -38,6 +46,7 @@ export const AppProvider = ({ children }) => {
   const clearCompare = () => setCompareRooms([]);
 
   // ================= CONFIG =================
+
   const currency = "₹";
 
   const api = axios.create({
@@ -45,26 +54,50 @@ export const AppProvider = ({ children }) => {
     withCredentials: true,
   });
 
-  // Attach Clerk token automatically
-  api.interceptors.request.use(async (config) => {
-    const token = await getToken();
-    if (token) config.headers.Authorization = `Bearer ${token}`;
-    return config;
-  });
+  // ================= AXIOS TOKEN INTERCEPTOR =================
+
+  api.interceptors.request.use(
+    async (config) => {
+
+      try {
+
+        const token = await getToken();
+
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+
+      } catch (error) {
+        console.log("TOKEN ERROR:", error);
+      }
+
+      return config;
+    },
+    (error) => Promise.reject(error)
+  );
 
   // ================= FETCH ROOMS =================
+
   const fetchRooms = async () => {
     try {
+
       const { data } = await api.get("/api/rooms");
-      if (data?.success) setRooms(data.rooms || []);
+
+      if (data?.success) {
+        setRooms(data.rooms || []);
+      }
+
     } catch (error) {
       console.log("ROOM FETCH ERROR:", error?.response?.status);
     }
   };
 
   // ================= FETCH USER ROLE =================
+
   const fetchUser = async () => {
+
     try {
+
       setIsCheckingOwner(true);
 
       const { data } = await api.get("/api/user");
@@ -74,32 +107,43 @@ export const AppProvider = ({ children }) => {
       } else {
         setRole("user");
       }
+
     } catch (error) {
+
       console.log("USER FETCH ERROR:", error?.response?.status);
+
       setRole("user");
+
     } finally {
       setIsCheckingOwner(false);
     }
+
   };
 
-  // Sync role on login/logout
+  // ================= USER LOGIN SYNC =================
+
   useEffect(() => {
+
     if (user) {
       fetchUser();
     } else {
       setRole("user");
       setIsCheckingOwner(false);
     }
+
   }, [user]);
 
-  // Load rooms on first render
+  // ================= LOAD ROOMS =================
+
   useEffect(() => {
     fetchRooms();
   }, []);
 
   return (
+
     <AppContext.Provider
       value={{
+
         // Navigation
         navigate,
 
@@ -122,15 +166,17 @@ export const AppProvider = ({ children }) => {
         fetchRooms,
         currency,
 
-        // Compare Feature
+        // Compare
         compareRooms,
         addToCompare,
         removeFromCompare,
         clearCompare,
+
       }}
     >
       {children}
     </AppContext.Provider>
+
   );
 };
 
