@@ -14,10 +14,6 @@ import {
   CartesianGrid
 } from "recharts";
 
-import { io } from "socket.io-client";
-
-const socket = io(import.meta.env.VITE_BACKEND_URL);
-
 const Dashboard = () => {
   const { currency, user, axios } = useAppContext();
 
@@ -74,22 +70,6 @@ const Dashboard = () => {
       setFilteredBookings(filtered);
     }
   }, [statusFilter, dashboardData.bookings]);
-
-  // ================= REALTIME BOOKINGS =================
-  useEffect(() => {
-    socket.on("new-booking", (booking) => {
-      toast.success("New booking received!");
-
-      setDashboardData((prev) => ({
-        ...prev,
-        bookings: [booking, ...prev.bookings],
-        totalBookings: prev.totalBookings + 1,
-        totalRevenue: prev.totalRevenue + booking.totalPrice
-      }));
-    });
-
-    return () => socket.off("new-booking");
-  }, []);
 
   // ================= MONTHLY ANALYTICS =================
   const monthlyRevenue = {};
