@@ -19,17 +19,14 @@ const MyBookings = () => {
     return `${import.meta.env.VITE_API_URL}/${img}`;
   };
 
-  // ✅ Fetch user bookings
+  // ✅ Fetch bookings
   const fetchUserBookings = async () => {
     try {
       const { data } = await axios.post("/api/bookings/user");
-
       if (data.success) {
         setBookings(data.bookings);
-      } else {
-        toast.error(data.message);
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to load bookings");
     }
   };
@@ -50,13 +47,31 @@ const MyBookings = () => {
         toast.error(data.message);
         setPayingId(null);
       }
-    } catch (error) {
+    } catch {
       toast.error("Payment failed");
       setPayingId(null);
     }
   };
 
-  // ✅ Secure invoice download (FIXED)
+  // ✅ Cancel booking
+  const handleCancel = async (bookingId) => {
+    try {
+      const { data } = await axios.post(
+        `/api/bookings/${bookingId}/cancel`
+      );
+
+      if (data.success) {
+        toast.success("Booking cancelled");
+        fetchUserBookings();
+      } else {
+        toast.error(data.message);
+      }
+    } catch {
+      toast.error("Cancellation failed");
+    }
+  };
+
+  // ✅ Download invoice
   const downloadInvoice = async (bookingId) => {
     try {
       setDownloadingId(bookingId);
@@ -77,8 +92,7 @@ const MyBookings = () => {
       document.body.appendChild(link);
       link.click();
       link.remove();
-
-    } catch (error) {
+    } catch {
       toast.error("Invoice download failed");
     } finally {
       setDownloadingId(null);
@@ -125,6 +139,21 @@ const MyBookings = () => {
                   <p className="font-medium">
                     Total: ₹ {booking.totalPrice?.toLocaleString()}
                   </p>
+
+                  <p className="text-sm mt-1">
+                    Status:{" "}
+                    <span
+                      className={
+                        booking.status === "confirmed"
+                          ? "text-green-600"
+                          : booking.status === "refunded"
+                          ? "text-red-600"
+                          : "text-yellow-600"
+                      }
+                    >
+                      {booking.status}
+                    </span>
+                  </p>
                 </div>
               </div>
 
@@ -142,7 +171,9 @@ const MyBookings = () => {
 
               {/* ACTION SECTION */}
               <div className="flex gap-3 items-center">
-                {!booking.isPaid ? (
+
+                {/* Pending Payment */}
+                {booking.status === "pending" && (
                   <button
                     onClick={() => handlePayment(booking._id)}
                     disabled={payingId === booking._id}
@@ -152,17 +183,39 @@ const MyBookings = () => {
                       ? "Redirecting..."
                       : "Pay Now"}
                   </button>
-                ) : (
-                  <button
-                    onClick={() => downloadInvoice(booking._id)}
-                    disabled={downloadingId === booking._id}
-                    className="px-4 py-1.5 text-sm bg-black text-white rounded-full"
-                  >
-                    {downloadingId === booking._id
-                      ? "Downloading..."
-                      : "Download Invoice"}
-                  </button>
                 )}
+
+                {/* Confirmed Booking */}
+                {booking.status === "confirmed" && (
+                  <>
+                    <button
+                      onClick={() => downloadInvoice(booking._id)}
+                      disabled={downloadingId === booking._id}
+                      className="px-4 py-1.5 text-sm bg-black text-white rounded-full"
+                    >
+                      {downloadingId === booking._id
+                        ? "Downloading..."
+                        : "Download Invoice"}
+                    </button>
+
+                    {new Date(booking.checkInDate) > new Date() && (
+                      <button
+                        onClick={() => handleCancel(booking._id)}
+                        className="px-4 py-1.5 text-sm border border-red-500 text-red-500 rounded-full"
+                      >
+                        Cancel
+                      </button>
+                    )}
+                  </>
+                )}
+
+                {/* Refunded */}
+                {booking.status === "refunded" && (
+                  <span className="text-sm text-red-500 font-medium">
+                    Refunded
+                  </span>
+                )}
+
               </div>
             </div>
           ))
