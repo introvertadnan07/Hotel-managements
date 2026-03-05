@@ -40,9 +40,18 @@ const bookingSchema = new mongoose.Schema(
       required: true,
     },
 
+    stripeSessionId: String,
+    stripePaymentIntentId: String,
+
     paymentMethod: {
       type: String,
       default: "Pay At Hotel",
+    },
+
+    status: {
+      type: String,
+      enum: ["pending", "confirmed", "cancelled", "refunded", "completed"],
+      default: "pending",
     },
 
     isPaid: {
@@ -52,6 +61,9 @@ const bookingSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+bookingSchema.index({ room: 1, checkInDate: 1, checkOutDate: 1 });
+bookingSchema.index({ user: 1 });
 
 const Booking = mongoose.model("Booking", bookingSchema);
 export default Booking;

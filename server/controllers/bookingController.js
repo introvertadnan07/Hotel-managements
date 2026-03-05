@@ -3,6 +3,7 @@ import PDFDocument from "pdfkit";
 import Booking from "../models/Booking.js";
 import Room from "../models/Room.js";
 import Hotel from "../models/Hotel.js";
+import Coupon from "../models/Coupon.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -15,8 +16,9 @@ export const checkAvailabilityAPI = async (req, res) => {
 
     const existingBookings = await Booking.find({
       room: roomId,
-      checkInDate: { $lte: checkOutDate },
-      checkOutDate: { $gte: checkInDate },
+      status: { $in: ["pending", "confirmed"] },
+      checkInDate: { $lt: checkOutDate },
+      checkOutDate: { $gt: checkInDate },
     });
 
     res.json({
@@ -24,7 +26,6 @@ export const checkAvailabilityAPI = async (req, res) => {
       isAvailable: existingBookings.length === 0,
     });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ success: false });
   }
 };
@@ -34,12 +35,49 @@ export const checkAvailabilityAPI = async (req, res) => {
 //
 export const createBooking = async (req, res) => {
   try {
-    const { roomId, checkInDate, checkOutDate, guests } = req.body;
+    const { roomId, checkInDate, checkOutDate, guests, couponCode } = req.body;
 
     const room = await Room.findById(roomId).populate("hotel");
-
-    if (!room) {
+    if (!room)
       return res.status(404).json({ success: false, message: "Room not found" });
+
+    // Prevent double booking
+    const overlapping = await Booking.findOne({
+      room: roomId,
+      status: { $in: ["pending", "confirmed"] },
+      checkInDate: { $lt: checkOutDate },
+      checkOutDate: { $gt: checkInDate },
+    });
+
+    if (overlapping)
+      return res.status(400).json({ success: false, message: "Room already booked" });
+
+    const nights =
+      (new Date(checkOutDate) - new Date(checkInDate)) /
+      (1000 * 60 * 60 * 24);
+
+    let total = nights * room.pricePerNight;
+
+    if (couponCode) {
+      const coupon = await Coupon.findOne({ code: couponCode });
+
+      if (
+        !coupon ||
+        !coupon.isActive ||
+        coupon.expiryDate < new Date() ||
+        coupon.usedCount >= coupon.maxUsage
+      ) {
+        return res.status(400).json({ success: false, message: "Invalid coupon" });
+      }
+
+      if (coupon.discountType === "percent") {
+        total -= (total * coupon.discountValue) / 100;
+      } else {
+        total -= coupon.discountValue;
+      }
+
+      coupon.usedCount += 1;
+      await coupon.save();
     }
 
     const booking = await Booking.create({
@@ -49,12 +87,12 @@ export const createBooking = async (req, res) => {
       checkInDate,
       checkOutDate,
       guests,
-      totalPrice: room.pricePerNight,
+      totalPrice: total,
+      status: "pending",
     });
 
     res.json({ success: true, booking });
   } catch (error) {
-    console.error(error);
     res.status(500).json({ success: false });
   }
 };
@@ -70,39 +108,7 @@ export const getUserBookings = async (req, res) => {
       .sort({ createdAt: -1 });
 
     res.json({ success: true, bookings });
-  } catch (error) {
-    console.error("User booking error:", error);
-    res.status(500).json({ success: false });
-  }
-};
-
-//
-// HOTEL OWNER DASHBOARD
-//
-export const getHotelBookings = async (req, res) => {
-  try {
-    const hotel = await Hotel.findOne({ owner: req.user.clerkId });
-
-    if (!hotel) {
-      return res.status(404).json({ success: false });
-    }
-
-    const bookings = await Booking.find({ hotel: hotel._id })
-      .populate("room")
-      .populate("user")
-      .sort({ createdAt: -1 });
-
-    const totalBookings = bookings.length;
-    const totalRevenue = bookings
-      .filter((b) => b.isPaid)
-      .reduce((sum, b) => sum + b.totalPrice, 0);
-
-    res.json({
-      success: true,
-      dashboardData: { bookings, totalBookings, totalRevenue },
-    });
-  } catch (error) {
-    console.error(error);
+  } catch {
     res.status(500).json({ success: false });
   }
 };
@@ -118,9 +124,8 @@ export const stripePayment = async (req, res) => {
       .populate("room")
       .populate("hotel");
 
-    if (!booking) {
+    if (!booking)
       return res.status(404).json({ success: false });
-    }
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -132,7 +137,7 @@ export const stripePayment = async (req, res) => {
             product_data: {
               name: `${booking.hotel.name} - ${booking.room.roomType}`,
             },
-            unit_amount: booking.totalPrice * 100,
+            unit_amount: Math.round(booking.totalPrice * 100),
           },
           quantity: 1,
         },
@@ -142,53 +147,42 @@ export const stripePayment = async (req, res) => {
       metadata: { bookingId: booking._id.toString() },
     });
 
+    booking.stripeSessionId = session.id;
+    await booking.save();
+
     res.json({ success: true, url: session.url });
-  } catch (error) {
-    console.error(error);
+  } catch {
     res.status(500).json({ success: false });
   }
 };
 
 //
-// STREAMING INVOICE
+// CANCEL + REFUND
 //
-export const downloadInvoice = async (req, res) => {
+export const cancelBooking = async (req, res) => {
   try {
-    const booking = await Booking.findById(req.params.bookingId)
-      .populate("hotel")
-      .populate("room")
-      .populate("user");
+    const booking = await Booking.findById(req.params.id);
 
-    if (!booking || !booking.isPaid) {
+    if (!booking)
       return res.status(404).json({ success: false });
-    }
 
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader(
-      "Content-Disposition",
-      `attachment; filename=invoice-${booking._id}.pdf`
-    );
+    if (booking.user.toString() !== req.user._id.toString())
+      return res.status(403).json({ success: false });
 
-    const doc = new PDFDocument({ margin: 50 });
-    doc.pipe(res);
+    if (booking.status !== "confirmed")
+      return res.status(400).json({ success: false, message: "Cannot cancel" });
 
-    doc.fontSize(22).text("Anumifly Invoice", { align: "center" });
-    doc.moveDown();
+    const refund = await stripe.refunds.create({
+      payment_intent: booking.stripePaymentIntentId,
+    });
 
-    doc.fontSize(12);
-    doc.text(`Booking ID: ${booking._id}`);
-    doc.text(`Customer: ${booking.user.username}`);
-    doc.text(`Hotel: ${booking.hotel.name}`);
-    doc.text(`Room: ${booking.room.roomType}`);
-    doc.text(`Total: ₹${booking.totalPrice}`);
-    doc.text(`Status: Paid`);
-    doc.moveDown();
-    doc.text(`Check-In: ${new Date(booking.checkInDate).toDateString()}`);
-    doc.text(`Check-Out: ${new Date(booking.checkOutDate).toDateString()}`);
+    booking.status = "refunded";
+    booking.isPaid = false;
 
-    doc.end();
-  } catch (error) {
-    console.error("Invoice error:", error);
+    await booking.save();
+
+    res.json({ success: true, message: "Booking refunded" });
+  } catch {
     res.status(500).json({ success: false });
   }
 };

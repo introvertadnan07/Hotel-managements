@@ -1,64 +1,129 @@
 import Stripe from "stripe";
 import Booking from "../models/Booking.js";
-import User from "../models/User.js";
-import Room from "../models/Room.js";
 import { generateInvoicePDF } from "../utils/generateInvoice.js";
 import { sendInvoiceEmail } from "../utils/sendInvoiceEmail.js";
 
-export const stripeWebhooks = async (request, response) => {
-  const stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY);
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-  const sig = request.headers["stripe-signature"];
+export const stripeWebhooks = async (req, res) => {
+  const sig = req.headers["stripe-signature"];
   let event;
 
+  // 🔒 Verify Stripe Signature
   try {
-    event = stripeInstance.webhooks.constructEvent(
-      request.body,
+    event = stripe.webhooks.constructEvent(
+      req.body, // MUST be raw body
       sig,
       process.env.STRIPE_WEBHOOK_SECRET
     );
-  } catch (error) {
-    console.error("❌ Webhook signature verification failed:", error.message);
-    return response.status(400).send(`Webhook Error: ${error.message}`);
+  } catch (err) {
+    console.error("❌ Webhook signature verification failed:", err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
   try {
+    // ============================================
+    // ✅ CHECKOUT COMPLETED (PAYMENT SUCCESS)
+    // ============================================
     if (event.type === "checkout.session.completed") {
       const session = event.data.object;
       const bookingId = session.metadata?.bookingId;
 
       if (!bookingId) {
-        console.log("⚠️ No bookingId in metadata");
-        return response.json({ received: true });
+        console.log("⚠️ bookingId missing in metadata");
+        return res.json({ received: true });
       }
-
-      console.log("✅ Payment success for booking:", bookingId);
 
       const booking = await Booking.findById(bookingId)
         .populate("user")
-        .populate("room");
+        .populate("room")
+        .populate("hotel");
 
-      if (!booking) return response.json({ received: true });
+      if (!booking) {
+        console.log("⚠️ Booking not found");
+        return res.json({ received: true });
+      }
 
+      // Prevent duplicate confirmation
+      if (booking.status === "confirmed") {
+        return res.json({ received: true });
+      }
+
+      // ✅ Update booking
       booking.isPaid = true;
+      booking.status = "confirmed";
       booking.paymentMethod = "Stripe";
+      booking.stripePaymentIntentId = session.payment_intent;
+
       await booking.save();
 
-      // ✅ Generate Invoice
-      const invoicePath = await generateInvoicePDF(
-        booking,
-        booking.user,
-        booking.room
-      );
+      console.log("✅ Booking confirmed:", bookingId);
 
-      // ✅ Send Email
-      await sendInvoiceEmail(booking.user, invoicePath);
+      // ============================================
+      // 📄 Generate Invoice
+      // ============================================
+      try {
+        const invoicePath = await generateInvoicePDF(
+          booking,
+          booking.user,
+          booking.room,
+          booking.hotel
+        );
+
+        // ============================================
+        // 📧 Send Email
+        // ============================================
+        await sendInvoiceEmail(booking.user, invoicePath);
+
+        console.log("📧 Invoice email sent:", booking.user.email);
+      } catch (mailError) {
+        console.error("⚠️ Email/Invoice error:", mailError.message);
+      }
     }
 
-    response.json({ received: true });
+    // ============================================
+    // 💰 REFUND COMPLETED
+    // ============================================
+    if (event.type === "charge.refunded") {
+      const charge = event.data.object;
+
+      const booking = await Booking.findOne({
+        stripePaymentIntentId: charge.payment_intent,
+      });
+
+      if (!booking) return res.json({ received: true });
+
+      booking.status = "refunded";
+      booking.isPaid = false;
+
+      await booking.save();
+
+      console.log("💰 Booking refunded:", booking._id);
+    }
+
+    // ============================================
+    // ❌ PAYMENT FAILED
+    // ============================================
+    if (event.type === "payment_intent.payment_failed") {
+      const intent = event.data.object;
+
+      const booking = await Booking.findOne({
+        stripePaymentIntentId: intent.id,
+      });
+
+      if (booking) {
+        booking.status = "cancelled";
+        booking.isPaid = false;
+        await booking.save();
+      }
+
+      console.log("❌ Payment failed:", intent.id);
+    }
+
+    res.json({ received: true });
 
   } catch (error) {
     console.error("❌ Webhook handler error:", error.message);
-    response.status(500).json({ success: false });
+    res.status(500).json({ success: false });
   }
 };
