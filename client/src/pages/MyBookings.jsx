@@ -12,7 +12,7 @@ const MyBookings = () => {
   const [downloadingId, setDownloadingId] = useState(null);
   const [cancelingId, setCancelingId] = useState(null);
 
-  // Safe image handler
+  // Image handler
   const getImageUrl = (img) => {
     if (!img) return assets.hostedDefaultImage;
     if (img.startsWith("http")) return img;
@@ -20,7 +20,7 @@ const MyBookings = () => {
     return `${import.meta.env.VITE_API_URL}/${img}`;
   };
 
-  // Fetch user bookings
+  // Fetch bookings
   const fetchUserBookings = async () => {
     try {
       const { data } = await axios.post("/api/bookings/user");
@@ -30,7 +30,7 @@ const MyBookings = () => {
       } else {
         toast.error(data.message || "Failed to load bookings");
       }
-    } catch (error) {
+    } catch {
       toast.error("Failed to load bookings");
     }
   };
@@ -50,7 +50,7 @@ const MyBookings = () => {
         toast.error(data.message || "Payment failed");
         setPayingId(null);
       }
-    } catch (error) {
+    } catch {
       toast.error("Payment failed");
       setPayingId(null);
     }
@@ -75,7 +75,7 @@ const MyBookings = () => {
       } else {
         toast.error(data.message || "Cancellation failed");
       }
-    } catch (error) {
+    } catch {
       toast.error("Cancellation failed");
     } finally {
       setCancelingId(null);
@@ -104,7 +104,7 @@ const MyBookings = () => {
       document.body.appendChild(link);
       link.click();
       link.remove();
-    } catch (error) {
+    } catch {
       toast.error("Invoice download failed");
     } finally {
       setDownloadingId(null);
@@ -112,9 +112,7 @@ const MyBookings = () => {
   };
 
   useEffect(() => {
-    if (user) {
-      fetchUserBookings();
-    }
+    if (user) fetchUserBookings();
   }, [user]);
 
   return (
@@ -134,7 +132,7 @@ const MyBookings = () => {
               key={booking._id}
               className="grid grid-cols-1 md:grid-cols-[3fr_2fr_1fr] gap-6 border-b py-6"
             >
-              {/* LEFT SECTION */}
+              {/* LEFT */}
               <div className="flex gap-4">
                 <img
                   src={getImageUrl(booking.room?.images?.[0])}
@@ -171,33 +169,41 @@ const MyBookings = () => {
                 </div>
               </div>
 
-              {/* DATE SECTION */}
+              {/* DATES */}
               <div className="text-sm">
                 <p>
-                  Check-In:{" "}
-                  {new Date(booking.checkInDate).toDateString()}
+                  Check-In: {new Date(booking.checkInDate).toDateString()}
                 </p>
-
                 <p>
-                  Check-Out:{" "}
-                  {new Date(booking.checkOutDate).toDateString()}
+                  Check-Out: {new Date(booking.checkOutDate).toDateString()}
                 </p>
               </div>
 
-              {/* ACTION SECTION */}
+              {/* ACTIONS */}
               <div className="flex gap-3 items-center">
-                {/* Pending payment */}
+
+                {/* Pending */}
                 {booking.status === "pending" && (
-                  <button
-                    onClick={() => handlePayment(booking._id)}
-                    disabled={payingId === booking._id}
-                    className="px-4 py-1.5 text-sm border rounded-full"
-                  >
-                    {payingId === booking._id ? "Redirecting..." : "Pay Now"}
-                  </button>
+                  <>
+                    <button
+                      onClick={() => handlePayment(booking._id)}
+                      disabled={payingId === booking._id}
+                      className="px-4 py-1.5 text-sm border rounded-full"
+                    >
+                      {payingId === booking._id ? "Redirecting..." : "Pay Now"}
+                    </button>
+
+                    <button
+                      onClick={() => handleCancel(booking._id)}
+                      disabled={cancelingId === booking._id}
+                      className="px-4 py-1.5 text-sm border border-red-500 text-red-500 rounded-full"
+                    >
+                      {cancelingId === booking._id ? "Cancelling..." : "Cancel"}
+                    </button>
+                  </>
                 )}
 
-                {/* Confirmed booking */}
+                {/* Confirmed */}
                 {booking.status === "confirmed" && (
                   <>
                     <button
@@ -207,20 +213,16 @@ const MyBookings = () => {
                     >
                       {downloadingId === booking._id
                         ? "Downloading..."
-                        : "Download Invoice"}
+                        : "Invoice"}
                     </button>
 
-                    {new Date(booking.checkInDate) > new Date() && (
-                      <button
-                        onClick={() => handleCancel(booking._id)}
-                        disabled={cancelingId === booking._id}
-                        className="px-4 py-1.5 text-sm border border-red-500 text-red-500 rounded-full"
-                      >
-                        {cancelingId === booking._id
-                          ? "Cancelling..."
-                          : "Cancel"}
-                      </button>
-                    )}
+                    <button
+                      onClick={() => handleCancel(booking._id)}
+                      disabled={cancelingId === booking._id}
+                      className="px-4 py-1.5 text-sm border border-red-500 text-red-500 rounded-full"
+                    >
+                      {cancelingId === booking._id ? "Cancelling..." : "Cancel"}
+                    </button>
                   </>
                 )}
 
@@ -230,6 +232,7 @@ const MyBookings = () => {
                     Refunded
                   </span>
                 )}
+
               </div>
             </div>
           ))
