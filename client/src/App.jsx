@@ -25,6 +25,7 @@ import CompareBar from "./components/CompareBar";
 import CompareModal from "./components/CompareModal";
 
 import { useAppContext } from "./context/AppContext";
+import Analytics from "./pages/hotelOwner/Analytics"
 
 const App = () => {
   const { showHotelReg, isOwner } = useAppContext();
@@ -74,6 +75,7 @@ const App = () => {
           <Route index element={<Dashboard />} />
           <Route path="add-room" element={<AddRoom />} />
           <Route path="list-room" element={<ListRoom />} />
+           <Route path="analytics" element={<Analytics />} />
         </Route>
       </Routes>
     </>
