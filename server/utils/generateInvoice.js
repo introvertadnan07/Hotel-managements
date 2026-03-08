@@ -1,22 +1,17 @@
 import PDFDocument from "pdfkit";
-import fs from "fs";
-import path from "path";
 
+// ✅ Returns a Buffer instead of saving to disk
+// Works on Vercel and any serverless platform
 export const generateInvoicePDF = (booking, user, room) => {
   return new Promise((resolve, reject) => {
     try {
       const doc = new PDFDocument({ margin: 50 });
+      const chunks = [];
 
-      // Make sure uploads folder exists
-      if (!fs.existsSync("uploads")) {
-        fs.mkdirSync("uploads", { recursive: true });
-      }
-
-      const fileName = `invoice-${booking._id}.pdf`;
-      const filePath = path.join("uploads", fileName);
-
-      const stream = fs.createWriteStream(filePath);
-      doc.pipe(stream);
+      // Collect PDF chunks into memory
+      doc.on("data", (chunk) => chunks.push(chunk));
+      doc.on("end", () => resolve(Buffer.concat(chunks)));
+      doc.on("error", reject);
 
       // ── HEADER ────────────────────────────────────────────
       doc
@@ -66,11 +61,11 @@ export const generateInvoicePDF = (booking, user, room) => {
         .moveDown(0.3);
 
       const details = [
-        ["Hotel", booking.hotel?.name || "—"],
-        ["Room Type", room?.roomType || "—"],
-        ["Check-In", new Date(booking.checkInDate).toDateString()],
-        ["Check-Out", new Date(booking.checkOutDate).toDateString()],
-        ["Guests", String(booking.guests || 1)],
+        ["Hotel",          booking.hotel?.name || "—"],
+        ["Room Type",      room?.roomType || "—"],
+        ["Check-In",       new Date(booking.checkInDate).toDateString()],
+        ["Check-Out",      new Date(booking.checkOutDate).toDateString()],
+        ["Guests",         String(booking.guests || 1)],
         ["Booking Status", booking.status || "confirmed"],
       ];
 
@@ -130,8 +125,7 @@ export const generateInvoicePDF = (booking, user, room) => {
         .fillColor("#16a34a")
         .text(
           `Total: ₹${Number(booking.totalPrice).toLocaleString()}`,
-          355,
-          doc.y - 28,
+          355, doc.y - 28,
           { width: 190, align: "center" }
         );
 
@@ -141,7 +135,7 @@ export const generateInvoicePDF = (booking, user, room) => {
       doc
         .fontSize(11)
         .fillColor("#16a34a")
-        .text("✓ Payment Confirmed", { align: "center" })
+        .text("Payment Confirmed", { align: "center" })
         .moveDown(0.5);
 
       // ── FOOTER ────────────────────────────────────────────
@@ -155,14 +149,12 @@ export const generateInvoicePDF = (booking, user, room) => {
       doc
         .fontSize(9)
         .fillColor("#94a3b8")
-        .text("Thank you for choosing Anumifly. For support, contact us at support@anumifly.com", {
-          align: "center"
-        });
+        .text(
+          "Thank you for choosing Anumifly. For support, contact us at support@anumifly.com",
+          { align: "center" }
+        );
 
       doc.end();
-
-      stream.on("finish", () => resolve(filePath));
-      stream.on("error", reject);
 
     } catch (error) {
       reject(error);

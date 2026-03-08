@@ -1,5 +1,4 @@
 import Stripe from "stripe";
-import fs from "fs";
 import Booking from "../models/Booking.js";
 import Room from "../models/Room.js";
 import Hotel from "../models/Hotel.js";
@@ -232,6 +231,7 @@ export const cancelBooking = async (req, res) => {
 
 //
 // DOWNLOAD INVOICE
+// ✅ Vercel-compatible: sends PDF from memory buffer (no file system)
 //
 export const downloadInvoice = async (req, res) => {
   try {
@@ -244,7 +244,6 @@ export const downloadInvoice = async (req, res) => {
       return res.status(404).json({ success: false, message: "Booking not found" });
     }
 
-    // ✅ Fixed: use req.user._id (set by authMiddleware)
     if (booking.user._id.toString() !== req.user._id.toString()) {
       return res.status(403).json({ success: false, message: "Not authorized" });
     }
@@ -256,12 +255,17 @@ export const downloadInvoice = async (req, res) => {
       });
     }
 
-    const filePath = await generateInvoicePDF(booking, booking.user, booking.room);
+    // ✅ Get PDF as Buffer (no disk write)
+    const pdfBuffer = await generateInvoicePDF(booking, booking.user, booking.room);
 
-    res.download(filePath, `invoice-${booking._id}.pdf`, (err) => {
-      fs.unlink(filePath, () => {});
-      if (err) console.error("Invoice send error:", err);
+    // ✅ Send buffer directly as PDF download
+    res.set({
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `attachment; filename=invoice-${booking._id}.pdf`,
+      "Content-Length": pdfBuffer.length,
     });
+
+    res.send(pdfBuffer);
 
   } catch (error) {
     console.error("Invoice error:", error);

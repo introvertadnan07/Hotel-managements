@@ -31,7 +31,7 @@ const CustomTooltip = ({ active, payload, label, currency }) => {
 };
 
 const Analytics = () => {
-  const { axios, currency } = useAppContext();
+  const { axios, currency, user } = useAppContext();
 
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -52,7 +52,8 @@ const Analytics = () => {
     }
   };
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { if (user) fetchData(); }, [user]);
+
 
   // ── Derived stats ─────────────────────────────────────────────────────
   const totalBookings = bookings.length;
