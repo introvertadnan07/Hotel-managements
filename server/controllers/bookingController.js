@@ -1,9 +1,10 @@
 import Stripe from "stripe";
-import PDFDocument from "pdfkit";
+import fs from "fs";
 import Booking from "../models/Booking.js";
 import Room from "../models/Room.js";
 import Hotel from "../models/Hotel.js";
 import Coupon from "../models/Coupon.js";
+import { generateInvoicePDF } from "../utils/generateInvoice.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -40,9 +41,7 @@ export const createBooking = async (req, res) => {
     const room = await Room.findById(roomId).populate("hotel");
 
     if (!room)
-      return res
-        .status(404)
-        .json({ success: false, message: "Room not found" });
+      return res.status(404).json({ success: false, message: "Room not found" });
 
     const overlapping = await Booking.findOne({
       room: roomId,
@@ -52,13 +51,10 @@ export const createBooking = async (req, res) => {
     });
 
     if (overlapping)
-      return res
-        .status(400)
-        .json({ success: false, message: "Room already booked" });
+      return res.status(400).json({ success: false, message: "Room already booked" });
 
     const nights =
-      (new Date(checkOutDate) - new Date(checkInDate)) /
-      (1000 * 60 * 60 * 24);
+      (new Date(checkOutDate) - new Date(checkInDate)) / (1000 * 60 * 60 * 24);
 
     let total = nights * room.pricePerNight;
 
@@ -80,9 +76,7 @@ export const createBooking = async (req, res) => {
         coupon.expiryDate < new Date() ||
         coupon.usedCount >= coupon.maxUsage
       ) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Invalid coupon" });
+        return res.status(400).json({ success: false, message: "Invalid coupon" });
       }
 
       if (coupon.discountType === "percent") {
@@ -95,7 +89,6 @@ export const createBooking = async (req, res) => {
       await coupon.save();
     }
 
-    // Prevent negative price
     if (total < 0) total = 0;
 
     const booking = await Booking.create({
@@ -139,9 +132,7 @@ export const getHotelBookings = async (req, res) => {
     const hotel = await Hotel.findOne({ owner: req.user.clerkId });
 
     if (!hotel)
-      return res
-        .status(404)
-        .json({ success: false, message: "Hotel not found" });
+      return res.status(404).json({ success: false, message: "Hotel not found" });
 
     const bookings = await Booking.find({ hotel: hotel._id })
       .populate("user")
@@ -156,11 +147,7 @@ export const getHotelBookings = async (req, res) => {
 
     res.json({
       success: true,
-      dashboardData: {
-        bookings,
-        totalBookings,
-        totalRevenue,
-      },
+      dashboardData: { bookings, totalBookings, totalRevenue },
     });
   } catch {
     res.status(500).json({ success: false });
@@ -178,8 +165,7 @@ export const stripePayment = async (req, res) => {
       .populate("room")
       .populate("hotel");
 
-    if (!booking)
-      return res.status(404).json({ success: false });
+    if (!booking) return res.status(404).json({ success: false });
 
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -217,20 +203,17 @@ export const cancelBooking = async (req, res) => {
   try {
     const booking = await Booking.findById(req.params.id);
 
-    if (!booking)
-      return res.status(404).json({ success: false });
+    if (!booking) return res.status(404).json({ success: false });
 
     if (booking.user.toString() !== req.user._id.toString())
       return res.status(403).json({ success: false });
 
-    // Allow cancel for pending or confirmed
     if (!["pending", "confirmed"].includes(booking.status))
       return res.status(400).json({
         success: false,
         message: "Booking cannot be cancelled",
       });
 
-    // Refund if payment exists
     if (booking.stripePaymentIntentId) {
       await stripe.refunds.create({
         payment_intent: booking.stripePaymentIntentId,
@@ -239,14 +222,49 @@ export const cancelBooking = async (req, res) => {
 
     booking.status = "refunded";
     booking.isPaid = false;
-
     await booking.save();
 
-    res.json({
-      success: true,
-      message: "Booking cancelled successfully",
-    });
+    res.json({ success: true, message: "Booking cancelled successfully" });
   } catch {
     res.status(500).json({ success: false });
+  }
+};
+
+//
+// DOWNLOAD INVOICE
+//
+export const downloadInvoice = async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id)
+      .populate("user")
+      .populate("room")
+      .populate("hotel");
+
+    if (!booking) {
+      return res.status(404).json({ success: false, message: "Booking not found" });
+    }
+
+    // ✅ Fixed: use req.user._id (set by authMiddleware)
+    if (booking.user._id.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, message: "Not authorized" });
+    }
+
+    if (!booking.isPaid) {
+      return res.status(400).json({
+        success: false,
+        message: "Invoice only available for paid bookings",
+      });
+    }
+
+    const filePath = await generateInvoicePDF(booking, booking.user, booking.room);
+
+    res.download(filePath, `invoice-${booking._id}.pdf`, (err) => {
+      fs.unlink(filePath, () => {});
+      if (err) console.error("Invoice send error:", err);
+    });
+
+  } catch (error) {
+    console.error("Invoice error:", error);
+    res.status(500).json({ success: false, message: "Invoice generation failed" });
   }
 };

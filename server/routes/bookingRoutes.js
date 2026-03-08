@@ -7,6 +7,7 @@ import {
   getHotelBookings,
   stripePayment,
   cancelBooking,
+  downloadInvoice,
 } from "../controllers/bookingController.js";
 
 import { protect } from "../middleware/authMiddleware.js";
@@ -42,5 +43,10 @@ bookingRouter.post("/stripe-payment", protect, stripePayment);
 // CANCEL BOOKING
 //
 bookingRouter.post("/:id/cancel", protect, cancelBooking);
+
+//
+// DOWNLOAD INVOICE
+//
+bookingRouter.get("/invoice/:id", protect, downloadInvoice);
 
 export default bookingRouter;
