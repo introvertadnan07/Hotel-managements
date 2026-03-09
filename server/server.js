@@ -14,6 +14,7 @@ import bookingRouter from "./routes/bookingRoutes.js";
 import reviewRouter from "./routes/reviewRoutes.js";
 import wishlistRouter from "./routes/wishlistRoutes.js";
 import aiRouter from "./routes/aiRoutes.js";
+import newsletterRouter from "./routes/newsletterRoutes.js";
 
 import clerkWebhooks from "./controllers/clerkWebhooks.js";
 import { stripeWebhooks } from "./controllers/stripeWebhooks.js";
@@ -49,7 +50,7 @@ app.use(
 //
 // ✅ Stripe Webhook (RAW body REQUIRED)
 // MUST be before express.json()
-// 
+//
 app.post(
   "/api/webhooks/stripe",
   express.raw({ type: "application/json" }),
@@ -104,6 +105,7 @@ app.use("/api/bookings", bookingRouter);
 app.use("/api/reviews", reviewRouter);
 app.use("/api/wishlist", wishlistRouter);
 app.use("/api/ai", aiRouter);
+app.use("/api/newsletter", newsletterRouter);
 
 //
 // ✅ 404 Fallback (LAST middleware)
