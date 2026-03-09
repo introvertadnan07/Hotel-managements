@@ -1,11 +1,12 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "@clerk/clerk-react";
 import { assets } from "../assets/assets";
 
 const HotelCard = ({ room, index }) => {
   const { getToken } = useAuth();
+  const navigate = useNavigate();
 
   const [wishlisted, setWishlisted] = useState(room.isWishlisted || false);
   const [loading, setLoading] = useState(false);
@@ -29,7 +30,8 @@ const HotelCard = ({ room, index }) => {
 
   // ✅ Wishlist Toggle
   const toggleWishlist = async (e) => {
-    e.preventDefault(); // ⭐ prevents Link navigation
+    e.preventDefault();
+    e.stopPropagation();
     if (loading) return;
 
     try {
@@ -37,25 +39,17 @@ const HotelCard = ({ room, index }) => {
       const token = await getToken();
 
       if (wishlisted) {
-        // ✅ Remove
         const { data } = await axios.delete(
           `${import.meta.env.VITE_API_URL}/api/wishlist/${room._id}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
-
         if (data.success) setWishlisted(false);
       } else {
-        // ✅ Add
         const { data } = await axios.post(
           `${import.meta.env.VITE_API_URL}/api/wishlist`,
           { roomId: room._id },
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
+          { headers: { Authorization: `Bearer ${token}` } }
         );
-
         if (data.success) setWishlisted(true);
       }
     } catch (error) {
@@ -63,6 +57,13 @@ const HotelCard = ({ room, index }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // ✅ Book Now handler
+  const handleBookNow = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    navigate(`/rooms/${room._id}`);
   };
 
   return (
@@ -114,7 +115,6 @@ const HotelCard = ({ room, index }) => {
           <p className="font-playfair text-xl">
             {room.hotel?.name}
           </p>
-
           <div className="flex items-center gap-1">
             <img src={assets.starIconOutlined} alt="" />
             <span>4.5</span>
@@ -138,9 +138,10 @@ const HotelCard = ({ room, index }) => {
             </span>
           </p>
 
+          {/* ✅ Fixed Book Now button */}
           <button
+            onClick={handleBookNow}
             className="px-4 py-2 text-sm border rounded-lg hover:bg-black hover:text-white transition"
-            onClick={(e) => e.preventDefault()}
           >
             Book Now
           </button>
