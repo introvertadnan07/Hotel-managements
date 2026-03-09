@@ -12,7 +12,7 @@ export const stripeWebhooks = async (req, res) => {
   // 🔒 Verify Stripe Signature
   try {
     event = stripe.webhooks.constructEvent(
-      req.body, // MUST be raw body
+      req.body,
       sig,
       process.env.STRIPE_WEBHOOK_SECRET
     );
@@ -54,30 +54,35 @@ export const stripeWebhooks = async (req, res) => {
       booking.status = "confirmed";
       booking.paymentMethod = "Stripe";
       booking.stripePaymentIntentId = session.payment_intent;
-
       await booking.save();
 
       console.log("✅ Booking confirmed:", bookingId);
 
       // ============================================
-      // 📄 Generate Invoice
+      // 📄 Generate Invoice + 📧 Send Premium Email
       // ============================================
       try {
-        const invoicePath = await generateInvoicePDF(
+        // ✅ Generate PDF as Buffer (Vercel-compatible)
+        const invoiceBuffer = await generateInvoicePDF(
           booking,
           booking.user,
           booking.room,
           booking.hotel
         );
 
-        // ============================================
-        // 📧 Send Email
-        // ============================================
-        await sendInvoiceEmail(booking.user, invoicePath);
+        // ✅ Send premium email with invoice attached
+        await sendInvoiceEmail(
+          booking.user,
+          invoiceBuffer,
+          booking,
+          booking.room,
+          booking.hotel
+        );
 
-        console.log("📧 Invoice email sent:", booking.user.email);
+        console.log("📧 Premium invoice email sent:", booking.user.email);
       } catch (mailError) {
         console.error("⚠️ Email/Invoice error:", mailError.message);
+        // Don't fail the webhook — email is non-critical
       }
     }
 
@@ -95,7 +100,6 @@ export const stripeWebhooks = async (req, res) => {
 
       booking.status = "refunded";
       booking.isPaid = false;
-
       await booking.save();
 
       console.log("💰 Booking refunded:", booking._id);

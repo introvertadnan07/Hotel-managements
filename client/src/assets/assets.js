@@ -46,13 +46,11 @@ import uploadArea from "./uploadArea.svg";
 import totalBookingIcon from "./totalBookingIcon.svg";
 import totalRevenueIcon from "./totalRevenueIcon.svg";
 
-
 import experiencehero from "./heroexperience.jpg";
 import spa from "./spa.jpg";
 import dining from "./dining.jpg";
 import pool from "./pool.jpg";
 
-//  Local testimonial images
 import adnanImage from "./adnan.jpg";
 import anumImage from "./anum.jpg";
 
@@ -99,28 +97,16 @@ export const assets = {
   exclusiveOffer2: exclusiveOfferCardImg2,
   exclusiveOffer3: exclusiveOfferCardImg3,
 
-  // Experience page
   experiencehero,
   spa,
   dining,
   pool,
 
-  // ⭐ ADD THESE (THIS FIXES YOUR ISSUE)
   adnanImage,
   anumImage,
 };
-// Cities
-export const cities = [
-  "Dubai",
-  "Singapore",
-  "New York",
-  "Chennai",
-  "Mumbai",
-  "Kochi",
-  "Patna",
-  "Ranchi",
-  "Hyderabad",
-];
+
+// ✅ cities removed — now dynamic from DB via Hero.jsx
 
 // Exclusive Offers
 export const exclusiveOffers = [
@@ -183,7 +169,7 @@ export const testimonials = [
   },
 ];
 
-//  Facility Icons Mapping
+// Facility Icons Mapping
 export const facilityIcons = {
   "Free WiFi": freeWifiIcon,
   "Free Breakfast": freeBreakfastIcon,
@@ -192,7 +178,7 @@ export const facilityIcons = {
   "Pool Access": poolIcon,
 };
 
-//  Room Details Highlights
+// Room Details Highlights
 export const roomCommonData = [
   {
     icon: homeIcon,
@@ -216,7 +202,7 @@ export const roomCommonData = [
   },
 ];
 
-//  Dummy Rooms
+// Dummy Rooms
 export const roomsDummyData = [
   {
     _id: "1",
@@ -228,7 +214,7 @@ export const roomsDummyData = [
   },
 ];
 
-//  Dummy Bookings
+// Dummy Bookings
 export const userBookingsDummyData = [
   {
     _id: "b1",

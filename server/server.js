@@ -18,6 +18,7 @@ import newsletterRouter from "./routes/newsletterRoutes.js";
 
 import clerkWebhooks from "./controllers/clerkWebhooks.js";
 import { stripeWebhooks } from "./controllers/stripeWebhooks.js";
+import adminRouter from "./routes/adminRoutes.js";
 
 //
 // ✅ Initialize Services
@@ -47,6 +48,7 @@ app.use(
   })
 );
 
+app.use("/api/admin", adminRouter);
 //
 // ✅ Stripe Webhook (RAW body REQUIRED)
 // MUST be before express.json()
