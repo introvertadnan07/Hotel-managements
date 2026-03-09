@@ -5,10 +5,10 @@ import StarRating from "./StarRating";
 
 const Testimonial = () => {
   return (
-    <div className="flex flex-col items-center px-6 md:px-16 lg:px-24 bg-slate-50 pt-20 pb-24">
+    <div className="flex flex-col items-center px-6 md:px-16 lg:px-24 bg-slate-50 dark:bg-gray-900 pt-20 pb-24 transition-colors duration-300">
       <Title
         title="What Our Guests Say"
-        subTitle="Discover why discerning travelers consistently choose QuickStay for their exclusive and luxurious accommodations around the world."
+        subTitle="Discover why discerning travelers consistently choose AnumiflyStay for their exclusive and luxurious accommodations around the world."
       />
 
       {/* Cards */}
@@ -16,7 +16,7 @@ const Testimonial = () => {
         {testimonials.map((testimonial) => (
           <div
             key={testimonial.id}
-            className="bg-white p-6 rounded-xl shadow max-w-sm"
+            className="bg-white dark:bg-gray-800 p-6 rounded-xl shadow max-w-sm transition-colors duration-300"
           >
             {/* User */}
             <div className="flex items-center gap-3">
@@ -26,10 +26,10 @@ const Testimonial = () => {
                 className="w-12 h-12 rounded-full object-cover"
               />
               <div>
-                <p className="font-playfair text-lg">
+                <p className="font-playfair text-lg dark:text-white">
                   {testimonial.name}
                 </p>
-                <p className="text-gray-500 text-sm">
+                <p className="text-gray-500 dark:text-gray-400 text-sm">
                   {testimonial.address}
                 </p>
               </div>
@@ -41,8 +41,8 @@ const Testimonial = () => {
             </div>
 
             {/* Review */}
-            <p className="text-gray-500 mt-4 text-sm leading-relaxed">
-              “{testimonial.review}”
+            <p className="text-gray-500 dark:text-gray-400 mt-4 text-sm leading-relaxed">
+              "{testimonial.review}"
             </p>
           </div>
         ))}

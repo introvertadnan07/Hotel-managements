@@ -28,13 +28,33 @@ const HeartIcon = () => (
   </svg>
 );
 
+const SunIcon = () => (
+  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <circle cx="12" cy="12" r="5" />
+    <line x1="12" y1="1" x2="12" y2="3" />
+    <line x1="12" y1="21" x2="12" y2="23" />
+    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+    <line x1="1" y1="12" x2="3" y2="12" />
+    <line x1="21" y1="12" x2="23" y2="12" />
+    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+  </svg>
+);
+
+const MoonIcon = () => (
+  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+  </svg>
+);
+
 const Navbar = () => {
   const navLinks = [
     { name: "Home", path: "/" },
     { name: "Hotels", path: "/rooms" },
     { name: "Wishlist", path: "/wishlist" },
-    { name: "Experience", path: "/experience" },   // ✅ FIXED
-    { name: "About", path: "/about" },             // ✅ FIXED
+    { name: "Experience", path: "/experience" },
+    { name: "About", path: "/about" },
   ];
 
   const [isScrolled, setIsScrolled] = React.useState(false);
@@ -51,16 +71,16 @@ const Navbar = () => {
     isOwner,
     isCheckingOwner,
     setShowHotelReg,
+    darkMode,
+    toggleDarkMode,
   } = useAppContext();
 
-  // ✅ Scroll detection
   React.useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 10);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // ✅ Lock body scroll (mobile menu)
   React.useEffect(() => {
     document.body.style.overflow = isMenuOpen ? "hidden" : "auto";
     return () => (document.body.style.overflow = "auto");
@@ -68,29 +88,26 @@ const Navbar = () => {
 
   const navStyle =
     !isHomePage || isOwnerPage || isScrolled
-      ? "bg-white shadow-sm text-black"
+      ? "bg-white dark:bg-gray-900 shadow-sm text-black dark:text-white"
       : "bg-transparent text-white";
 
-  // ✅ Active link style
   const isActive = (path) => location.pathname === path;
 
   return (
-    <nav
-      className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${navStyle}`}
-    >
+    <nav className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${navStyle}`}>
       <div className="h-20 px-6 md:px-16 lg:px-24 xl:px-32 flex items-center justify-between">
 
-        {/* ✅ Logo */}
+        {/* ✅ Text-only Logo */}
         <Link to="/">
-          <img
-            src={assets.logo}
-            alt="logo"
-            className={`h-9 transition ${
+          <span
+            className={`text-xl font-playfair font-semibold tracking-wide transition ${
               !isHomePage || isOwnerPage || isScrolled
-                ? "invert opacity-80"
-                : ""
+                ? "text-black dark:text-white"
+                : "text-white"
             }`}
-          />
+          >
+            AnumiflyStay
+          </span>
         </Link>
 
         {/* ✅ Desktop Nav */}
@@ -99,47 +116,47 @@ const Navbar = () => {
             <Link
               key={link.name}
               to={link.path}
-              className={`relative transition hover:text-gray-500 ${
+              className={`relative transition hover:text-gray-500 dark:hover:text-gray-300 ${
                 isActive(link.path) ? "font-semibold" : ""
               }`}
             >
               {link.name}
-
-              {/* Active underline */}
               {isActive(link.path) && (
-                <span className="absolute left-0 -bottom-1 w-full h-[2px] bg-black rounded-full" />
+                <span className="absolute left-0 -bottom-1 w-full h-[2px] bg-black dark:bg-white rounded-full" />
               )}
             </Link>
           ))}
 
-          {/* ✅ Owner Button */}
           {user && (
             <button
               disabled={isCheckingOwner}
               onClick={() => {
-                if (isOwner) {
-                  navigate("/owner");
-                } else {
-                  setShowHotelReg(true);
-                }
+                if (isOwner) navigate("/owner");
+                else setShowHotelReg(true);
               }}
-              className={`border px-4 py-1 rounded-full transition ${
+              className={`border px-4 py-1 rounded-full transition dark:border-gray-600 ${
                 isCheckingOwner
                   ? "opacity-50 cursor-not-allowed"
-                  : "hover:bg-black hover:text-white"
+                  : "hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black"
               }`}
             >
-              {isCheckingOwner
-                ? "Loading..."
-                : isOwner
-                ? "Dashboard"
-                : "List Your Hotel"}
+              {isCheckingOwner ? "Loading..." : isOwner ? "Dashboard" : "List Your Hotel"}
             </button>
           )}
         </div>
 
         {/* ✅ Right Side */}
         <div className="hidden md:flex items-center gap-4">
+
+          {/* Dark Mode Toggle */}
+          <button
+            onClick={toggleDarkMode}
+            className="w-9 h-9 rounded-full flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+            title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+          >
+            {darkMode ? <SunIcon /> : <MoonIcon />}
+          </button>
+
           {user ? (
             <UserButton>
               <UserButton.MenuItems>
@@ -158,21 +175,28 @@ const Navbar = () => {
           ) : (
             <button
               onClick={openSignIn}
-              className="bg-black text-white px-8 py-2.5 rounded-full hover:bg-gray-800 transition"
+              className="bg-black dark:bg-white dark:text-black text-white px-8 py-2.5 rounded-full hover:bg-gray-800 dark:hover:bg-gray-200 transition"
             >
               Login
             </button>
           )}
         </div>
 
-        {/* ✅ Mobile Menu Icon */}
-        <div className="md:hidden">
+        {/* ✅ Mobile Right */}
+        <div className="md:hidden flex items-center gap-3">
+          <button
+            onClick={toggleDarkMode}
+            className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+          >
+            {darkMode ? <SunIcon /> : <MoonIcon />}
+          </button>
+
           <img
             src={assets.menuIcon}
             alt="menu"
             onClick={() => setIsMenuOpen(true)}
             className={`h-4 cursor-pointer ${
-              !isHomePage || isOwnerPage || isScrolled ? "invert" : ""
+              !isHomePage || isOwnerPage || isScrolled ? "invert dark:invert-0" : ""
             }`}
           />
         </div>
@@ -180,26 +204,28 @@ const Navbar = () => {
 
       {/* ✅ Mobile Menu */}
       <div
-        className={`fixed inset-0 bg-white z-[999] md:hidden transform transition-transform duration-300 ${
+        className={`fixed inset-0 bg-white dark:bg-gray-900 z-[999] md:hidden transform transition-transform duration-300 ${
           isMenuOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <img
           src={assets.closeIcon}
           alt="close"
-          className="absolute top-6 right-6 h-5 cursor-pointer"
+          className="absolute top-6 right-6 h-5 cursor-pointer dark:invert"
           onClick={() => setIsMenuOpen(false)}
         />
 
         <div className="flex flex-col items-center gap-6 mt-24">
+          <span className="text-2xl font-playfair font-semibold text-black dark:text-white mb-2">
+            AnumiflyStay
+          </span>
+
           {navLinks.map((link) => (
             <Link
               key={link.name}
               to={link.path}
               onClick={() => setIsMenuOpen(false)}
-              className={`text-lg ${
-                isActive(link.path) ? "font-semibold" : ""
-              }`}
+              className={`text-lg dark:text-white ${isActive(link.path) ? "font-semibold" : ""}`}
             >
               {link.name}
             </Link>
@@ -210,31 +236,23 @@ const Navbar = () => {
               disabled={isCheckingOwner}
               onClick={() => {
                 setIsMenuOpen(false);
-
-                if (isOwner) {
-                  navigate("/owner");
-                } else {
-                  setShowHotelReg(true);
-                }
+                if (isOwner) navigate("/owner");
+                else setShowHotelReg(true);
               }}
-              className={`border px-6 py-2 rounded-full transition ${
+              className={`border px-6 py-2 rounded-full transition dark:border-gray-600 dark:text-white ${
                 isCheckingOwner
                   ? "opacity-50 cursor-not-allowed"
                   : "hover:bg-black hover:text-white"
               }`}
             >
-              {isCheckingOwner
-                ? "Loading..."
-                : isOwner
-                ? "Dashboard"
-                : "List Your Hotel"}
+              {isCheckingOwner ? "Loading..." : isOwner ? "Dashboard" : "List Your Hotel"}
             </button>
           )}
 
           {!user && (
             <button
               onClick={openSignIn}
-              className="bg-black text-white px-8 py-2 rounded-full"
+              className="bg-black dark:bg-white dark:text-black text-white px-8 py-2 rounded-full"
             >
               Login
             </button>

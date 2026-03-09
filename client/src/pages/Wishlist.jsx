@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { useAuth } from "@clerk/clerk-react";
-import { assets } from "../assets/assets"; 
+import { useNavigate } from "react-router-dom";
+import { assets } from "../assets/assets";
 
 const Wishlist = () => {
   const { getToken } = useAuth();
+  const navigate = useNavigate();
   const [wishlist, setWishlist] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [removingId, setRemovingId] = useState(null);
 
-  // ✅ Image resolver (safe)
   const getImageUrl = (img) => {
     if (!img) return assets?.placeholderImage || "";
     if (img.startsWith("http")) return img;
@@ -20,19 +22,11 @@ const Wishlist = () => {
     try {
       const token = await getToken();
       if (!token) return;
-
       const { data } = await axios.get(
         `${import.meta.env.VITE_API_URL}/api/wishlist`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      if (data.success) {
-        setWishlist(data.wishlist);
-      }
+      if (data.success) setWishlist(data.wishlist);
     } catch (error) {
       console.error("Wishlist error:", error);
     } finally {
@@ -40,29 +34,23 @@ const Wishlist = () => {
     }
   };
 
-  // ✅ FIX → Your backend uses POST /toggle (NOT delete)
   const removeFromWishlist = async (roomId) => {
     try {
+      setRemovingId(roomId);
       const token = await getToken();
       if (!token) return;
-
       const { data } = await axios.post(
         `${import.meta.env.VITE_API_URL}/api/wishlist/toggle`,
         { roomId },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-
       if (data.success) {
-        setWishlist((prev) =>
-          prev.filter((item) => item.room._id !== roomId)
-        );
+        setWishlist((prev) => prev.filter((item) => item.room._id !== roomId));
       }
     } catch (error) {
       console.error("Remove failed:", error);
+    } finally {
+      setRemovingId(null);
     }
   };
 
@@ -70,70 +58,174 @@ const Wishlist = () => {
     fetchWishlist();
   }, []);
 
+  // ---- Loading State ----
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-[60vh]">
-        <p className="text-gray-500 text-lg">Loading wishlist...</p>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border-4 border-black border-t-transparent rounded-full animate-spin" />
+          <p className="text-gray-400 text-sm tracking-widest uppercase">
+            Loading your saves...
+          </p>
+        </div>
       </div>
     );
   }
 
+  // ---- Empty State ----
   if (!wishlist.length) {
     return (
-      <div className="flex flex-col items-center justify-center h-[60vh]">
-        <h2 className="text-2xl font-semibold">My Wishlist ❤️</h2>
-        <p className="text-gray-500 mt-2">No saved rooms yet</p>
+      <div className="min-h-screen flex flex-col items-center justify-center px-4 text-center">
+        <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center mb-6">
+          <svg className="w-10 h-10 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M12 21s-6.7-4.35-9.19-7.36C.84 11.29 1.13 7.9 3.51 6.1c2.07-1.56 4.93-1.12 6.49.97 1.56-2.09 4.42-2.53 6.49-.97 2.38 1.8 2.67 5.19.7 7.54C18.7 16.65 12 21 12 21Z" />
+          </svg>
+        </div>
+        <h2 className="text-2xl font-playfair text-gray-800 mb-2">
+          Your wishlist is empty
+        </h2>
+        <p className="text-gray-400 text-sm mb-8 max-w-xs">
+          Save rooms you love and come back to them anytime.
+        </p>
+        <button
+          onClick={() => navigate("/rooms")}
+          className="bg-black text-white px-8 py-3 rounded-full text-sm tracking-wide hover:bg-gray-800 transition"
+        >
+          Explore Rooms
+        </button>
       </div>
     );
   }
 
+  // ---- Main Wishlist ----
   return (
-    <div className="max-w-6xl mx-auto px-4 py-10">
-      <h2 className="text-3xl font-bold mb-8">My Wishlist ❤️</h2>
+    <div className="min-h-screen bg-[#f8f7f4]">
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {wishlist.map((item) => {
-          const room = item.room;
+      {/* Header */}
+      <div className="pt-28 pb-10 px-6 md:px-16 lg:px-24">
+        <div className="flex items-end justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-widest text-gray-400 mb-2">
+              Your Collection
+            </p>
+            <h1 className="text-4xl md:text-5xl font-playfair text-gray-900">
+              Saved Rooms
+            </h1>
+          </div>
+          <span className="text-sm text-gray-400 mb-2">
+            {wishlist.length} {wishlist.length === 1 ? "property" : "properties"}
+          </span>
+        </div>
+        <div className="mt-6 h-px bg-gray-200" />
+      </div>
 
-          return (
-            <div
-              key={room._id}
-              className="bg-white rounded-2xl shadow hover:shadow-lg transition"
-            >
-              <img
-                src={getImageUrl(room.images?.[0])}
-                alt={room.roomType}
-                className="w-full h-48 object-cover rounded-t-2xl"
-                onError={(e) => {
-                  if (assets?.placeholderImage)
-                    e.target.src = assets.placeholderImage;
-                }}
-              />
+      {/* Grid */}
+      <div className="px-6 md:px-16 lg:px-24 pb-20">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {wishlist.map((item) => {
+            const room = item.room;
+            const isRemoving = removingId === room._id;
 
-              <div className="p-4">
-                <h3 className="text-lg font-semibold">
-                  {room.roomType}
-                </h3>
-
-                <p className="text-gray-500 text-sm">
-                  {room.hotel?.name}
-                </p>
-
-                {/* ✅ FIXED PRICE */}
-                <p className="font-bold mt-2">
-                  ₹{room.pricePerNight} / night
-                </p>
-
-                <button
-                  onClick={() => removeFromWishlist(room._id)}
-                  className="mt-4 w-full bg-black text-white py-2 rounded-lg hover:bg-gray-800 transition"
+            return (
+              <div
+                key={room._id}
+                className={`group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 ${
+                  isRemoving ? "opacity-40 scale-95" : ""
+                }`}
+              >
+                {/* Image — clickable */}
+                <div
+                  className="relative overflow-hidden cursor-pointer h-52"
+                  onClick={() => navigate(`/rooms/${room._id}`)}
                 >
-                  Remove
-                </button>
+                  <img
+                    src={getImageUrl(room.images?.[0])}
+                    alt={room.roomType}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    onError={(e) => {
+                      if (assets?.placeholderImage)
+                        e.target.src = assets.placeholderImage;
+                    }}
+                  />
+
+                  {/* Gradient overlay */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+
+                  {/* Room type badge */}
+                  <span className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm text-xs font-medium px-3 py-1 rounded-full text-gray-700 shadow-sm">
+                    {room.roomType}
+                  </span>
+
+                  {/* Remove (heart) button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      removeFromWishlist(room._id);
+                    }}
+                    className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-sm hover:bg-red-50 transition"
+                    title="Remove from wishlist"
+                  >
+                    <svg className="w-4 h-4 text-red-500" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 21s-6.7-4.35-9.19-7.36C.84 11.29 1.13 7.9 3.51 6.1c2.07-1.56 4.93-1.12 6.49.97 1.56-2.09 4.42-2.53 6.49-.97 2.38 1.8 2.67 5.19.7 7.54C18.7 16.65 12 21 12 21Z" />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Card Body */}
+                <div className="p-5">
+
+                  {/* Hotel name */}
+                  <h3
+                    className="text-lg font-playfair text-gray-900 cursor-pointer hover:underline underline-offset-2"
+                    onClick={() => navigate(`/rooms/${room._id}`)}
+                  >
+                    {room.hotel?.name || "Hotel"}
+                  </h3>
+
+                  {/* Address */}
+                  {room.hotel?.address && (
+                    <div className="flex items-start gap-1.5 mt-1.5">
+                      <img
+                        src={assets.locationIcon}
+                        alt=""
+                        className="w-3.5 h-3.5 mt-0.5 opacity-50 shrink-0"
+                      />
+                      <p className="text-xs text-gray-400 leading-relaxed line-clamp-1">
+                        {room.hotel.address}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Price */}
+                  <div className="mt-4 flex items-end justify-between">
+                    <div>
+                      <span className="text-2xl font-semibold text-gray-900">
+                        ₹{room.pricePerNight}
+                      </span>
+                      <span className="text-xs text-gray-400 ml-1">/ night</span>
+                    </div>
+                  </div>
+
+                  {/* Buttons */}
+                  <div className="mt-4 flex gap-3">
+                    <button
+                      onClick={() => navigate(`/rooms/${room._id}`)}
+                      className="flex-1 bg-black text-white text-sm py-2.5 rounded-xl hover:bg-gray-800 transition font-medium"
+                    >
+                      Book Now
+                    </button>
+                    <button
+                      onClick={() => navigate(`/rooms/${room._id}`)}
+                      className="px-4 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-600 hover:border-gray-400 transition"
+                    >
+                      Details
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </div>
   );

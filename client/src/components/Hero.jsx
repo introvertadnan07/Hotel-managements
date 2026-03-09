@@ -1,12 +1,22 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import heroImage from "../assets/heroImage.png";
-import { cities, assets } from "../assets/assets";
+import { assets } from "../assets/assets";
 import { useAppContext } from "../context/AppContext";
 
 const Hero = () => {
-  const { navigate, getToken, axios, setSearchedCities } = useAppContext();
+  const { navigate, getToken, axios, setSearchedCities, rooms } = useAppContext();
 
   const [destination, setDestination] = useState("");
+
+  // ✅ Dynamically extract unique cities from rooms data
+  const cities = useMemo(() => {
+    if (!rooms || rooms.length === 0) return [];
+    const citySet = new Set();
+    rooms.forEach((room) => {
+      if (room.hotel?.city) citySet.add(room.hotel.city);
+    });
+    return Array.from(citySet).sort();
+  }, [rooms]);
 
   const onSearch = async (e) => {
     e.preventDefault();
@@ -28,11 +38,7 @@ const Hero = () => {
       setSearchedCities((prev) => {
         const filtered = prev.filter((city) => city !== destination);
         const updated = [...filtered, destination];
-
-        if (updated.length > 3) {
-          updated.shift();
-        }
-
+        if (updated.length > 3) updated.shift();
         return updated;
       });
 
@@ -88,10 +94,11 @@ const Hero = () => {
                 value={destination}
                 onChange={(e) => setDestination(e.target.value)}
                 className="w-full rounded-lg border border-gray-200 px-3 py-2 mt-1 text-sm outline-none focus:border-black"
-                placeholder="Type here"
+                placeholder="Type city name"
                 required
               />
 
+              {/* ✅ Dynamic cities from DB */}
               <datalist id="destinations">
                 {cities.map((city, index) => (
                   <option key={index} value={city} />
@@ -149,6 +156,7 @@ const Hero = () => {
               <span>Search</span>
             </button>
           </form>
+
         </div>
       </div>
     </div>

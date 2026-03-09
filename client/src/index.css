@@ -3,6 +3,9 @@
 /* Tailwind CSS v4 entry */
 @import "tailwindcss";
 
+/* ✅ Enable dark mode via class on <html> */
+@variant dark (&:where(.dark, .dark *));
+
 /* Global font */
 * {
   font-family: 'Outfit', sans-serif;

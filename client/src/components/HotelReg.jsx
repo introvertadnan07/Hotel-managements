@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from "react";
-import { assets, cities } from "../assets/assets";
+import { assets } from "../assets/assets";
 import { useAppContext } from "../context/AppContext";
 import { useAuth } from "@clerk/clerk-react";
 import toast from "react-hot-toast";
 
 const HotelReg = () => {
-  const { setShowHotelReg, navigate, axios, fetchUser } = useAppContext();
+  const { setShowHotelReg, navigate, axios, fetchUser, rooms } = useAppContext();
   const { getToken } = useAuth();
 
   const [name, setName] = useState("");
@@ -14,14 +14,21 @@ const HotelReg = () => {
   const [city, setCity] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // ✅ Dynamic cities from existing rooms in DB
+  const cities = React.useMemo(() => {
+    if (!rooms || rooms.length === 0) return [];
+    const citySet = new Set();
+    rooms.forEach((room) => {
+      if (room.hotel?.city) citySet.add(room.hotel.city);
+    });
+    return Array.from(citySet).sort();
+  }, [rooms]);
+
   // ✅ Close modal with ESC
   useEffect(() => {
     const handler = (e) => {
-      if (e.key === "Escape") {
-        setShowHotelReg(false);
-      }
+      if (e.key === "Escape") setShowHotelReg(false);
     };
-
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [setShowHotelReg]);
@@ -38,7 +45,6 @@ const HotelReg = () => {
       setLoading(true);
 
       const token = await getToken();
-
       if (!token) {
         toast.error("Authentication failed. Please login again.");
         return;
@@ -53,20 +59,14 @@ const HotelReg = () => {
 
       if (data.success) {
         toast.success("Hotel registered successfully");
-
-        // 🔥 IMPORTANT → re-fetch role from backend
         await fetchUser();
-
         setShowHotelReg(false);
         navigate("/owner");
       }
     } catch (error) {
-      const message =
-        error.response?.data?.message || "Registration failed";
-
+      const message = error.response?.data?.message || "Registration failed";
       toast.error(message);
 
-      // If already registered → sync role and redirect
       if (message.toLowerCase().includes("already")) {
         await fetchUser();
         setShowHotelReg(false);
@@ -133,20 +133,19 @@ const HotelReg = () => {
             className="w-full border border-gray-200 rounded px-3 py-2 mb-4 outline-none focus:border-black"
           />
 
-          <select
+          {/* ✅ City - free text input with datalist suggestions */}
+          <input
+            list="city-suggestions"
+            placeholder="City (type any city)"
             value={city}
             onChange={(e) => setCity(e.target.value)}
             className="w-full border border-gray-200 rounded px-3 py-2 mb-6 outline-none focus:border-black"
-          >
-            <option value="" disabled>
-              Select City
-            </option>
+          />
+          <datalist id="city-suggestions">
             {cities.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
+              <option key={c} value={c} />
             ))}
-          </select>
+          </datalist>
 
           <button
             type="submit"

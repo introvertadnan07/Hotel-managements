@@ -1,25 +1,31 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { assets } from "../assets/assets";
 
 const ExclusiveOffers = () => {
+  const navigate = useNavigate();
+
   const offers = [
     {
       id: 1,
       title: "Summer Escape Deal",
       description: "Enjoy up to 30% off on luxury rooms this summer.",
       image: assets.exclusiveOffer1,
+      roomType: "Luxury Room",
     },
     {
       id: 2,
       title: "Weekend Special",
       description: "Book a weekend stay and get complimentary breakfast.",
       image: assets.exclusiveOffer2,
+      roomType: "Double Bed",
     },
     {
       id: 3,
       title: "Honeymoon Package",
       description: "Romantic room setup with exclusive couple benefits.",
       image: assets.exclusiveOffer3,
+      roomType: "Family Suite",
     },
   ];
 
@@ -54,7 +60,10 @@ const ExclusiveOffers = () => {
                 {offer.description}
               </p>
 
-              <button className="mt-4 text-sm bg-black text-white px-4 py-2 rounded hover:bg-gray-800 transition">
+              <button
+                onClick={() => navigate(`/rooms?type=${encodeURIComponent(offer.roomType)}`)}
+                className="mt-4 text-sm bg-black text-white px-4 py-2 rounded hover:bg-gray-800 transition"
+              >
                 View Offer
               </button>
             </div>
