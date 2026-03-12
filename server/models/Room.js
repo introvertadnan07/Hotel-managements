@@ -13,6 +13,20 @@ const roomSchema = new mongoose.Schema(
       required: true,
     },
 
+    // ✅ NEW
+    category: {
+      type: String,
+      enum: ["Budget", "Standard", "Premium", "Luxury"],
+      default: "Standard",
+    },
+
+    // ✅ NEW
+    description: {
+      type: String,
+      default: "",
+      maxlength: 1000,
+    },
+
     pricePerNight: {
       type: Number,
       required: true,
@@ -62,5 +76,4 @@ const roomSchema = new mongoose.Schema(
 );
 
 const Room = mongoose.model("Room", roomSchema);
-
 export default Room;
