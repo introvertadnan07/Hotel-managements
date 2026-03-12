@@ -5,17 +5,107 @@ import { useAppContext } from "../context/AppContext";
 import toast from "react-hot-toast";
 import Swal from "sweetalert2";
 import BookingCalendar from "../components/BookingCalendar";
+import { FiCalendar, FiList, FiDownload, FiX, FiCreditCard } from "react-icons/fi";
 
+// ── Status Timeline ───────────────────────────────────────────
+const STEPS = ["pending", "confirmed", "completed"];
+
+const StatusTimeline = ({ status }) => {
+  const currentIndex = STEPS.indexOf(status);
+
+  if (status === "refunded" || status === "cancelled") {
+    return (
+      <div className="flex items-center gap-2 mt-3">
+        <span className={`text-xs font-medium px-3 py-1 rounded-full
+          ${status === "refunded"
+            ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+            : "bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400"}`}>
+          {status === "refunded" ? "💸 Refunded" : "❌ Cancelled"}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-1 mt-3">
+      {STEPS.map((step, i) => {
+        const done = i <= currentIndex;
+        const active = i === currentIndex;
+        return (
+          <React.Fragment key={step}>
+            <div className="flex flex-col items-center">
+              <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-all
+                ${done
+                  ? "bg-gray-900 dark:bg-white text-white dark:text-gray-900"
+                  : "bg-gray-200 dark:bg-gray-700 text-gray-400"}`}>
+                {done ? "✓" : i + 1}
+              </div>
+              <span className={`text-[10px] mt-1 capitalize
+                ${active ? "text-gray-900 dark:text-white font-semibold" : "text-gray-400"}`}>
+                {step}
+              </span>
+            </div>
+            {i < STEPS.length - 1 && (
+              <div className={`flex-1 h-0.5 mb-4 transition-all
+                ${i < currentIndex
+                  ? "bg-gray-900 dark:bg-white"
+                  : "bg-gray-200 dark:bg-gray-700"}`} />
+            )}
+          </React.Fragment>
+        );
+      })}
+    </div>
+  );
+};
+
+// ── Skeleton ─────────────────────────────────────────────────
+const BookingSkeleton = () => (
+  <div className="animate-pulse border-b border-gray-100 dark:border-gray-700 py-6">
+    <div className="flex gap-4">
+      <div className="w-28 h-24 rounded-xl bg-gray-200 dark:bg-gray-700 shrink-0" />
+      <div className="flex-1 space-y-3">
+        <div className="h-5 bg-gray-200 dark:bg-gray-700 rounded w-40" />
+        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24" />
+        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-32" />
+        <div className="flex gap-2 mt-2">
+          <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700" />
+          <div className="h-0.5 flex-1 bg-gray-200 dark:bg-gray-700 mt-3" />
+          <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700" />
+          <div className="h-0.5 flex-1 bg-gray-200 dark:bg-gray-700 mt-3" />
+          <div className="w-6 h-6 rounded-full bg-gray-200 dark:bg-gray-700" />
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+// ── Empty State ───────────────────────────────────────────────
+const EmptyBookings = ({ navigate }) => (
+  <div className="flex flex-col items-center justify-center py-24 text-center">
+    <div className="w-20 h-20 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4">
+      <FiCalendar className="text-3xl text-gray-400" />
+    </div>
+    <h3 className="text-xl font-playfair text-gray-800 dark:text-white mb-2">No Bookings Yet</h3>
+    <p className="text-gray-500 dark:text-gray-400 text-sm mb-6 max-w-xs">
+      You haven't made any reservations. Start exploring our hotels!
+    </p>
+    <button onClick={() => navigate("/rooms")}
+      className="px-6 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-full text-sm font-medium hover:opacity-80 transition">
+      Browse Hotels
+    </button>
+  </div>
+);
+
+// ── Main Component ────────────────────────────────────────────
 const MyBookings = () => {
-  const { axios, user } = useAppContext();
-
+  const { axios, user, navigate } = useAppContext();
   const [bookings, setBookings] = useState([]);
+  const [skelLoading, setSkelLoading] = useState(true);
   const [payingId, setPayingId] = useState(null);
   const [downloadingId, setDownloadingId] = useState(null);
   const [cancelingId, setCancelingId] = useState(null);
-  const [view, setView] = useState("list"); // "list" | "calendar"
+  const [view, setView] = useState("list");
 
-  // Image handler
   const getImageUrl = (img) => {
     if (!img) return assets.hostedDefaultImage;
     if (img.startsWith("http")) return img;
@@ -23,38 +113,26 @@ const MyBookings = () => {
     return `${import.meta.env.VITE_API_URL}/${img}`;
   };
 
-  // Fetch bookings
+  // ✅ FIXED: POST → GET
   const fetchUserBookings = async () => {
     try {
-      const { data } = await axios.post("/api/bookings/user");
-      if (data.success) {
-        setBookings(data.bookings || []);
-      } else {
-        toast.error(data.message || "Failed to load bookings");
-      }
-    } catch {
-      toast.error("Failed to load bookings");
-    }
+      setSkelLoading(true);
+      const { data } = await axios.get("/api/bookings/user");
+      if (data.success) setBookings(data.bookings || []);
+      else toast.error(data.message || "Failed to load bookings");
+    } catch { toast.error("Failed to load bookings"); }
+    finally { setSkelLoading(false); }
   };
 
-  // Stripe payment
   const handlePayment = async (bookingId) => {
     try {
       setPayingId(bookingId);
       const { data } = await axios.post("/api/bookings/stripe-payment", { bookingId });
-      if (data.success) {
-        window.location.href = data.url;
-      } else {
-        toast.error(data.message || "Payment failed");
-        setPayingId(null);
-      }
-    } catch {
-      toast.error("Payment failed");
-      setPayingId(null);
-    }
+      if (data.success) window.location.href = data.url;
+      else { toast.error(data.message || "Payment failed"); setPayingId(null); }
+    } catch { toast.error("Payment failed"); setPayingId(null); }
   };
 
-  // Cancel booking
   const handleCancel = async (bookingId) => {
     const result = await Swal.fire({
       title: "Cancel booking?",
@@ -63,32 +141,22 @@ const MyBookings = () => {
       showCancelButton: true,
       confirmButtonColor: "#ef4444",
       cancelButtonColor: "#6b7280",
-      confirmButtonText: "Yes, cancel booking",
+      confirmButtonText: "Yes, cancel",
     });
     if (!result.isConfirmed) return;
     try {
       setCancelingId(bookingId);
-      const { data } = await axios.post(`/api/bookings/${bookingId}/cancel`);
-      if (data.success) {
-        toast.success("Booking cancelled successfully");
-        fetchUserBookings();
-      } else {
-        toast.error(data.message || "Cancellation failed");
-      }
-    } catch {
-      toast.error("Cancellation failed");
-    } finally {
-      setCancelingId(null);
-    }
+      const { data } = await axios.post(`/api/bookings/cancel/${bookingId}`);
+      if (data.success) { toast.success("Booking cancelled"); fetchUserBookings(); }
+      else toast.error(data.message || "Cancellation failed");
+    } catch { toast.error("Cancellation failed"); }
+    finally { setCancelingId(null); }
   };
 
-  // Download invoice
   const downloadInvoice = async (bookingId) => {
     try {
       setDownloadingId(bookingId);
-      const response = await axios.get(`/api/bookings/invoice/${bookingId}`, {
-        responseType: "blob",
-      });
+      const response = await axios.get(`/api/bookings/invoice/${bookingId}`, { responseType: "blob" });
       const blob = new Blob([response.data], { type: "application/pdf" });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -97,145 +165,137 @@ const MyBookings = () => {
       document.body.appendChild(link);
       link.click();
       link.remove();
-    } catch {
-      toast.error("Invoice download failed");
-    } finally {
-      setDownloadingId(null);
-    }
+    } catch { toast.error("Invoice download failed"); }
+    finally { setDownloadingId(null); }
   };
 
-  useEffect(() => {
-    if (user) fetchUserBookings();
-  }, [user]);
+  useEffect(() => { if (user) fetchUserBookings(); }, [user]);
 
   return (
-    <div className="py-28 px-4 md:px-16 lg:px-24 xl:px-32">
+    <div className="py-28 px-4 md:px-16 lg:px-24 xl:px-32 dark:bg-gray-900 min-h-screen transition-colors duration-300">
 
-      {/* Title + View Toggle */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-        <Title
-          title="My Bookings"
-          subTitle="Manage your hotel reservations easily."
-          align="left"
-        />
-        <div className="flex items-center gap-2 bg-gray-100 p-1 rounded-xl self-start mt-1">
-          <button
-            onClick={() => setView("list")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              view === "list" ? "bg-white shadow-sm text-gray-800" : "text-gray-500 hover:text-gray-700"
-            }`}>
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
-            </svg>
-            List
-          </button>
-          <button
-            onClick={() => setView("calendar")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              view === "calendar" ? "bg-white shadow-sm text-gray-800" : "text-gray-500 hover:text-gray-700"
-            }`}>
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <rect x="3" y="4" width="18" height="18" rx="2" />
-              <path strokeLinecap="round" d="M16 2v4M8 2v4M3 10h18" />
-            </svg>
-            Calendar
-          </button>
+        <Title title="My Bookings" subTitle="Manage your hotel reservations easily." align="left" />
+
+        {/* View Toggle */}
+        <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl self-start">
+          {[
+            { key: "list", icon: <FiList />, label: "List" },
+            { key: "calendar", icon: <FiCalendar />, label: "Calendar" },
+          ].map(({ key, icon, label }) => (
+            <button key={key} onClick={() => setView(key)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all
+                ${view === key
+                  ? "bg-white dark:bg-gray-700 shadow text-gray-800 dark:text-white"
+                  : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"}`}>
+              {icon} {label}
+            </button>
+          ))}
         </div>
       </div>
 
-      <div className="max-w-6xl mt-8 w-full text-gray-800">
+      <div className="max-w-6xl mt-8 w-full">
 
-        {bookings.length === 0 ? (
-          <p className="py-10 text-gray-500">No bookings found.</p>
-        ) : view === "calendar" ? (
+        {/* Skeleton */}
+        {skelLoading && (
+          <div className="space-y-2">
+            {[1, 2, 3].map(i => <BookingSkeleton key={i} />)}
+          </div>
+        )}
 
-          /* ── Calendar View ─────────────────────────────────── */
+        {/* Empty */}
+        {!skelLoading && bookings.length === 0 && <EmptyBookings navigate={navigate} />}
+
+        {/* Calendar */}
+        {!skelLoading && bookings.length > 0 && view === "calendar" && (
           <div className="max-w-2xl">
             <BookingCalendar bookings={bookings} isOwner={false} />
           </div>
+        )}
 
-        ) : (
+        {/* List */}
+        {!skelLoading && bookings.length > 0 && view === "list" && bookings.map((booking) => (
+          <div key={booking._id}
+            className="grid grid-cols-1 md:grid-cols-[3fr_2fr_1fr] gap-6 border-b border-gray-100 dark:border-gray-700 py-6">
 
-          /* ── List View (your original UI) ──────────────────── */
-          bookings.map((booking) => (
-            <div
-              key={booking._id}
-              className="grid grid-cols-1 md:grid-cols-[3fr_2fr_1fr] gap-6 border-b py-6"
-            >
-              {/* LEFT */}
-              <div className="flex gap-4">
-                <img
-                  src={getImageUrl(booking.room?.images?.[0])}
-                  alt="hotel"
-                  className="w-28 h-24 rounded-lg object-cover"
-                />
-                <div>
-                  <p className="font-playfair text-xl">
-                    {booking.hotel?.name}
-                    <span className="text-sm text-gray-500"> ({booking.room?.roomType})</span>
+            {/* LEFT */}
+            <div className="flex gap-4">
+              <img src={getImageUrl(booking.room?.images?.[0])} alt="hotel"
+                className="w-28 h-24 rounded-xl object-cover shrink-0" />
+              <div className="min-w-0">
+                <p className="font-playfair text-xl text-gray-900 dark:text-white">
+                  {booking.hotel?.name}
+                  <span className="text-sm text-gray-500 dark:text-gray-400 font-sans">
+                    {" "}({booking.room?.roomType})
+                  </span>
+                </p>
+                <p className="font-medium text-gray-800 dark:text-gray-200 mt-1">
+                  ₹{booking.totalPrice?.toLocaleString()}
+                </p>
+                {booking.couponCode && (
+                  <p className="text-xs text-green-600 dark:text-green-400 mt-0.5">
+                    🎟 Coupon: {booking.couponCode}
                   </p>
-                  <p className="font-medium">
-                    Total: ₹ {booking.totalPrice?.toLocaleString()}
-                  </p>
-                  <p className="text-sm mt-1">
-                    Status:{" "}
-                    <span className={
-                      booking.status === "confirmed" ? "text-green-600" :
-                      booking.status === "refunded" ? "text-red-600" : "text-yellow-600"
-                    }>
-                      {booking.status}
-                    </span>
-                  </p>
-                </div>
-              </div>
-
-              {/* DATES */}
-              <div className="text-sm">
-                <p>Check-In: {new Date(booking.checkInDate).toDateString()}</p>
-                <p>Check-Out: {new Date(booking.checkOutDate).toDateString()}</p>
-              </div>
-
-              {/* ACTIONS */}
-              <div className="flex gap-3 items-center">
-                {booking.status === "pending" && (
-                  <>
-                    <button
-                      onClick={() => handlePayment(booking._id)}
-                      disabled={payingId === booking._id}
-                      className="px-4 py-1.5 text-sm border rounded-full">
-                      {payingId === booking._id ? "Redirecting..." : "Pay Now"}
-                    </button>
-                    <button
-                      onClick={() => handleCancel(booking._id)}
-                      disabled={cancelingId === booking._id}
-                      className="px-4 py-1.5 text-sm border border-red-500 text-red-500 rounded-full">
-                      {cancelingId === booking._id ? "Cancelling..." : "Cancel"}
-                    </button>
-                  </>
                 )}
-                {booking.status === "confirmed" && (
-                  <>
-                    <button
-                      onClick={() => downloadInvoice(booking._id)}
-                      disabled={downloadingId === booking._id}
-                      className="px-4 py-1.5 text-sm bg-black text-white rounded-full">
-                      {downloadingId === booking._id ? "Downloading..." : "Invoice"}
-                    </button>
-                    <button
-                      onClick={() => handleCancel(booking._id)}
-                      disabled={cancelingId === booking._id}
-                      className="px-4 py-1.5 text-sm border border-red-500 text-red-500 rounded-full">
-                      {cancelingId === booking._id ? "Cancelling..." : "Cancel"}
-                    </button>
-                  </>
-                )}
-                {booking.status === "refunded" && (
-                  <span className="text-sm text-red-500 font-medium">Refunded</span>
-                )}
+                <StatusTimeline status={booking.status} />
               </div>
             </div>
-          ))
-        )}
+
+            {/* DATES */}
+            <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+              <p className="flex items-center gap-2">
+                <FiCalendar className="shrink-0" />
+                Check-In: <span className="font-medium text-gray-800 dark:text-gray-200">
+                  {new Date(booking.checkInDate).toDateString()}
+                </span>
+              </p>
+              <p className="flex items-center gap-2">
+                <FiCalendar className="shrink-0" />
+                Check-Out: <span className="font-medium text-gray-800 dark:text-gray-200">
+                  {new Date(booking.checkOutDate).toDateString()}
+                </span>
+              </p>
+              <p className="text-xs mt-2">
+                {booking.isPaid
+                  ? <span className="text-green-600 dark:text-green-400 font-medium">✓ Paid</span>
+                  : <span className="text-yellow-600 dark:text-yellow-400">⏳ Unpaid</span>}
+              </p>
+            </div>
+
+            {/* ACTIONS */}
+            <div className="flex flex-row md:flex-col gap-2 items-start md:items-end justify-start md:justify-center">
+              {booking.status === "pending" && (
+                <>
+                  <button onClick={() => handlePayment(booking._id)} disabled={payingId === booking._id}
+                    className="flex items-center gap-1.5 px-4 py-1.5 text-sm bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-80 transition disabled:opacity-60">
+                    <FiCreditCard className="text-xs" />
+                    {payingId === booking._id ? "Redirecting..." : "Pay Now"}
+                  </button>
+                  <button onClick={() => handleCancel(booking._id)} disabled={cancelingId === booking._id}
+                    className="flex items-center gap-1.5 px-4 py-1.5 text-sm border border-red-400 text-red-500 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 transition disabled:opacity-60">
+                    <FiX className="text-xs" />
+                    {cancelingId === booking._id ? "Cancelling..." : "Cancel"}
+                  </button>
+                </>
+              )}
+              {booking.status === "confirmed" && (
+                <>
+                  <button onClick={() => downloadInvoice(booking._id)} disabled={downloadingId === booking._id}
+                    className="flex items-center gap-1.5 px-4 py-1.5 text-sm bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-80 transition disabled:opacity-60">
+                    <FiDownload className="text-xs" />
+                    {downloadingId === booking._id ? "Downloading..." : "Invoice"}
+                  </button>
+                  <button onClick={() => handleCancel(booking._id)} disabled={cancelingId === booking._id}
+                    className="flex items-center gap-1.5 px-4 py-1.5 text-sm border border-red-400 text-red-500 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 transition disabled:opacity-60">
+                    <FiX className="text-xs" />
+                    {cancelingId === booking._id ? "Cancelling..." : "Cancel"}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );

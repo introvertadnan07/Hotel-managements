@@ -3,8 +3,8 @@ import Sidebar from "../../components/hotelOwner/Sidebar";
 
 const Layout = () => {
   return (
-    <div className="flex min-h-screen bg-gray-50 pt-20">
-      
+    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 pt-20 transition-colors duration-300">
+
       {/* Sidebar */}
       <Sidebar />
 

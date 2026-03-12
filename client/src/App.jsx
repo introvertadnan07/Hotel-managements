@@ -16,7 +16,8 @@ import AllRooms from "./pages/AllRooms";
 import RoomDetails from "./components/RoomDetails";
 import MyBookings from "./pages/MyBookings";
 import Wishlist from "./pages/Wishlist";
-import AdminPanel from "./pages/AdminPanel"; // ✅ new
+import AdminPanel from "./pages/AdminPanel";
+import NotFound from "./pages/NotFound"; // ✅
 
 import HotelReg from "./components/HotelReg";
 import Loader from "./components/Loader";
@@ -34,18 +35,15 @@ const App = () => {
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900 dark:text-white transition-colors duration-300">
-
       <Navbar />
 
       {!isOwnerRoute && <ChatAssistant />}
-
       {!isOwnerRoute && (
         <>
           <CompareBar onCompare={() => setShowCompare(true)} />
           {showCompare && <CompareModal onClose={() => setShowCompare(false)} />}
         </>
       )}
-
       {showHotelReg && <HotelReg />}
 
       <Routes>
@@ -58,24 +56,20 @@ const App = () => {
         <Route path="/wishlist" element={<Wishlist />} />
         <Route path="/loader/:nextUrl" element={<Loader />} />
 
-        {/* ✅ ADMIN ROUTE */}
-        <Route
-          path="/admin"
-          element={role === "admin" ? <AdminPanel /> : <Navigate to="/" />}
-        />
+        {/* ✅ Admin */}
+        <Route path="/admin" element={role === "admin" ? <AdminPanel /> : <Navigate to="/" />} />
 
-        {/* 🔐 OWNER ROUTE */}
-        <Route
-          path="/owner/*"
-          element={isOwner ? <OwnerLayout /> : <Navigate to="/" />}
-        >
+        {/* 🔐 Owner */}
+        <Route path="/owner/*" element={isOwner ? <OwnerLayout /> : <Navigate to="/" />}>
           <Route index element={<Dashboard />} />
           <Route path="add-room" element={<AddRoom />} />
           <Route path="list-room" element={<ListRoom />} />
           <Route path="analytics" element={<Analytics />} />
         </Route>
-      </Routes>
 
+        {/* ✅ 404 */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
     </div>
   );
 };

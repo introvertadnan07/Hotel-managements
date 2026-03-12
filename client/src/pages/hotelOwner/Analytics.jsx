@@ -8,17 +8,15 @@ import {
   CartesianGrid, PieChart, Pie, Cell
 } from "recharts";
 
-// ── Room type colors ──────────────────────────────────────────────────────
 const ROOM_COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#8b5cf6", "#ef4444"];
 
-// ── Custom Tooltip ────────────────────────────────────────────────────────
 const CustomTooltip = ({ active, payload, label, currency }) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white border border-gray-200 rounded-xl px-4 py-3 shadow-lg text-sm">
-        <p className="font-semibold text-gray-700 mb-1">{label}</p>
+      <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 shadow-lg text-sm">
+        <p className="font-semibold text-gray-700 dark:text-gray-200 mb-1">{label}</p>
         {payload.map((p, i) => (
-          <p key={i} className="text-gray-600">
+          <p key={i} className="text-gray-600 dark:text-gray-400">
             {p.name === "revenue"
               ? `Revenue: ${currency}${Number(p.value).toLocaleString()}`
               : `Bookings: ${p.value}`}
@@ -32,19 +30,16 @@ const CustomTooltip = ({ active, payload, label, currency }) => {
 
 const Analytics = () => {
   const { axios, currency, user } = useAppContext();
-
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeChart, setActiveChart] = useState("revenue");
 
-  // ── Fetch bookings ────────────────────────────────────────────────────
+  // ✅ FIXED: POST → GET
   const fetchData = async () => {
     try {
       setLoading(true);
-      const { data } = await axios.post("/api/bookings/hotel");
-      if (data.success) {
-        setBookings(data.dashboardData?.bookings || []);
-      }
+      const { data } = await axios.get("/api/bookings/hotel");
+      if (data.success) setBookings(data.dashboardData?.bookings || []);
     } catch {
       toast.error("Failed to load analytics");
     } finally {
@@ -54,8 +49,7 @@ const Analytics = () => {
 
   useEffect(() => { if (user) fetchData(); }, [user]);
 
-
-  // ── Derived stats ─────────────────────────────────────────────────────
+  // ── Derived stats ─────────────────────────────────────────
   const totalBookings = bookings.length;
   const paidCount = bookings.filter(b => b.isPaid).length;
   const pendingCount = bookings.filter(b => !b.isPaid).length;
@@ -63,7 +57,7 @@ const Analytics = () => {
   const occupancyRate = totalBookings > 0 ? ((paidCount / totalBookings) * 100).toFixed(1) : 0;
   const avgBookingValue = paidCount > 0 ? Math.round(totalRevenue / paidCount) : 0;
 
-  // ── Monthly chart data ────────────────────────────────────────────────
+  // ── Monthly chart data ────────────────────────────────────
   const monthOrder = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
   const monthlyMap = {};
   bookings.forEach((b) => {
@@ -74,7 +68,7 @@ const Analytics = () => {
   });
   const chartData = monthOrder.filter(m => monthlyMap[m]).map(m => monthlyMap[m]);
 
-  // ── Room type breakdown ───────────────────────────────────────────────
+  // ── Room type breakdown ───────────────────────────────────
   const roomTypeMap = {};
   bookings.forEach((b) => {
     const type = b.room?.roomType || "Unknown";
@@ -82,7 +76,7 @@ const Analytics = () => {
   });
   const roomTypeData = Object.entries(roomTypeMap).map(([name, value]) => ({ name, value }));
 
-  // ── Top rooms by revenue ──────────────────────────────────────────────
+  // ── Top rooms by revenue ──────────────────────────────────
   const roomRevMap = {};
   bookings.forEach((b) => {
     if (!b.isPaid) return;
@@ -90,17 +84,15 @@ const Analytics = () => {
     roomRevMap[key] = (roomRevMap[key] || 0) + b.totalPrice;
   });
   const topRooms = Object.entries(roomRevMap)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
+    .sort((a, b) => b[1] - a[1]).slice(0, 5)
     .map(([type, revenue]) => ({ type, revenue }));
 
-  // ── Stat cards ────────────────────────────────────────────────────────
   const stats = [
     {
-      label: "Total Bookings",
-      value: totalBookings,
+      label: "Total Bookings", value: totalBookings,
       sub: `${paidCount} paid · ${pendingCount} pending`,
-      bg: "bg-blue-50", border: "border-blue-100", text: "text-blue-600",
+      bg: "bg-blue-50 dark:bg-blue-900/20", border: "border-blue-100 dark:border-blue-800",
+      text: "text-blue-600 dark:text-blue-400",
       icon: (
         <svg className="w-7 h-7 text-blue-500" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
           <path strokeLinecap="round" d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />
@@ -111,7 +103,8 @@ const Analytics = () => {
       label: "Total Revenue",
       value: `${currency}${Number(totalRevenue).toLocaleString()}`,
       sub: `Avg ${currency}${Number(avgBookingValue).toLocaleString()} / booking`,
-      bg: "bg-green-50", border: "border-green-100", text: "text-green-600",
+      bg: "bg-green-50 dark:bg-green-900/20", border: "border-green-100 dark:border-green-800",
+      text: "text-green-600 dark:text-green-400",
       icon: (
         <svg className="w-7 h-7 text-green-500" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
           <path strokeLinecap="round" d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
@@ -119,10 +112,10 @@ const Analytics = () => {
       ),
     },
     {
-      label: "Occupancy Rate",
-      value: `${occupancyRate}%`,
+      label: "Occupancy Rate", value: `${occupancyRate}%`,
       sub: `${paidCount} confirmed stays`,
-      bg: "bg-purple-50", border: "border-purple-100", text: "text-purple-600",
+      bg: "bg-purple-50 dark:bg-purple-900/20", border: "border-purple-100 dark:border-purple-800",
+      text: "text-purple-600 dark:text-purple-400",
       icon: (
         <svg className="w-7 h-7 text-purple-500" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
           <path strokeLinecap="round" d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
@@ -131,10 +124,10 @@ const Analytics = () => {
       ),
     },
     {
-      label: "Room Types",
-      value: roomTypeData.length,
+      label: "Room Types", value: roomTypeData.length,
       sub: "Active categories",
-      bg: "bg-amber-50", border: "border-amber-100", text: "text-amber-600",
+      bg: "bg-amber-50 dark:bg-amber-900/20", border: "border-amber-100 dark:border-amber-800",
+      text: "text-amber-600 dark:text-amber-400",
       icon: (
         <svg className="w-7 h-7 text-amber-500" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
           <rect x="3" y="3" width="7" height="7" rx="1" />
@@ -148,39 +141,40 @@ const Analytics = () => {
 
   return (
     <div className="p-6">
-
-      <Title
-        align="left"
-        font="outfit"
-        title="Analytics"
-        subTitle="Deep insights into your hotel performance"
-      />
+      <Title align="left" font="outfit" title="Analytics" subTitle="Deep insights into your hotel performance" />
 
       {loading ? (
-        <p className="mt-8 text-gray-500">Loading analytics...</p>
+        <div className="animate-pulse mt-8 space-y-6">
+          <div className="grid grid-cols-2 xl:grid-cols-4 gap-4">
+            {[1,2,3,4].map(i => <div key={i} className="h-24 bg-gray-200 dark:bg-gray-700 rounded-xl" />)}
+          </div>
+          <div className="h-80 bg-gray-200 dark:bg-gray-700 rounded-xl" />
+          <div className="grid grid-cols-3 gap-6">
+            <div className="col-span-2 h-64 bg-gray-200 dark:bg-gray-700 rounded-xl" />
+            <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded-xl" />
+          </div>
+        </div>
       ) : (
         <>
-          {/* ── Stat Cards ─────────────────────────────────────── */}
+          {/* ── Stat Cards ──────────────────────────────── */}
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 my-8">
             {stats.map((s, i) => (
-              <div key={i} className={`${s.bg} ${s.border} border rounded-xl p-5 shadow-sm flex gap-4 items-start`}>
-                <div className="p-2 rounded-lg bg-white shadow-sm flex-shrink-0">
-                  {s.icon}
-                </div>
+              <div key={i} className={`${s.bg} ${s.border} border rounded-xl p-5 shadow-sm flex gap-4 items-start transition-colors duration-300`}>
+                <div className="p-2 rounded-lg bg-white dark:bg-gray-800 shadow-sm flex-shrink-0">{s.icon}</div>
                 <div>
                   <p className={`${s.text} text-sm font-medium`}>{s.label}</p>
-                  <p className="text-gray-800 text-xl font-bold leading-tight">{s.value}</p>
-                  <p className="text-gray-400 text-xs mt-0.5">{s.sub}</p>
+                  <p className="text-gray-800 dark:text-white text-xl font-bold leading-tight">{s.value}</p>
+                  <p className="text-gray-400 dark:text-gray-500 text-xs mt-0.5">{s.sub}</p>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* ── Area Chart — Monthly Performance ───────────────── */}
-          <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm mb-6">
+          {/* ── Area Chart ──────────────────────────────── */}
+          <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 shadow-sm mb-6 transition-colors duration-300">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5">
               <div>
-                <h2 className="text-base font-semibold text-gray-800">Monthly Performance</h2>
+                <h2 className="text-base font-semibold text-gray-800 dark:text-white">Monthly Performance</h2>
                 <p className="text-gray-400 text-xs mt-0.5">Revenue and bookings trend over time</p>
               </div>
               <div className="flex gap-2">
@@ -188,8 +182,8 @@ const Analytics = () => {
                   <button key={t} onClick={() => setActiveChart(t)}
                     className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
                       activeChart === t
-                        ? "bg-gray-900 text-white"
-                        : "border border-gray-200 text-gray-500 hover:bg-gray-50"
+                        ? "bg-gray-900 dark:bg-white text-white dark:text-gray-900"
+                        : "border border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-700"
                     }`}>
                     {t.charAt(0).toUpperCase() + t.slice(1)}
                   </button>
@@ -207,30 +201,26 @@ const Analytics = () => {
                       <stop offset="95%" stopColor={activeChart === "revenue" ? "#10b981" : "#3b82f6"} stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
                   <XAxis dataKey="month" tick={{ fontSize: 12, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 12, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
                   <Tooltip content={<CustomTooltip currency={currency} />} />
-                  <Area
-                    type="monotone"
-                    dataKey={activeChart}
+                  <Area type="monotone" dataKey={activeChart}
                     stroke={activeChart === "revenue" ? "#10b981" : "#3b82f6"}
-                    strokeWidth={2.5}
-                    fill="url(#areaGrad)"
+                    strokeWidth={2.5} fill="url(#areaGrad)"
                     dot={{ r: 4, strokeWidth: 0, fill: activeChart === "revenue" ? "#10b981" : "#3b82f6" }}
-                    activeDot={{ r: 6, strokeWidth: 2, stroke: "#fff" }}
-                  />
+                    activeDot={{ r: 6, strokeWidth: 2, stroke: "#fff" }} />
                 </AreaChart>
               </ResponsiveContainer>
             )}
           </div>
 
-          {/* ── Bottom Row ──────────────────────────────────────── */}
+          {/* ── Bottom Row ──────────────────────────────── */}
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
 
-            {/* Bar chart — revenue by room type */}
-            <div className="xl:col-span-2 bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-              <h2 className="text-base font-semibold text-gray-800 mb-1">Revenue by Room Type</h2>
+            {/* Bar chart */}
+            <div className="xl:col-span-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 shadow-sm transition-colors duration-300">
+              <h2 className="text-base font-semibold text-gray-800 dark:text-white mb-1">Revenue by Room Type</h2>
               <p className="text-gray-400 text-xs mb-5">Top earning room categories</p>
               {topRooms.length === 0 ? (
                 <p className="text-gray-400 text-sm py-16 text-center">No paid bookings yet</p>
@@ -251,9 +241,9 @@ const Analytics = () => {
               )}
             </div>
 
-            {/* Pie — room type booking share */}
-            <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-              <h2 className="text-base font-semibold text-gray-800 mb-1">Room Type Breakdown</h2>
+            {/* Pie chart */}
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 shadow-sm transition-colors duration-300">
+              <h2 className="text-base font-semibold text-gray-800 dark:text-white mb-1">Room Type Breakdown</h2>
               <p className="text-gray-400 text-xs mb-4">Booking share by room type</p>
               {roomTypeData.length === 0 ? (
                 <p className="text-gray-400 text-sm py-16 text-center">No data yet</p>
@@ -261,13 +251,9 @@ const Analytics = () => {
                 <>
                   <ResponsiveContainer width="100%" height={180}>
                     <PieChart>
-                      <Pie
-                        data={roomTypeData}
-                        cx="50%" cy="50%"
+                      <Pie data={roomTypeData} cx="50%" cy="50%"
                         innerRadius={50} outerRadius={80}
-                        dataKey="value"
-                        paddingAngle={3}
-                      >
+                        dataKey="value" paddingAngle={3}>
                         {roomTypeData.map((_, i) => (
                           <Cell key={i} fill={ROOM_COLORS[i % ROOM_COLORS.length]} stroke="transparent" />
                         ))}
@@ -277,7 +263,7 @@ const Analytics = () => {
                         contentStyle={{
                           borderRadius: "10px", fontSize: "12px",
                           border: "1px solid #e5e7eb",
-                          boxShadow: "0 4px 12px rgba(0,0,0,0.08)"
+                          background: "white"
                         }}
                       />
                     </PieChart>
@@ -287,15 +273,14 @@ const Analytics = () => {
                       <div key={i} className="flex items-center gap-2">
                         <div className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                           style={{ background: ROOM_COLORS[i % ROOM_COLORS.length] }} />
-                        <span className="text-gray-500 text-xs truncate">{r.name}</span>
-                        <span className="text-gray-700 text-xs font-semibold ml-auto">{r.value}</span>
+                        <span className="text-gray-500 dark:text-gray-400 text-xs truncate">{r.name}</span>
+                        <span className="text-gray-700 dark:text-gray-200 text-xs font-semibold ml-auto">{r.value}</span>
                       </div>
                     ))}
                   </div>
                 </>
               )}
             </div>
-
           </div>
         </>
       )}
