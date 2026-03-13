@@ -3,7 +3,7 @@ import { useParams, useSearchParams } from "react-router-dom";
 import { useAppContext } from "../context/AppContext";
 import { assets } from "../assets/assets";
 import toast from "react-hot-toast";
-import { FaUserFriends, FaBed, FaBath, FaStar, FaTimes, FaChevronLeft, FaChevronRight, FaExpand, FaCalendarAlt, FaShare, FaCopy, FaWhatsapp } from "react-icons/fa";
+import { FaUserFriends, FaBed, FaBath, FaStar, FaTimes, FaChevronLeft, FaChevronRight, FaExpand, FaCalendarAlt, FaShare, FaCopy, FaWhatsapp, FaReply } from "react-icons/fa";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
@@ -18,7 +18,6 @@ L.Icon.Default.mergeOptions({
 // ─── LIGHTBOX ────────────────────────────────────────────────────────────────
 const Lightbox = ({ images, startIndex, onClose, getImageUrl }) => {
   const [current, setCurrent] = useState(startIndex);
-
   const prev = useCallback(() => setCurrent((c) => (c - 1 + images.length) % images.length), [images.length]);
   const next = useCallback(() => setCurrent((c) => (c + 1) % images.length), [images.length]);
 
@@ -72,8 +71,8 @@ const Lightbox = ({ images, startIndex, onClose, getImageUrl }) => {
 
 // ─── SHARE MODAL ─────────────────────────────────────────────────────────────
 const ShareModal = ({ room, onClose }) => {
-  const url     = window.location.href;
-  const text    = `Check out ${room?.hotel?.name} - ${room?.roomType} on AnumiflyStay! 🏨`;
+  const url  = window.location.href;
+  const text = `Check out ${room?.hotel?.name} - ${room?.roomType} on AnumiflyStay! 🏨`;
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
@@ -84,17 +83,6 @@ const ShareModal = ({ room, onClose }) => {
     });
   };
 
-  const handleWhatsApp = () => {
-    window.open(`https://wa.me/?text=${encodeURIComponent(`${text}\n${url}`)}`, "_blank");
-  };
-
-  const handleNativeShare = () => {
-    if (navigator.share) {
-      navigator.share({ title: room?.hotel?.name, text, url });
-    }
-  };
-
-  // Close on outside click
   useEffect(() => {
     const handleKey = (e) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", handleKey);
@@ -104,8 +92,6 @@ const ShareModal = ({ room, onClose }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4" onClick={onClose}>
       <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
-
-        {/* Header */}
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2">
             <FaShare className="text-gray-600 dark:text-gray-400" />
@@ -113,17 +99,10 @@ const ShareModal = ({ room, onClose }) => {
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-lg transition">✕</button>
         </div>
-
-        {/* Room preview */}
         <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-3 mb-5 flex items-center gap-3">
           <div className="w-12 h-12 rounded-lg bg-gray-200 dark:bg-gray-600 shrink-0 overflow-hidden">
             {room?.images?.[0] && (
-              <img
-                src={typeof room.images[0] === "string" && room.images[0].startsWith("http")
-                  ? room.images[0]
-                  : `${import.meta.env.VITE_API_URL}/${room.images[0]}`}
-                alt="" className="w-full h-full object-cover"
-              />
+              <img src={typeof room.images[0] === "string" && room.images[0].startsWith("http") ? room.images[0] : `${import.meta.env.VITE_API_URL}/${room.images[0]}`} alt="" className="w-full h-full object-cover" />
             )}
           </div>
           <div className="min-w-0">
@@ -131,51 +110,27 @@ const ShareModal = ({ room, onClose }) => {
             <p className="text-xs text-gray-500 dark:text-gray-400">{room?.roomType} · {room?.hotel?.city}</p>
           </div>
         </div>
-
-        {/* Copy link */}
         <div className="flex gap-2 mb-4">
-          <input
-            readOnly value={url}
-            className="flex-1 text-xs bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-gray-600 dark:text-gray-300 outline-none truncate"
-          />
-          <button
-            onClick={handleCopy}
-            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition shrink-0 ${
-              copied
-                ? "bg-green-500 text-white"
-                : "bg-black dark:bg-white text-white dark:text-black hover:opacity-80"
-            }`}
-          >
+          <input readOnly value={url} className="flex-1 text-xs bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 text-gray-600 dark:text-gray-300 outline-none truncate" />
+          <button onClick={handleCopy}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition shrink-0 ${copied ? "bg-green-500 text-white" : "bg-black dark:bg-white text-white dark:text-black hover:opacity-80"}`}>
             <FaCopy className="text-xs" />
             {copied ? "Copied!" : "Copy"}
           </button>
         </div>
-
-        {/* Share options */}
         <div className="flex gap-3">
-          {/* WhatsApp */}
-          <button
-            onClick={handleWhatsApp}
-            className="flex-1 flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white py-2.5 rounded-xl text-sm font-medium transition"
-          >
-            <FaWhatsapp className="text-base" />
-            WhatsApp
+          <button onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(`${text}\n${url}`)}`, "_blank")}
+            className="flex-1 flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white py-2.5 rounded-xl text-sm font-medium transition">
+            <FaWhatsapp className="text-base" /> WhatsApp
           </button>
-
-          {/* Native Share (mobile) / Twitter fallback */}
           {navigator.share ? (
-            <button
-              onClick={handleNativeShare}
-              className="flex-1 flex items-center justify-center gap-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 py-2.5 rounded-xl text-sm font-medium transition"
-            >
-              <FaShare className="text-sm" />
-              More
+            <button onClick={() => navigator.share({ title: room?.hotel?.name, text, url })}
+              className="flex-1 flex items-center justify-center gap-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 py-2.5 rounded-xl text-sm font-medium transition">
+              <FaShare className="text-sm" /> More
             </button>
           ) : (
-            <button
-              onClick={() => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, "_blank")}
-              className="flex-1 flex items-center justify-center gap-2 bg-sky-500 hover:bg-sky-600 text-white py-2.5 rounded-xl text-sm font-medium transition"
-            >
+            <button onClick={() => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`, "_blank")}
+              className="flex-1 flex items-center justify-center gap-2 bg-sky-500 hover:bg-sky-600 text-white py-2.5 rounded-xl text-sm font-medium transition">
               𝕏 Twitter
             </button>
           )}
@@ -187,14 +142,10 @@ const ShareModal = ({ room, onClose }) => {
 
 // ─── AVAILABILITY CALENDAR ────────────────────────────────────────────────────
 const AvailabilityCalendar = ({ bookedRanges, checkInDate, checkOutDate, onSelectDates }) => {
-  const todayRaw = new Date();
-  todayRaw.setHours(0, 0, 0, 0);
-
-  const [viewDate, setViewDate] = useState(() => {
-    const d = new Date(); d.setDate(1); return d;
-  });
-  const [hoverDate, setHoverDate]                   = useState(null);
-  const [selectingCheckout, setSelectingCheckout]   = useState(false);
+  const todayRaw = new Date(); todayRaw.setHours(0, 0, 0, 0);
+  const [viewDate, setViewDate] = useState(() => { const d = new Date(); d.setDate(1); return d; });
+  const [hoverDate, setHoverDate]                 = useState(null);
+  const [selectingCheckout, setSelectingCheckout] = useState(false);
 
   const DAYS   = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
   const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
@@ -210,8 +161,8 @@ const AvailabilityCalendar = ({ bookedRanges, checkInDate, checkOutDate, onSelec
     return set;
   }, [bookedRanges]);
 
-  const isBooked = (date) => bookedDates.has(date.toDateString());
-  const isPast   = (date) => date < todayRaw;
+  const isBooked = (d) => bookedDates.has(d.toDateString());
+  const isPast   = (d) => d < todayRaw;
 
   const isInRange = (date) => {
     const ci = checkInDate  ? new Date(checkInDate)  : null;
@@ -224,123 +175,69 @@ const AvailabilityCalendar = ({ bookedRanges, checkInDate, checkOutDate, onSelec
     return false;
   };
 
-  const isCheckIn  = (date) => checkInDate  && date.toDateString() === new Date(checkInDate).toDateString();
-  const isCheckOut = (date) => checkOutDate && date.toDateString() === new Date(checkOutDate).toDateString();
+  const isCI = (d) => checkInDate  && d.toDateString() === new Date(checkInDate).toDateString();
+  const isCO = (d) => checkOutDate && d.toDateString() === new Date(checkOutDate).toDateString();
 
   const handleDayClick = (date) => {
     if (isPast(date) || isBooked(date)) return;
-    if (!checkInDate || (checkInDate && checkOutDate)) {
-      onSelectDates(date.toISOString().split("T")[0], "");
-      setSelectingCheckout(true);
-      return;
-    }
+    if (!checkInDate || (checkInDate && checkOutDate)) { onSelectDates(date.toISOString().split("T")[0], ""); setSelectingCheckout(true); return; }
     const ci = new Date(checkInDate);
-    if (date <= ci) {
-      onSelectDates(date.toISOString().split("T")[0], "");
-      setSelectingCheckout(true);
-      return;
-    }
+    if (date <= ci) { onSelectDates(date.toISOString().split("T")[0], ""); setSelectingCheckout(true); return; }
     const cur = new Date(ci); cur.setDate(cur.getDate() + 1);
-    while (cur < date) {
-      if (isBooked(cur)) { toast.error("Selected range includes booked dates"); return; }
-      cur.setDate(cur.getDate() + 1);
-    }
+    while (cur < date) { if (isBooked(cur)) { toast.error("Selected range includes booked dates"); return; } cur.setDate(cur.getDate() + 1); }
     onSelectDates(checkInDate, date.toISOString().split("T")[0]);
     setSelectingCheckout(false);
   };
 
   const getDaysInMonth = () => {
-    const year  = viewDate.getFullYear();
-    const month = viewDate.getMonth();
-    const first = new Date(year, month, 1).getDay();
-    const total = new Date(year, month + 1, 0).getDate();
-    const days  = [];
+    const year = viewDate.getFullYear(), month = viewDate.getMonth();
+    const first = new Date(year, month, 1).getDay(), total = new Date(year, month + 1, 0).getDate();
+    const days = [];
     for (let i = 0; i < first; i++) days.push(null);
     for (let d = 1; d <= total; d++) days.push(new Date(year, month, d));
     return days;
   };
 
-  const prevMonth = () => setViewDate((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1));
-  const nextMonth = () => setViewDate((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1));
-
   return (
     <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-2xl p-5 mt-10">
       <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <FaCalendarAlt className="text-gray-500 dark:text-gray-400" />
-          <h2 className="text-lg font-playfair dark:text-white">Availability</h2>
-        </div>
+        <div className="flex items-center gap-2"><FaCalendarAlt className="text-gray-500 dark:text-gray-400" /><h2 className="text-lg font-playfair dark:text-white">Availability</h2></div>
         <div className="flex items-center gap-3">
-          <button onClick={prevMonth} className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition text-gray-600 dark:text-gray-400">
-            <FaChevronLeft className="text-sm" />
-          </button>
-          <span className="text-sm font-medium dark:text-white min-w-[130px] text-center">
-            {MONTHS[viewDate.getMonth()]} {viewDate.getFullYear()}
-          </span>
-          <button onClick={nextMonth} className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition text-gray-600 dark:text-gray-400">
-            <FaChevronRight className="text-sm" />
-          </button>
+          <button onClick={() => setViewDate((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1))} className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition text-gray-600 dark:text-gray-400"><FaChevronLeft className="text-sm" /></button>
+          <span className="text-sm font-medium dark:text-white min-w-[130px] text-center">{MONTHS[viewDate.getMonth()]} {viewDate.getFullYear()}</span>
+          <button onClick={() => setViewDate((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1))} className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition text-gray-600 dark:text-gray-400"><FaChevronRight className="text-sm" /></button>
         </div>
       </div>
-      <div className="grid grid-cols-7 mb-2">
-        {DAYS.map((d) => (
-          <div key={d} className="text-center text-xs text-gray-400 dark:text-gray-500 font-medium py-1">{d}</div>
-        ))}
-      </div>
+      <div className="grid grid-cols-7 mb-2">{DAYS.map((d) => <div key={d} className="text-center text-xs text-gray-400 dark:text-gray-500 font-medium py-1">{d}</div>)}</div>
       <div className="grid grid-cols-7 gap-y-1">
         {getDaysInMonth().map((date, i) => {
           if (!date) return <div key={`e-${i}`} />;
-          const booked   = isBooked(date);
-          const past     = isPast(date);
-          const inRange  = isInRange(date);
-          const isCI     = isCheckIn(date);
-          const isCO     = isCheckOut(date);
-          const isToday  = date.toDateString() === todayRaw.toDateString();
-          const disabled = booked || past;
+          const booked = isBooked(date), past = isPast(date), inRange = isInRange(date), ci = isCI(date), co = isCO(date), isToday = date.toDateString() === todayRaw.toDateString(), disabled = booked || past;
           return (
-            <div
-              key={date.toDateString()}
-              onClick={() => handleDayClick(date)}
+            <div key={date.toDateString()} onClick={() => handleDayClick(date)}
               onMouseEnter={() => { if (selectingCheckout && checkInDate && !checkOutDate) setHoverDate(date); }}
               onMouseLeave={() => setHoverDate(null)}
-              className={`
-                relative text-center py-1.5 text-sm rounded-lg transition select-none
+              className={`relative text-center py-1.5 text-sm rounded-lg transition select-none
                 ${disabled ? "text-gray-300 dark:text-gray-600 cursor-not-allowed line-through" : "cursor-pointer"}
-                ${booked  ? "bg-red-50 dark:bg-red-900/20 text-red-400 dark:text-red-500" : ""}
+                ${booked ? "bg-red-50 dark:bg-red-900/20 text-red-400 dark:text-red-500" : ""}
                 ${inRange && !disabled ? "bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-none" : ""}
-                ${isCI    ? "!bg-black dark:!bg-white !text-white dark:!text-black rounded-lg font-bold" : ""}
-                ${isCO    ? "!bg-black dark:!bg-white !text-white dark:!text-black rounded-lg font-bold" : ""}
-                ${!disabled && !inRange && !isCI && !isCO ? "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300" : ""}
-              `}
-            >
+                ${ci ? "!bg-black dark:!bg-white !text-white dark:!text-black rounded-lg font-bold" : ""}
+                ${co ? "!bg-black dark:!bg-white !text-white dark:!text-black rounded-lg font-bold" : ""}
+                ${!disabled && !inRange && !ci && !co ? "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300" : ""}`}>
               {date.getDate()}
-              {isToday && !isCI && !isCO && (
-                <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-blue-500" />
-              )}
+              {isToday && !ci && !co && <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-blue-500" />}
             </div>
           );
         })}
       </div>
       <div className="flex flex-wrap gap-4 mt-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-        {[
-          { color: "bg-black dark:bg-white", label: "Selected" },
-          { color: "bg-blue-100 dark:bg-blue-900/40", label: "Your stay" },
-          { color: "bg-red-100 dark:bg-red-900/30", label: "Booked" },
-          { color: "bg-gray-100 dark:bg-gray-700", label: "Available" },
-        ].map(({ color, label }) => (
-          <div key={label} className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-            <div className={`w-3 h-3 rounded ${color}`} />
-            <span>{label}</span>
-          </div>
+        {[{ color: "bg-black dark:bg-white", label: "Selected" }, { color: "bg-blue-100 dark:bg-blue-900/40", label: "Your stay" }, { color: "bg-red-100 dark:bg-red-900/30", label: "Booked" }, { color: "bg-gray-100 dark:bg-gray-700", label: "Available" }].map(({ color, label }) => (
+          <div key={label} className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400"><div className={`w-3 h-3 rounded ${color}`} /><span>{label}</span></div>
         ))}
       </div>
       <p className="text-xs text-gray-400 dark:text-gray-500 mt-3 text-center">
-        {!checkInDate
-          ? "Click a date to set check-in"
-          : !checkOutDate
-          ? "Now click a date to set check-out"
-          : `${new Date(checkInDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })} → ${new Date(checkOutDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}`
-        }
+        {!checkInDate ? "Click a date to set check-in" : !checkOutDate ? "Now click a date to set check-out"
+          : `${new Date(checkInDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })} → ${new Date(checkOutDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}`}
       </p>
     </div>
   );
@@ -350,17 +247,15 @@ const AvailabilityCalendar = ({ bookedRanges, checkInDate, checkOutDate, onSelec
 const RoomDetails = () => {
   const { id } = useParams();
   const [searchParams] = useSearchParams();
-  const { axios, currency, navigate, user } = useAppContext();
+  const { axios, currency, navigate, user, isOwner } = useAppContext();
 
-  const [room, setRoom]           = useState(null);
+  const [room, setRoom]         = useState(null);
   const [mainImage, setMainImage] = useState(0);
-  const [loading, setLoading]     = useState(false);
+  const [loading, setLoading]   = useState(false);
 
   const [lightboxOpen, setLightboxOpen]   = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
-
-  // ✅ Share modal
-  const [shareOpen, setShareOpen] = useState(false);
+  const [shareOpen, setShareOpen]         = useState(false);
 
   const [checkInDate, setCheckInDate]   = useState(searchParams.get("checkIn")  || "");
   const [checkOutDate, setCheckOutDate] = useState(searchParams.get("checkOut") || "");
@@ -380,6 +275,11 @@ const RoomDetails = () => {
   const [reviewComment, setReviewComment] = useState("");
   const [reviewLoading, setReviewLoading] = useState(false);
   const [hoverRating, setHoverRating]     = useState(0);
+
+  // ✅ Owner reply state
+  const [replyingTo, setReplyingTo]     = useState(null); // reviewId
+  const [replyText, setReplyText]       = useState("");
+  const [replyLoading, setReplyLoading] = useState(false);
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -431,10 +331,7 @@ const RoomDetails = () => {
       try {
         setMapLoading(true);
         const query = encodeURIComponent(room.hotel.address);
-        const res = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`,
-          { headers: { "Accept-Language": "en" } }
-        );
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1`, { headers: { "Accept-Language": "en" } });
         const results = await res.json();
         if (results.length > 0) setMapCoords({ lat: parseFloat(results[0].lat), lng: parseFloat(results[0].lon) });
       } catch {} finally { setMapLoading(false); }
@@ -450,10 +347,8 @@ const RoomDetails = () => {
       const { data } = await axios.post("/api/bookings/validate-coupon", { code: couponCode, total });
       if (data.success) { setCouponApplied(data); toast.success(data.message); }
       else { toast.error(data.message); setCouponApplied(null); }
-    } catch (err) {
-      toast.error(err?.response?.data?.message || "Invalid coupon");
-      setCouponApplied(null);
-    } finally { setCouponLoading(false); }
+    } catch (err) { toast.error(err?.response?.data?.message || "Invalid coupon"); setCouponApplied(null); }
+    finally { setCouponLoading(false); }
   };
 
   const removeCoupon = () => { setCouponApplied(null); setCouponCode(""); };
@@ -464,13 +359,31 @@ const RoomDetails = () => {
     try {
       setReviewLoading(true);
       const { data } = await axios.post("/api/reviews", { roomId: id, rating: reviewRating, comment: reviewComment });
-      if (data.success) {
-        toast.success("Review submitted! ⭐");
-        setReviewComment(""); setReviewRating(5); setCanReview(false);
-        fetchReviews();
-      } else toast.error(data.message || "Failed to submit review");
+      if (data.success) { toast.success("Review submitted! ⭐"); setReviewComment(""); setReviewRating(5); setCanReview(false); fetchReviews(); }
+      else toast.error(data.message || "Failed to submit review");
     } catch { toast.error("Failed to submit review"); }
     finally { setReviewLoading(false); }
+  };
+
+  // ✅ Owner reply submit
+  const handleReplySubmit = async (reviewId) => {
+    if (!replyText.trim()) return toast.error("Reply cannot be empty");
+    try {
+      setReplyLoading(true);
+      const { data } = await axios.post(`/api/reviews/${reviewId}/reply`, { reply: replyText });
+      if (data.success) { toast.success("Reply posted! ✅"); setReplyingTo(null); setReplyText(""); fetchReviews(); }
+      else toast.error(data.message || "Failed to post reply");
+    } catch (err) { toast.error(err?.response?.data?.message || "Failed to post reply"); }
+    finally { setReplyLoading(false); }
+  };
+
+  // ✅ Delete owner reply
+  const handleDeleteReply = async (reviewId) => {
+    try {
+      const { data } = await axios.delete(`/api/reviews/${reviewId}/reply`);
+      if (data.success) { toast.success("Reply deleted"); fetchReviews(); }
+      else toast.error(data.message);
+    } catch { toast.error("Failed to delete reply"); }
   };
 
   const handleBooking = async (e) => {
@@ -482,11 +395,7 @@ const RoomDetails = () => {
       setLoading(true);
       const availabilityRes = await axios.post("/api/bookings/check-availability", { roomId: id, checkInDate, checkOutDate });
       if (!availabilityRes.data.isAvailable) { toast.error("Room not available for selected dates"); return; }
-      const { data } = await axios.post("/api/bookings/book", {
-        roomId: id, checkInDate, checkOutDate,
-        guests: Number(guests),
-        couponCode: couponApplied ? couponCode : undefined,
-      });
+      const { data } = await axios.post("/api/bookings/book", { roomId: id, checkInDate, checkOutDate, guests: Number(guests), couponCode: couponApplied ? couponCode : undefined });
       if (data.success) { toast.success("Booking confirmed! Check your email 📧"); navigate("/my-bookings"); }
       else toast.error(data.message || "Booking failed");
     } catch { toast.error("Booking failed"); }
@@ -504,32 +413,20 @@ const RoomDetails = () => {
   const total      = subtotal + serviceFee;
   const discount   = couponApplied ? couponApplied.discount : 0;
   const finalTotal = Math.max(total - discount, 0);
-  const avgRating  = reviews.length > 0
-    ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1)
-    : null;
+  const avgRating  = reviews.length > 0 ? (reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length).toFixed(1) : null;
 
   return (
     <div className="pt-28 px-6 md:px-16 lg:px-24 xl:px-32 dark:bg-gray-900 min-h-screen transition-colors duration-300">
 
-      {lightboxOpen && (
-        <Lightbox images={images} startIndex={lightboxIndex} onClose={() => setLightboxOpen(false)} getImageUrl={getImageUrl} />
-      )}
-
-      {/* ✅ Share Modal */}
+      {lightboxOpen && <Lightbox images={images} startIndex={lightboxIndex} onClose={() => setLightboxOpen(false)} getImageUrl={getImageUrl} />}
       {shareOpen && <ShareModal room={room} onClose={() => setShareOpen(false)} />}
 
-      {/* Title row with Share button */}
+      {/* Title + Share */}
       <div className="flex items-start justify-between gap-4 flex-wrap">
-        <h1 className="text-3xl font-playfair dark:text-white">
-          {room.hotel?.name} ({room.roomType})
-        </h1>
-        {/* ✅ SHARE BUTTON */}
-        <button
-          onClick={() => setShareOpen(true)}
-          className="flex items-center gap-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-full text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition shrink-0"
-        >
-          <FaShare className="text-sm" />
-          Share
+        <h1 className="text-3xl font-playfair dark:text-white">{room.hotel?.name} ({room.roomType})</h1>
+        <button onClick={() => setShareOpen(true)}
+          className="flex items-center gap-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-full text-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition shrink-0">
+          <FaShare className="text-sm" /> Share
         </button>
       </div>
 
@@ -557,15 +454,9 @@ const RoomDetails = () => {
           <div className="relative group cursor-pointer" onClick={() => openLightbox(mainImage)}>
             <img src={getImageUrl(images[mainImage])} className="w-full h-[420px] object-cover rounded-2xl shadow transition-opacity group-hover:opacity-90" alt="room" />
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition rounded-2xl">
-              <div className="bg-black/50 backdrop-blur-sm text-white px-4 py-2 rounded-full flex items-center gap-2 text-sm">
-                <FaExpand /><span>View Gallery</span>
-              </div>
+              <div className="bg-black/50 backdrop-blur-sm text-white px-4 py-2 rounded-full flex items-center gap-2 text-sm"><FaExpand /><span>View Gallery</span></div>
             </div>
-            {images.length > 1 && (
-              <div className="absolute bottom-3 right-3 bg-black/70 text-white text-xs px-3 py-1 rounded-full backdrop-blur-sm">
-                1 / {images.length}
-              </div>
-            )}
+            {images.length > 1 && <div className="absolute bottom-3 right-3 bg-black/70 text-white text-xs px-3 py-1 rounded-full backdrop-blur-sm">1 / {images.length}</div>}
           </div>
 
           {/* Thumbnails */}
@@ -574,11 +465,9 @@ const RoomDetails = () => {
               {images.map((img, index) => (
                 <div key={index} className="relative group">
                   <img src={getImageUrl(img)} onClick={() => setMainImage(index)}
-                    className={`w-20 h-20 object-cover rounded-lg cursor-pointer border-2 transition
-                      ${mainImage === index ? "border-black dark:border-white" : "border-gray-200 dark:border-gray-700 hover:border-gray-400"}`}
+                    className={`w-20 h-20 object-cover rounded-lg cursor-pointer border-2 transition ${mainImage === index ? "border-black dark:border-white" : "border-gray-200 dark:border-gray-700 hover:border-gray-400"}`}
                     alt="thumbnail" />
-                  <button onClick={() => openLightbox(index)}
-                    className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/30 rounded-lg transition opacity-0 group-hover:opacity-100">
+                  <button onClick={() => openLightbox(index)} className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/30 rounded-lg transition opacity-0 group-hover:opacity-100">
                     <FaExpand className="text-white text-xs" />
                   </button>
                 </div>
@@ -591,11 +480,7 @@ const RoomDetails = () => {
             bookedRanges={bookedRanges}
             checkInDate={checkInDate}
             checkOutDate={checkOutDate}
-            onSelectDates={(ci, co) => {
-              setCheckInDate(ci);
-              setCheckOutDate(co);
-              setCouponApplied(null);
-            }}
+            onSelectDates={(ci, co) => { setCheckInDate(ci); setCheckOutDate(co); setCouponApplied(null); }}
           />
 
           {/* Map */}
@@ -619,7 +504,7 @@ const RoomDetails = () => {
             {!mapLoading && !mapCoords && <div className="w-full h-[300px] rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center text-gray-400">Map not available</div>}
           </div>
 
-          {/* Reviews */}
+          {/* REVIEWS */}
           <div className="mt-12">
             <div className="flex items-center gap-3 mb-6">
               <h2 className="text-2xl font-playfair dark:text-white">Guest Reviews</h2>
@@ -642,12 +527,9 @@ const RoomDetails = () => {
                       <FaStar className={`text-2xl transition ${star <= (hoverRating || reviewRating) ? "text-yellow-400" : "text-gray-300 dark:text-gray-600"}`} />
                     </button>
                   ))}
-                  <span className="ml-2 text-sm text-gray-500 dark:text-gray-400 self-center">
-                    {["","Poor","Fair","Good","Very Good","Excellent"][hoverRating || reviewRating]}
-                  </span>
+                  <span className="ml-2 text-sm text-gray-500 dark:text-gray-400 self-center">{["","Poor","Fair","Good","Very Good","Excellent"][hoverRating || reviewRating]}</span>
                 </div>
-                <textarea value={reviewComment} onChange={(e) => setReviewComment(e.target.value)}
-                  placeholder="Share your experience..." rows={3}
+                <textarea value={reviewComment} onChange={(e) => setReviewComment(e.target.value)} placeholder="Share your experience..." rows={3}
                   className="w-full border border-gray-200 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl px-4 py-3 text-sm outline-none focus:border-black dark:focus:border-white resize-none" required />
                 <button type="submit" disabled={reviewLoading}
                   className="mt-3 bg-black dark:bg-white text-white dark:text-black px-6 py-2 rounded-full text-sm hover:opacity-80 transition disabled:opacity-60">
@@ -672,25 +554,73 @@ const RoomDetails = () => {
             ) : (
               <div className="flex flex-col gap-6">
                 {reviews.map((review) => (
-                  <div key={review._id} className="flex gap-4">
-                    <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center shrink-0 overflow-hidden">
-                      {review.user?.image
-                        ? <img src={review.user.image} alt="" className="w-full h-full object-cover" />
-                        : <span className="text-sm font-medium text-gray-600 dark:text-gray-300">{review.user?.username?.[0]?.toUpperCase() || "U"}</span>
-                      }
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <p className="font-medium text-sm dark:text-white">{review.user?.username || "Guest"}</p>
-                        <p className="text-xs text-gray-400">{new Date(review.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</p>
+                  <div key={review._id} className="flex flex-col gap-3">
+                    {/* Guest review */}
+                    <div className="flex gap-4">
+                      <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center shrink-0 overflow-hidden">
+                        {review.user?.image
+                          ? <img src={review.user.image} alt="" className="w-full h-full object-cover" />
+                          : <span className="text-sm font-medium text-gray-600 dark:text-gray-300">{review.user?.username?.[0]?.toUpperCase() || "U"}</span>
+                        }
                       </div>
-                      <div className="flex gap-0.5 mt-1">
-                        {[1,2,3,4,5].map((star) => (
-                          <FaStar key={star} className={`text-xs ${star <= review.rating ? "text-yellow-400" : "text-gray-200 dark:text-gray-600"}`} />
-                        ))}
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between flex-wrap gap-2">
+                          <p className="font-medium text-sm dark:text-white">{review.user?.username || "Guest"}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-xs text-gray-400">{new Date(review.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</p>
+                            {/* ✅ Owner reply button */}
+                            {isOwner && !review.ownerReply && (
+                              <button onClick={() => { setReplyingTo(review._id); setReplyText(""); }}
+                                className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-700 transition">
+                                <FaReply className="text-xs" /> Reply
+                              </button>
+                            )}
+                            {isOwner && review.ownerReply && (
+                              <button onClick={() => handleDeleteReply(review._id)}
+                                className="text-xs text-red-400 hover:text-red-600 transition">
+                                Delete reply
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex gap-0.5 mt-1">
+                          {[1,2,3,4,5].map((star) => (
+                            <FaStar key={star} className={`text-xs ${star <= review.rating ? "text-yellow-400" : "text-gray-200 dark:text-gray-600"}`} />
+                          ))}
+                        </div>
+                        <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{review.comment}</p>
                       </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{review.comment}</p>
                     </div>
+
+                    {/* ✅ Owner reply inline form */}
+                    {replyingTo === review._id && (
+                      <div className="ml-14 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl p-4">
+                        <p className="text-xs font-medium text-blue-700 dark:text-blue-400 mb-2">🏨 Reply as Hotel Owner</p>
+                        <textarea value={replyText} onChange={(e) => setReplyText(e.target.value)}
+                          placeholder="Write your reply..." rows={2}
+                          className="w-full border border-blue-200 dark:border-blue-700 dark:bg-gray-800 dark:text-white rounded-lg px-3 py-2 text-sm outline-none focus:border-blue-400 resize-none" />
+                        <div className="flex gap-2 mt-2">
+                          <button onClick={() => handleReplySubmit(review._id)} disabled={replyLoading}
+                            className="bg-blue-600 text-white px-4 py-1.5 rounded-lg text-xs font-medium hover:bg-blue-700 transition disabled:opacity-60">
+                            {replyLoading ? "Posting..." : "Post Reply"}
+                          </button>
+                          <button onClick={() => setReplyingTo(null)} className="text-xs text-gray-400 hover:text-gray-600 transition px-2">Cancel</button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ✅ Show existing owner reply */}
+                    {review.ownerReply && (
+                      <div className="ml-14 bg-gray-50 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700 rounded-xl p-4">
+                        <p className="text-xs font-semibold text-gray-700 dark:text-gray-300 mb-1 flex items-center gap-1.5">
+                          🏨 <span>Hotel Response</span>
+                          {review.ownerRepliedAt && (
+                            <span className="text-gray-400 font-normal">· {new Date(review.ownerRepliedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
+                          )}
+                        </p>
+                        <p className="text-sm text-gray-600 dark:text-gray-300">{review.ownerReply}</p>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -714,8 +644,7 @@ const RoomDetails = () => {
                   {" → "}
                   {checkOutDate ? new Date(checkOutDate).toLocaleDateString("en-IN", { day: "numeric", month: "short" }) : "Check-out"}
                 </span>
-                <button onClick={() => { setCheckInDate(""); setCheckOutDate(""); setCouponApplied(null); }}
-                  className="ml-2 text-blue-400 hover:text-red-500 transition">✕</button>
+                <button onClick={() => { setCheckInDate(""); setCheckOutDate(""); setCouponApplied(null); }} className="ml-2 text-blue-400 hover:text-red-500 transition">✕</button>
               </div>
             )}
 
@@ -743,8 +672,7 @@ const RoomDetails = () => {
                 <div>
                   {!couponApplied ? (
                     <div className="flex gap-2">
-                      <input type="text" value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                        placeholder="Promo code"
+                      <input type="text" value={couponCode} onChange={(e) => setCouponCode(e.target.value.toUpperCase())} placeholder="Promo code"
                         className="flex-1 border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-3 py-2 text-sm outline-none focus:border-black uppercase" />
                       <button type="button" onClick={handleApplyCoupon} disabled={couponLoading}
                         className="bg-gray-100 dark:bg-gray-600 dark:text-white hover:bg-gray-200 text-sm px-4 py-2 rounded-lg transition disabled:opacity-60">
@@ -770,18 +698,12 @@ const RoomDetails = () => {
                     <span>{currency}{room.pricePerNight} × {nights} night{nights > 1 ? "s" : ""}</span>
                     <span>{currency} {subtotal.toFixed(0)}</span>
                   </p>
-                  <p className="flex justify-between dark:text-gray-300">
-                    <span>Service Fee (10%)</span><span>{currency} {serviceFee.toFixed(0)}</span>
-                  </p>
+                  <p className="flex justify-between dark:text-gray-300"><span>Service Fee (10%)</span><span>{currency} {serviceFee.toFixed(0)}</span></p>
                   {couponApplied && (
-                    <p className="flex justify-between text-green-600 dark:text-green-400">
-                      <span>Discount</span><span>- {currency} {discount.toFixed(0)}</span>
-                    </p>
+                    <p className="flex justify-between text-green-600 dark:text-green-400"><span>Discount</span><span>- {currency} {discount.toFixed(0)}</span></p>
                   )}
                   <hr className="my-1 dark:border-gray-600" />
-                  <p className="flex justify-between font-semibold text-base dark:text-white">
-                    <span>Total</span><span>{currency} {finalTotal.toFixed(0)}</span>
-                  </p>
+                  <p className="flex justify-between font-semibold text-base dark:text-white"><span>Total</span><span>{currency} {finalTotal.toFixed(0)}</span></p>
                 </div>
               )}
 
