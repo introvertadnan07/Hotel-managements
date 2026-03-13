@@ -5,7 +5,8 @@ import {
   chatAssistant,
   generateRoomDescription,
   getPriceSuggestion,
-  compareRoomsAI, 
+  compareRoomsAI,
+  getAIRoomRecommendations,
 } from "../controllers/aiController.js";
 
 const aiRouter = express.Router();
@@ -15,8 +16,9 @@ aiRouter.get("/recommendations/:roomId", getRecommendations);
 aiRouter.post("/chat", chatAssistant);
 aiRouter.get("/generate-description/:roomId", generateRoomDescription);
 aiRouter.get("/price-suggestion/:roomId", getPriceSuggestion);
-
-// ⭐ NEW ROUTE
 aiRouter.post("/compare-rooms", compareRoomsAI);
+
+// ⭐ NEW — AI Room Recommender
+aiRouter.post("/recommend", getAIRoomRecommendations);
 
 export default aiRouter;

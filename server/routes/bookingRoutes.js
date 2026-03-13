@@ -8,6 +8,8 @@ import {
   cancelBooking,
   downloadInvoice,
   validateCoupon,
+  getBookedDates,
+  modifyBooking,
 } from "../controllers/bookingController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
@@ -20,6 +22,8 @@ bookingRouter.get("/hotel", protect, getHotelBookings);
 bookingRouter.post("/stripe-payment", protect, stripePayment);
 bookingRouter.post("/cancel/:id", protect, cancelBooking);
 bookingRouter.get("/invoice/:id", protect, downloadInvoice);
-bookingRouter.post("/validate-coupon", protect, validateCoupon); // ✅ new
+bookingRouter.post("/validate-coupon", protect, validateCoupon);
+bookingRouter.get("/booked-dates/:roomId", getBookedDates);    // ✅ public — no auth
+bookingRouter.post("/modify", protect, modifyBooking);          // ✅ new — modify dates
 
 export default bookingRouter;

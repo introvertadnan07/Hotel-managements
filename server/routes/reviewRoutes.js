@@ -5,7 +5,9 @@ import { protect } from "../middleware/authMiddleware.js";
 const reviewRouter = express.Router();
 
 reviewRouter.post("/", protect, addReview);
+
+reviewRouter.get("/can-review/:roomId", protect, canReviewRoom);
+
 reviewRouter.get("/:roomId", getRoomReviews);
-reviewRouter.get("/can-review/:roomId", protect, canReviewRoom); 
 
 export default reviewRouter;

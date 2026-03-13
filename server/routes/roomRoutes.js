@@ -6,6 +6,7 @@ import {
   getOwnerRooms,
   getRoomById,
   toggleRoomAvailability,
+  getUnavailableRooms,
 } from "../controllers/roomController.js";
 import { protect } from "../middleware/authMiddleware.js";
 
@@ -17,7 +18,10 @@ roomRouter.post("/", protect, upload.array("images", 4), createRoom);
 // ✅ GET ALL ROOMS
 roomRouter.get("/", getRooms);
 
-// ✅ GET OWNER ROOMS
+// ✅ GET UNAVAILABLE ROOM IDs for a date range (must be BEFORE /:id)
+roomRouter.get("/unavailable", getUnavailableRooms);
+
+// ✅ GET OWNER ROOMS (must be BEFORE /:id)
 roomRouter.get("/owner", protect, getOwnerRooms);
 
 // ✅ GET SINGLE ROOM

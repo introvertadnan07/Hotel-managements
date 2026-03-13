@@ -1,9 +1,10 @@
 import Room from "../models/Room.js";
 import Hotel from "../models/Hotel.js";
+import Booking from "../models/Booking.js";
 import { v2 as cloudinary } from "cloudinary";
 import streamifier from "streamifier";
 
-// ✅ CREATE ROOM — accepts hotelId from frontend
+// ✅ CREATE ROOM
 export const createRoom = async (req, res) => {
   try {
     const {
@@ -16,7 +17,6 @@ export const createRoom = async (req, res) => {
       return res.status(400).json({ success: false, message: "Room type and price are required" });
     }
 
-    // ✅ If hotelId provided, verify ownership. Otherwise fallback to first hotel.
     let hotel;
     if (hotelId) {
       hotel = await Hotel.findOne({ _id: hotelId, owner: req.user.clerkId });
@@ -29,7 +29,6 @@ export const createRoom = async (req, res) => {
       return res.status(400).json({ success: false, message: "No hotel found. Please register a hotel first." });
     }
 
-    // ✅ Upload images to Cloudinary
     let imageUrls = [];
     if (req.files && req.files.length > 0) {
       for (const file of req.files) {
@@ -49,16 +48,16 @@ export const createRoom = async (req, res) => {
     const room = await Room.create({
       hotel: hotel._id,
       roomType,
-      pricePerNight: Number(pricePerNight),
-      amenities: amenities ? JSON.parse(amenities) : [],
-      images: imageUrls,
-      maxGuests: maxGuests ? Number(maxGuests) : 4,
-      baseGuests: baseGuests ? Number(baseGuests) : 2,
+      pricePerNight:   Number(pricePerNight),
+      amenities:       amenities ? JSON.parse(amenities) : [],
+      images:          imageUrls,
+      maxGuests:       maxGuests       ? Number(maxGuests)       : 4,
+      baseGuests:      baseGuests      ? Number(baseGuests)      : 2,
       extraGuestPrice: extraGuestPrice ? Number(extraGuestPrice) : 500,
-      beds: beds ? Number(beds) : 1,
-      bathrooms: bathrooms ? Number(bathrooms) : 1,
-      description: description || "",
-      category: category || "Standard",
+      beds:            beds            ? Number(beds)            : 1,
+      bathrooms:       bathrooms       ? Number(bathrooms)       : 1,
+      description:     description     || "",
+      category:        category        || "Standard",
     });
 
     res.json({ success: true, message: "Room created successfully", room });
@@ -74,6 +73,43 @@ export const getRooms = async (req, res) => {
     const rooms = await Room.find({ isAvailable: true }).populate("hotel");
     res.json({ success: true, rooms });
   } catch (error) {
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+// ✅ GET UNAVAILABLE ROOM IDs for a given date range
+// Finds all confirmed/pending bookings that overlap with the requested dates
+// and returns their room IDs so the frontend can filter them out
+export const getUnavailableRooms = async (req, res) => {
+  try {
+    const { checkIn, checkOut } = req.query;
+
+    if (!checkIn || !checkOut) {
+      return res.status(400).json({ success: false, message: "checkIn and checkOut are required" });
+    }
+
+    const checkInDate  = new Date(checkIn);
+    const checkOutDate = new Date(checkOut);
+
+    if (isNaN(checkInDate) || isNaN(checkOutDate) || checkInDate >= checkOutDate) {
+      return res.status(400).json({ success: false, message: "Invalid date range" });
+    }
+
+    // Overlap: existing booking starts before our checkout AND ends after our checkin
+    const overlappingBookings = await Booking.find({
+      status: { $in: ["pending", "confirmed"] },
+      isPaid: true,
+      checkInDate:  { $lt: checkOutDate },
+      checkOutDate: { $gt: checkInDate },
+    }).select("room");
+
+    const unavailableRoomIds = [
+      ...new Set(overlappingBookings.map((b) => b.room.toString()))
+    ];
+
+    res.json({ success: true, unavailableRoomIds });
+  } catch (error) {
+    console.error("Get unavailable rooms error:", error);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
@@ -94,7 +130,7 @@ export const getOwnerRooms = async (req, res) => {
   try {
     const hotels = await Hotel.find({ owner: req.user.clerkId });
     if (!hotels.length) return res.json({ success: true, rooms: [] });
-    const hotelIds = hotels.map(h => h._id);
+    const hotelIds = hotels.map((h) => h._id);
     const rooms = await Room.find({ hotel: { $in: hotelIds } }).populate("hotel");
     res.json({ success: true, rooms });
   } catch (error) {
