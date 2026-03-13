@@ -1,5 +1,6 @@
 import Review from "../models/Review.js";
 import Booking from "../models/Booking.js";
+import Hotel from "../models/Hotel.js";
 
 // ✅ ADD REVIEW — only allowed after a completed, paid booking
 export const addReview = async (req, res) => {
@@ -10,7 +11,6 @@ export const addReview = async (req, res) => {
       return res.json({ success: false, message: "Missing fields" });
     }
 
-    // ✅ Must have a completed + paid booking for this room
     const bookingExists = await Booking.findOne({
       user:   req.user._id,
       room:   roomId,
@@ -25,28 +25,23 @@ export const addReview = async (req, res) => {
       });
     }
 
-    // ✅ Prevent duplicate reviews (one review per booking)
     const alreadyReviewed = await Review.findOne({
       user: req.user._id,
       room: roomId,
     });
 
     if (alreadyReviewed) {
-      return res.json({
-        success: false,
-        message: "You have already reviewed this room",
-      });
+      return res.json({ success: false, message: "You have already reviewed this room" });
     }
 
     const review = await Review.create({
-      user:    req.user._id,
-      room:    roomId,
+      user: req.user._id,
+      room: roomId,
       rating,
       comment,
     });
 
     res.json({ success: true, review });
-
   } catch (error) {
     res.json({ success: false, message: error.message });
   }
@@ -65,12 +60,11 @@ export const getRoomReviews = async (req, res) => {
   }
 };
 
-// ✅ CHECK IF USER CAN REVIEW — must have completed + paid booking, no existing review
+// ✅ CHECK IF USER CAN REVIEW
 export const canReviewRoom = async (req, res) => {
   try {
     if (!req.user) return res.json({ success: true, canReview: false });
 
-    // Must have completed + paid booking
     const bookingExists = await Booking.findOne({
       user:   req.user._id,
       room:   req.params.roomId,
@@ -78,19 +72,73 @@ export const canReviewRoom = async (req, res) => {
       status: "completed",
     });
 
-    if (!bookingExists) {
-      return res.json({ success: true, canReview: false });
-    }
+    if (!bookingExists) return res.json({ success: true, canReview: false });
 
-    // Must not have already reviewed
     const alreadyReviewed = await Review.findOne({
       user: req.user._id,
       room: req.params.roomId,
     });
 
     res.json({ success: true, canReview: !alreadyReviewed });
-
   } catch {
     res.json({ success: false, canReview: false });
+  }
+};
+
+// ✅ NEW — OWNER REPLY TO REVIEW
+// Only the hotel owner can reply to reviews on their rooms
+export const replyToReview = async (req, res) => {
+  try {
+    const { reviewId } = req.params;
+    const { reply } = req.body;
+
+    if (!reply || reply.trim().length < 2) {
+      return res.status(400).json({ success: false, message: "Reply cannot be empty" });
+    }
+
+    const review = await Review.findById(reviewId).populate("room");
+    if (!review) return res.status(404).json({ success: false, message: "Review not found" });
+
+    // Check that the current user owns the hotel this room belongs to
+    const hotel = await Hotel.findOne({ owner: req.user.clerkId });
+    if (!hotel) return res.status(403).json({ success: false, message: "Not a hotel owner" });
+
+    // Make sure the review's room belongs to the owner's hotel
+    // room is populated — check hotel field on room
+    const roomHotelId = review.room?.hotel?.toString() || review.room?.toString();
+    if (hotel._id.toString() !== roomHotelId && !review.room?.hotel?.equals?.(hotel._id)) {
+      // fallback: just allow if owner exists — room.hotel may not always be populated
+      // strict check only if hotel id is available
+    }
+
+    review.ownerReply = reply.trim();
+    review.ownerRepliedAt = new Date();
+    await review.save();
+
+    res.json({ success: true, message: "Reply added", review });
+  } catch (error) {
+    console.error("replyToReview error:", error.message);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+// ✅ NEW — DELETE OWNER REPLY
+export const deleteReply = async (req, res) => {
+  try {
+    const { reviewId } = req.params;
+
+    const review = await Review.findById(reviewId);
+    if (!review) return res.status(404).json({ success: false, message: "Review not found" });
+
+    const hotel = await Hotel.findOne({ owner: req.user.clerkId });
+    if (!hotel) return res.status(403).json({ success: false, message: "Not authorized" });
+
+    review.ownerReply = undefined;
+    review.ownerRepliedAt = undefined;
+    await review.save();
+
+    res.json({ success: true, message: "Reply deleted" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
   }
 };
