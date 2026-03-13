@@ -5,7 +5,7 @@ import { useAppContext } from "../context/AppContext";
 import toast from "react-hot-toast";
 import Swal from "sweetalert2";
 import BookingCalendar from "../components/BookingCalendar";
-import { FiCalendar, FiList, FiDownload, FiX, FiCreditCard } from "react-icons/fi";
+import { FiCalendar, FiList, FiDownload, FiX, FiCreditCard, FiEdit2 } from "react-icons/fi";
 
 // ── Status Timeline ───────────────────────────────────────────
 const STEPS = ["pending", "confirmed", "completed"];
@@ -29,7 +29,7 @@ const StatusTimeline = ({ status }) => {
   return (
     <div className="flex items-center gap-1 mt-3">
       {STEPS.map((step, i) => {
-        const done = i <= currentIndex;
+        const done   = i <= currentIndex;
         const active = i === currentIndex;
         return (
           <React.Fragment key={step}>
@@ -96,15 +96,157 @@ const EmptyBookings = ({ navigate }) => (
   </div>
 );
 
+// ── ✅ Modify Booking Modal ───────────────────────────────────
+const ModifyModal = ({ booking, onClose, onSuccess }) => {
+  const { axios } = useAppContext();
+  const today = new Date().toISOString().split("T")[0];
+
+  const [checkIn, setCheckIn]   = useState(new Date(booking.checkInDate).toISOString().split("T")[0]);
+  const [checkOut, setCheckOut] = useState(new Date(booking.checkOutDate).toISOString().split("T")[0]);
+  const [loading, setLoading]   = useState(false);
+
+  const nights = checkIn && checkOut
+    ? Math.max((new Date(checkOut) - new Date(checkIn)) / 86400000, 0)
+    : 0;
+
+  const pricePerNight   = booking.room?.pricePerNight || 0;
+  const newSubtotal     = nights * pricePerNight;
+  const newServiceFee   = newSubtotal * 0.1;
+  const newTotal        = newSubtotal + newServiceFee;
+
+  const handleSubmit = async () => {
+    if (!checkIn || !checkOut) return toast.error("Please select both dates");
+    if (checkIn >= checkOut) return toast.error("Check-out must be after check-in");
+    if (checkIn === new Date(booking.checkInDate).toISOString().split("T")[0] &&
+        checkOut === new Date(booking.checkOutDate).toISOString().split("T")[0]) {
+      return toast.error("No changes made");
+    }
+
+    try {
+      setLoading(true);
+      const { data } = await axios.post("/api/bookings/modify", {
+        bookingId: booking._id,
+        checkInDate: checkIn,
+        checkOutDate: checkOut,
+      });
+      if (data.success) {
+        toast.success("Booking updated! ✅");
+        onSuccess();
+        onClose();
+      } else {
+        toast.error(data.message || "Modification failed");
+      }
+    } catch (err) {
+      toast.error(err?.response?.data?.message || "Modification failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Close on Esc
+  useEffect(() => {
+    const handleKey = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [onClose]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4" onClick={onClose}>
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 w-full max-w-md" onClick={(e) => e.stopPropagation()}>
+
+        {/* Header */}
+        <div className="flex items-center justify-between mb-5">
+          <div>
+            <h3 className="font-semibold text-gray-900 dark:text-white text-lg">Modify Booking</h3>
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+              {booking.hotel?.name} — {booking.room?.roomType}
+            </p>
+          </div>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 text-xl transition">✕</button>
+        </div>
+
+        {/* Info banner */}
+        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl px-4 py-3 mb-5 text-xs text-amber-700 dark:text-amber-400">
+          ⚠️ Only unpaid pending bookings can be modified. Price will be recalculated.
+        </div>
+
+        {/* Current dates */}
+        <div className="bg-gray-50 dark:bg-gray-700 rounded-xl px-4 py-3 mb-5 text-xs text-gray-500 dark:text-gray-400">
+          <p className="font-medium text-gray-700 dark:text-gray-300 mb-1">Current dates:</p>
+          <p>
+            {new Date(booking.checkInDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+            {" → "}
+            {new Date(booking.checkOutDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+          </p>
+        </div>
+
+        {/* New dates */}
+        <div className="space-y-3 mb-5">
+          <div>
+            <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">New Check In</label>
+            <input type="date" min={today} value={checkIn}
+              onChange={(e) => {
+                setCheckIn(e.target.value);
+                if (checkOut && e.target.value >= checkOut) setCheckOut("");
+              }}
+              className="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-3 py-2 text-sm outline-none focus:border-black dark:focus:border-white" />
+          </div>
+          <div>
+            <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">New Check Out</label>
+            <input type="date" min={checkIn || today} value={checkOut}
+              onChange={(e) => setCheckOut(e.target.value)}
+              className="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg px-3 py-2 text-sm outline-none focus:border-black dark:focus:border-white" />
+          </div>
+        </div>
+
+        {/* New price preview */}
+        {nights > 0 && (
+          <div className="bg-gray-50 dark:bg-gray-700/50 rounded-xl p-4 mb-5 text-sm space-y-1.5">
+            <p className="font-medium text-gray-700 dark:text-gray-300 mb-2">New Price Breakdown</p>
+            <p className="flex justify-between text-gray-600 dark:text-gray-400">
+              <span>₹{pricePerNight} × {nights} night{nights > 1 ? "s" : ""}</span>
+              <span>₹{newSubtotal.toFixed(0)}</span>
+            </p>
+            <p className="flex justify-between text-gray-600 dark:text-gray-400">
+              <span>Service Fee (10%)</span>
+              <span>₹{newServiceFee.toFixed(0)}</span>
+            </p>
+            <hr className="dark:border-gray-600" />
+            <p className="flex justify-between font-semibold text-gray-900 dark:text-white">
+              <span>New Total</span>
+              <span>₹{newTotal.toFixed(0)}</span>
+            </p>
+          </div>
+        )}
+
+        {/* Actions */}
+        <div className="flex gap-3">
+          <button onClick={onClose}
+            className="flex-1 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 py-2.5 rounded-xl text-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition">
+            Cancel
+          </button>
+          <button onClick={handleSubmit} disabled={loading || nights === 0}
+            className="flex-1 bg-black dark:bg-white text-white dark:text-black py-2.5 rounded-xl text-sm font-medium hover:opacity-80 transition disabled:opacity-50">
+            {loading ? "Saving..." : "Save Changes"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // ── Main Component ────────────────────────────────────────────
 const MyBookings = () => {
   const { axios, user, navigate } = useAppContext();
-  const [bookings, setBookings] = useState([]);
+  const [bookings, setBookings]       = useState([]);
   const [skelLoading, setSkelLoading] = useState(true);
-  const [payingId, setPayingId] = useState(null);
+  const [payingId, setPayingId]       = useState(null);
   const [downloadingId, setDownloadingId] = useState(null);
   const [cancelingId, setCancelingId] = useState(null);
-  const [view, setView] = useState("list");
+  const [view, setView]               = useState("list");
+
+  // ✅ Modify modal state
+  const [modifyBooking, setModifyBooking] = useState(null);
 
   const getImageUrl = (img) => {
     if (!img) return assets.hostedDefaultImage;
@@ -113,7 +255,6 @@ const MyBookings = () => {
     return `${import.meta.env.VITE_API_URL}/${img}`;
   };
 
-  // ✅ FIXED: POST → GET
   const fetchUserBookings = async () => {
     try {
       setSkelLoading(true);
@@ -158,7 +299,7 @@ const MyBookings = () => {
       setDownloadingId(bookingId);
       const response = await axios.get(`/api/bookings/invoice/${bookingId}`, { responseType: "blob" });
       const blob = new Blob([response.data], { type: "application/pdf" });
-      const url = window.URL.createObjectURL(blob);
+      const url  = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
       link.download = `invoice-${bookingId}.pdf`;
@@ -174,6 +315,15 @@ const MyBookings = () => {
   return (
     <div className="py-28 px-4 md:px-16 lg:px-24 xl:px-32 dark:bg-gray-900 min-h-screen transition-colors duration-300">
 
+      {/* ✅ Modify Modal */}
+      {modifyBooking && (
+        <ModifyModal
+          booking={modifyBooking}
+          onClose={() => setModifyBooking(null)}
+          onSuccess={fetchUserBookings}
+        />
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <Title title="My Bookings" subTitle="Manage your hotel reservations easily." align="left" />
@@ -181,7 +331,7 @@ const MyBookings = () => {
         {/* View Toggle */}
         <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-xl self-start">
           {[
-            { key: "list", icon: <FiList />, label: "List" },
+            { key: "list",     icon: <FiList />,     label: "List" },
             { key: "calendar", icon: <FiCalendar />, label: "Calendar" },
           ].map(({ key, icon, label }) => (
             <button key={key} onClick={() => setView(key)}
@@ -265,13 +415,21 @@ const MyBookings = () => {
 
             {/* ACTIONS */}
             <div className="flex flex-row md:flex-col gap-2 items-start md:items-end justify-start md:justify-center">
-              {booking.status === "pending" && (
+              {booking.status === "pending" && !booking.isPaid && (
                 <>
                   <button onClick={() => handlePayment(booking._id)} disabled={payingId === booking._id}
                     className="flex items-center gap-1.5 px-4 py-1.5 text-sm bg-black dark:bg-white text-white dark:text-black rounded-full hover:opacity-80 transition disabled:opacity-60">
                     <FiCreditCard className="text-xs" />
                     {payingId === booking._id ? "Redirecting..." : "Pay Now"}
                   </button>
+
+                  {/* ✅ MODIFY BUTTON — only for pending + unpaid */}
+                  <button onClick={() => setModifyBooking(booking)}
+                    className="flex items-center gap-1.5 px-4 py-1.5 text-sm border border-blue-400 text-blue-500 rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/20 transition">
+                    <FiEdit2 className="text-xs" />
+                    Modify
+                  </button>
+
                   <button onClick={() => handleCancel(booking._id)} disabled={cancelingId === booking._id}
                     className="flex items-center gap-1.5 px-4 py-1.5 text-sm border border-red-400 text-red-500 rounded-full hover:bg-red-50 dark:hover:bg-red-900/20 transition disabled:opacity-60">
                     <FiX className="text-xs" />

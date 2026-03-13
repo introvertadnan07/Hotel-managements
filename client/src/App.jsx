@@ -11,19 +11,21 @@ import Dashboard from "./pages/hotelOwner/Dashboard";
 import AddRoom from "./pages/hotelOwner/AddRoom";
 import ListRoom from "./pages/hotelOwner/ListRoom";
 import Analytics from "./pages/hotelOwner/Analytics";
+import BookingsCalendar from "./pages/hotelOwner/BookingsCalendar"; // ✅ added
 
 import AllRooms from "./pages/AllRooms";
 import RoomDetails from "./components/RoomDetails";
 import MyBookings from "./pages/MyBookings";
 import Wishlist from "./pages/Wishlist";
 import AdminPanel from "./pages/AdminPanel";
-import NotFound from "./pages/NotFound"; // ✅
+import NotFound from "./pages/NotFound";
 
 import HotelReg from "./components/HotelReg";
 import Loader from "./components/Loader";
 import ChatAssistant from "./components/ChatAssistant";
 import CompareBar from "./components/CompareBar";
 import CompareModal from "./components/CompareModal";
+import AIRecommenderFloat from "./components/AIRecommender";
 
 import { useAppContext } from "./context/AppContext";
 
@@ -46,6 +48,9 @@ const App = () => {
       )}
       {showHotelReg && <HotelReg />}
 
+      {/* ✅ AI Float button — shows on ALL pages */}
+      <AIRecommenderFloat />
+
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/rooms" element={<AllRooms />} />
@@ -65,6 +70,7 @@ const App = () => {
           <Route path="add-room" element={<AddRoom />} />
           <Route path="list-room" element={<ListRoom />} />
           <Route path="analytics" element={<Analytics />} />
+          <Route path="bookings-calendar" element={<BookingsCalendar />} /> {/* ✅ added */}
         </Route>
 
         {/* ✅ 404 */}
