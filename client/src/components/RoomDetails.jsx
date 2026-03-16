@@ -296,7 +296,11 @@ const RoomDetails = () => {
   const fetchRoom = async () => {
     try {
       const { data } = await axios.get(`/api/rooms/${id}`);
-      if (data.success) { setRoom(data.room); setMainImage(0); }
+      if (data.success) {
+        setRoom(data.room);
+        setMainImage(0);
+        addRecentlyViewed(data.room); // ✅ track recently viewed
+      }
     } catch { toast.error("Failed to load room"); }
   };
 

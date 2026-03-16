@@ -26,6 +26,7 @@ import ChatAssistant from "./components/ChatAssistant";
 import CompareBar from "./components/CompareBar";
 import CompareModal from "./components/CompareModal";
 import AIRecommenderFloat from "./components/AIRecommender";
+import ProfileEdit from "./pages/ProfileEdit";
 
 import { useAppContext } from "./context/AppContext";
 
@@ -60,6 +61,7 @@ const App = () => {
         <Route path="/my-bookings" element={<MyBookings />} />
         <Route path="/wishlist" element={<Wishlist />} />
         <Route path="/loader/:nextUrl" element={<Loader />} />
+        <Route path="/profile" element={<ProfileEdit />} />
 
         {/* ✅ Admin */}
         <Route path="/admin" element={role === "admin" ? <AdminPanel /> : <Navigate to="/" />} />
@@ -70,7 +72,7 @@ const App = () => {
           <Route path="add-room" element={<AddRoom />} />
           <Route path="list-room" element={<ListRoom />} />
           <Route path="analytics" element={<Analytics />} />
-          <Route path="bookings-calendar" element={<BookingsCalendar />} /> {/* ✅ added */}
+          <Route path="bookings-calendar" element={<BookingsCalendar />} /> 
         </Route>
 
         {/* ✅ 404 */}
