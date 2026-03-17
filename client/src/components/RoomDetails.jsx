@@ -717,7 +717,7 @@ const RoomDetails = () => {
 
               <button type="submit" disabled={loading}
                 className="w-full bg-black dark:bg-white text-white dark:text-black py-2.5 rounded-lg hover:opacity-80 transition disabled:opacity-60 font-medium">
-                {loading ? "Processing..." : "Book now"}
+                {loading ? "Processing..." : "Book Now"}
               </button>
             </form>
           </div>
