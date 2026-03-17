@@ -5,6 +5,7 @@ import { assets } from "../assets/assets";
 import toast from "react-hot-toast";
 import { FaUserFriends, FaBed, FaBath, FaStar, FaTimes, FaChevronLeft, FaChevronRight, FaExpand, FaCalendarAlt, FaShare, FaCopy, FaWhatsapp, FaReply } from "react-icons/fa";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import { addRecentlyViewed } from "./RecentlyViewed";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 
@@ -284,7 +285,7 @@ const RoomDetails = () => {
   const today = new Date().toISOString().split("T")[0];
 
   const getImageUrl = (img) => {
-    if (!img) return assets.hostedDefaultImage;
+    if (!img) return "";
     if (typeof img === "string" && img.startsWith("http")) return img;
     if (typeof img === "string" && img.startsWith("/")) img = img.slice(1);
     return `${import.meta.env.VITE_API_URL}/${img}`;
@@ -299,9 +300,12 @@ const RoomDetails = () => {
       if (data.success) {
         setRoom(data.room);
         setMainImage(0);
-        addRecentlyViewed(data.room); // ✅ track recently viewed
+        addRecentlyViewed(data.room);
       }
-    } catch { toast.error("Failed to load room"); }
+    } catch (error) {
+      console.error("Failed to load room:", error);
+      toast.error("Failed to load room");
+    }
   };
 
   const fetchBookedRanges = async () => {
