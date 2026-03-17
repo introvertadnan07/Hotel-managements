@@ -232,7 +232,7 @@ const seedData = [
         description:    "Executive luxury suite with panoramic views of HITEC City, a Nizam-inspired interior, premium business amenities and private lounge access.",
         amenities:      ["Free Wifi", "Air Conditioning", "Free Breakfast", "Room Service", "Swimming Pool", "Gym Access"],
         images: [
-          "https://images.unsplash.com/photo-1614596437189-80a2c2a12b6a?w=800&q=80",
+          "https://unsplash.com/photos/brown-wooden-lounge-chairs-near-pool-surrounded-by-palm-trees-vmIWr0NnpCQ",
           "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=800&q=80",
           "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=800&q=80",
         ],
@@ -259,7 +259,7 @@ const seedData = [
         description:    "Heritage-style room in the cultural capital of India. Features colonial-era furniture, high ceilings, and is just steps away from Park Street's vibrant dining scene.",
         amenities:      ["Free Wifi", "Air Conditioning", "Free Breakfast"],
         images: [
-          "https://images.unsplash.com/photo-1593702288056-7cc94e0f0f60?w=800&q=80",
+          "https://unsplash.com/photos/3d-render-of-commercial-building-interior-and-reception-1FLlNc1C-2s",
           "https://images.unsplash.com/photo-1590490359683-658d3d23f972?w=800&q=80",
           "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&q=80",
         ],
