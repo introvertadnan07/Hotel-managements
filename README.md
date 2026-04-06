@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 <div align="center">
 
 <img src="https://img.shields.io/badge/AnumiflyStay-Hotel%20Booking%20Platform-0f172a?style=for-the-badge&logoColor=white" alt="AnumiflyStay" />
