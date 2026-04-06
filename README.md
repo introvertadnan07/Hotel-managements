@@ -297,6 +297,5 @@ This project is licensed under the MIT License — see the [LICENSE](LICENSE) fi
 *If you found this project helpful, please give it a ⭐*
 
 </div>
-=======
 # AnumiflyStay
 >>>>>>> 5f03fac34f2e9cd024036c85f103cd864d077c83
