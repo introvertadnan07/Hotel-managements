@@ -29,9 +29,16 @@ connectDB();
 const app = express();
 
 //
-// ✅ SIMPLE CORS (safe for now)
+// ✅ FIXED CORS (ONLY CHANGE HERE)
 //
-app.use(cors());
+app.use(
+  cors({
+    origin: "https://anumifly.vercel.app",
+    credentials: true,
+  })
+);
+
+app.options("*", cors());
 
 //
 // ✅ Stripe Webhook (RAW body REQUIRED)
