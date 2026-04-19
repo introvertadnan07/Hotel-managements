@@ -81,28 +81,33 @@ const AddRoom = () => {
 
   const charLimit = 500;
 
-  // ✅ Fetch owner's hotels on mount
-  useEffect(() => {
-    const fetchHotels = async () => {
-      try {
-        setHotelsLoading(true);
-        const token = await getToken();
-        const { data } = await axios.get(
-       `${import.meta.env.VITE_BACKEND_URL}/api/hotels/owner`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        if (data.success) {
-          setHotels(data.hotels || []);
-          if (data.hotels?.length === 1) setSelectedHotelId(data.hotels[0]._id);
-        }
-      } catch (err) {
-        console.error("Failed to fetch hotels:", err);
-      } finally {
-        setHotelsLoading(false);
+  // ✅ Fetch owner's hotels on mount 
+useEffect(() => {
+  const fetchHotels = async () => {
+    try {
+      setHotelsLoading(true);
+      const token = await getToken();
+      const { data } = await axios.get(
+        `${import.meta.env.VITE_API_URL}/api/hotels/owner`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (data.success) {
+        setHotels(data.hotels || []);
+        if (data.hotels?.length === 1) setSelectedHotelId(data.hotels[0]._id);
       }
-    };
-    fetchHotels();
-  }, []);
+    } catch (err) {
+      console.error("Failed to fetch hotels:", err);
+    } finally {
+      setHotelsLoading(false);
+    }
+  };
+
+  fetchHotels();
+}, []);
+
+
+
 
   const addImages = (files) => {
     const newImgs = Array.from(files)
