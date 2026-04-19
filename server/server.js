@@ -15,10 +15,10 @@ import reviewRouter from "./routes/reviewRoutes.js";
 import wishlistRouter from "./routes/wishlistRoutes.js";
 import aiRouter from "./routes/aiRoutes.js";
 import newsletterRouter from "./routes/newsletterRoutes.js";
+import adminRouter from "./routes/adminRoutes.js";
 
 import clerkWebhooks from "./controllers/clerkWebhooks.js";
 import { stripeWebhooks } from "./controllers/stripeWebhooks.js";
-import adminRouter from "./routes/adminRoutes.js";
 
 //
 // ✅ Initialize Services
@@ -29,29 +29,12 @@ connectDB();
 const app = express();
 
 //
-// ✅ SMART CORS (localhost + vercel + preview)
+// ✅ SIMPLE CORS (safe for now)
 //
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      if (
-        !origin ||
-        origin.includes("localhost") ||
-        origin.includes("vercel.app")
-      ) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-    credentials: true,
-  })
-);
+app.use(cors());
 
-app.use("/api/admin", adminRouter);
 //
 // ✅ Stripe Webhook (RAW body REQUIRED)
-// MUST be before express.json()
 //
 app.post(
   "/api/webhooks/stripe",
@@ -60,7 +43,7 @@ app.post(
 );
 
 //
-// ✅ Clerk Webhook (RAW body REQUIRED)
+// ✅ Clerk Webhook
 //
 app.post(
   "/api/webhooks/clerk",
@@ -69,7 +52,7 @@ app.post(
 );
 
 //
-// ✅ Body Parsers (AFTER webhooks)
+// ✅ Body Parsers
 //
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -80,26 +63,15 @@ app.use(express.urlencoded({ extended: true }));
 app.use(clerkMiddleware());
 
 //
-// ✅ Static Uploads (local dev only)
-// NOTE: Vercel filesystem is temporary
+// ✅ Static Uploads
 //
 const __dirname = path.resolve();
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 //
-// ✅ Health Routes
+// ✅ Routes
 //
-app.get("/", (req, res) => {
-  res.send("✅ Anumifly API working...");
-});
-
-app.get("/health", (req, res) => {
-  res.json({ status: "OK" });
-});
-
-//
-// ✅ API Routes
-//
+app.use("/api/admin", adminRouter);
 app.use("/api/user", userRouter);
 app.use("/api/hotels", hotelRouter);
 app.use("/api/rooms", roomRouter);
@@ -110,7 +82,14 @@ app.use("/api/ai", aiRouter);
 app.use("/api/newsletter", newsletterRouter);
 
 //
-// ✅ 404 Fallback (LAST middleware)
+// ✅ Health check
+//
+app.get("/", (req, res) => {
+  res.send("✅ Anumifly API working...");
+});
+
+//
+// ✅ 404 fallback
 //
 app.use((req, res) => {
   res.status(404).json({
@@ -120,7 +99,7 @@ app.use((req, res) => {
 });
 
 //
-// ✅ Start Server
+// ✅ Start server
 //
 const PORT = process.env.PORT || 5000;
 
