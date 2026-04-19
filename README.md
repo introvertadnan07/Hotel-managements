@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 <div align="center">
 
 <img src="https://img.shields.io/badge/AnumiflyStay-Hotel%20Booking%20Platform-0f172a?style=for-the-badge&logoColor=white" alt="AnumiflyStay" />
@@ -288,15 +287,12 @@ Newsletter   → email, subscribedAt
 
 This project is licensed under the MIT License — see the [LICENSE](LICENSE) file for details.
 
----
-
 <div align="center">
-
 **Built with ❤️ by Md Adnan Qaisar**
 
-*If you found this project helpful, please give it a ⭐*
+    
+If you found this project helpful, please give it a ⭐
 
 </div>
-=======
 # AnumiflyStay
 >>>>>>> 5f03fac34f2e9cd024036c85f103cd864d077c83
