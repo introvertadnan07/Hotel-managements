@@ -29,11 +29,25 @@ connectDB();
 const app = express();
 
 //
-// ✅ FIXED CORS (FINAL CORRECT)
+// ✅ FINAL CORS FIX (LOCAL + VERCEL)
 //
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://anumifly.vercel.app"
+];
+
 app.use(
   cors({
-    origin: "https://anumifly.vercel.app",
+    origin: function (origin, callback) {
+      // allow requests like Postman or server-to-server
+      if (!origin) return callback(null, true);
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        return callback(new Error("CORS not allowed"));
+      }
+    },
     credentials: true,
   })
 );
