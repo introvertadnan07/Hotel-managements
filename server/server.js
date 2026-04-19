@@ -29,7 +29,7 @@ connectDB();
 const app = express();
 
 //
-// ✅ FIXED CORS (ONLY CHANGE HERE)
+// ✅ FIXED CORS (FINAL CORRECT)
 //
 app.use(
   cors({
@@ -37,8 +37,6 @@ app.use(
     credentials: true,
   })
 );
-
-app.options("*", cors());
 
 //
 // ✅ Stripe Webhook (RAW body REQUIRED)
