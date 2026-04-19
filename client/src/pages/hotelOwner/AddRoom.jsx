@@ -88,7 +88,7 @@ const AddRoom = () => {
         setHotelsLoading(true);
         const token = await getToken();
         const { data } = await axios.get(
-          `${import.meta.env.VITE_BACKEND_URL}/api/hotels/owner`,
+       `${import.meta.env.VITE_BACKEND_URL}/api/hotels/owner`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         if (data.success) {
@@ -166,10 +166,16 @@ const AddRoom = () => {
 
       const token = await getToken();
       const { data } = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL}/api/rooms`,
-        formData,
-        { headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" } }
-      );
+      `${import.meta.env.VITE_API_URL}/api/rooms`,
+      formData,
+  {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "multipart/form-data"
+    }
+  }
+);
+      
 
       if (data.success) {
         toast.success("Room added successfully! 🎉");
